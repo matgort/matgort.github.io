@@ -79,17 +79,21 @@
     }
 
     /* thick border frame (FULL BLEED, always edge-to-edge) */
-    #borderFrame{
-      position: fixed;
-      inset: 0;
-      width:100vw;
-      height:100vh;
-      pointer-events: none;
-      display:none;
-    }
-    @supports (height: 100dvh){
-      #borderFrame{ height:100dvh; }
-    }
+#borderFrame{
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+
+
+pointer-events: none;
+display: none;
+
+
+/* Helps iOS avoid weird clipping */
+transform: translateZ(0);
+}
 
     /* UI bar */
     #bar{
