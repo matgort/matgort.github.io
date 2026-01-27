@@ -27,6 +27,11 @@
       --barOffset: 50px;
 
       --btnActive: var(--fg);
+
+	--bgColor: #F7C6D0;
+	--bdColor: #000000;
+	--borderPx: 0px;
+
     }
 
     html, body{
@@ -34,7 +39,7 @@
       width:100%;
       height:100%;
       overflow:hidden;
-      background:#F7C6D0;
+      background: var(--bdColor);
       font-family: "Times New Roman", Times, Georgia, serif;
       -webkit-text-size-adjust: 100%;
     }
@@ -52,10 +57,17 @@
       width:100vw;
       height:100vh;
       pointer-events:none;
+	background: var(--bgColor);
+	padding: var(--borderPx);
+	box-sizing: border-box;
     }
     @supports (height: 100dvh){
       #stage{ height:100dvh; }
     }
+#stage{
+transition: none !important;
+will-change: padding;
+}
 
     #phrase{
       position:absolute;
@@ -548,6 +560,64 @@ function applyDimmer(hex, sliderVal){
   }
   return setHsl(hex, h, s, l);
 }
+/* ================= One-frame style batching (iOS fix) ================= */
+let pendingFrameState = null;
+let frameRaf = 0;
+
+
+function scheduleFrameUpdate(nextState){
+pendingFrameState = nextState;
+if (frameRaf) return;
+
+
+frameRaf = requestAnimationFrame(() => {
+frameRaf = 0;
+const s = pendingFrameState;
+pendingFrameState = null;
+if (!s) return;
+
+
+const minDim = Math.min(window.innerWidth, window.innerHeight);
+const px = s.borderEnabled ? Math.max(0, Math.round(s.borderThickness01 * (minDim/2))) : 0;
+
+
+const root = document.documentElement.style;
+root.setProperty("--borderPx", px + "px");
+root.setProperty("--bdColor", s.borderHex);
+root.setProperty("--bgColor", s.bgHex);
+});
+}
+scheduleFrameUpdate({
+borderEnabled: sel.borderEnabled,
+borderThickness01: Number(bdThickEl.value),
+borderHex: FINAL_BORDER_HEX,
+bgHex: FINAL_BG_HEX
+});
+
+function applyVisualsNow(){
+// 1) pick palettes (your existing code probably does this)
+// You already have selected sets for bg/fg/bd like sel.bgColor etc.
+
+
+const bgTheme = bagNext("bgTheme", Array.from(sel.bgColor)) || "circus";
+const bdTheme = bagNext("bdTheme", Array.from(sel.bdColor)) || "circus";
+
+
+const bgBase = PAL[bgTheme][0];
+const bdBase = PAL[bdTheme][0];
+
+
+const FINAL_BG_HEX = applyDimmer(bgBase, bgBrightEl.value);
+const FINAL_BORDER_HEX = applyDimmer(bdBase, bdBrightEl.value);
+
+
+scheduleFrameUpdate({
+borderEnabled: sel.borderEnabled,
+borderThickness01: Number(bdThickEl.value),
+borderHex: FINAL_BORDER_HEX,
+bgHex: FINAL_BG_HEX
+});
+}
 
 /* ================= Controls ================= */
 const CONTEXT_OPTS = ["home","work","fun"];
@@ -623,6 +693,21 @@ const sel = {
   borderEnabled: true,
   borderThickness: Number(bdThickEl.value)
 };
+function reapplyForViewportShift(){
+// re-run current visuals without changing random selections
+// If your visuals are tied to "current chosen colors", use those vars instead.
+applyVisualsNow();
+}
+
+
+if (window.visualViewport){
+visualViewport.addEventListener("resize", reapplyForViewportShift, { passive:true });
+visualViewport.addEventListener("scroll", reapplyForViewportShift, { passive:true });
+}
+
+
+window.addEventListener("resize", reapplyForViewportShift, { passive:true });
+window.addEventListener("orientationchange", reapplyForViewportShift, { passive:true });
 
 /* ================= Vocab banks (FULL, expanded) ================= */
 /* Descriptors */
