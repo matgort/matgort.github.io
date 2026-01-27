@@ -1078,7 +1078,7 @@ let hideTimer = null;
 function showUI(){
   barEl.classList.remove("hidden");
   if(hideTimer) clearTimeout(hideTimer);
-  hideTimer = setTimeout(()=> barEl.classList.add("hidden"), 5000);
+  hideTimer = setTimeout(()=> barEl.classList.add("hidden"), 3000);
 }
 ["mousemove","mousedown","touchstart","keydown","wheel"].forEach(evt=>{
   window.addEventListener(evt, showUI, {passive:true});
