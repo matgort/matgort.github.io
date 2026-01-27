@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,18 +12,16 @@
 
       /* UI sizing */
       --barH: clamp(190px, 23vh, 260px);
+      --barOffset: 50px;
+
+      /* UI scale (your request: +2%) */
+      --uiScale: 1.02;
 
       /* Phrase layout */
       --textScale: 1;
-
-      /* DEFAULT phrase position: true vertical center of the WINDOW */
       --yPct: 50%;
-
       --phraseW: 75vw;
       --edgePad: 50px;
-
-      /* IMPORTANT: positive raises the UI UP (prevents cropping) */
-      --barOffset: 50px;
 
       --btnActive: var(--fg);
     }
@@ -39,19 +36,19 @@
       -webkit-text-size-adjust: 100%;
     }
 
-    /* Use dynamic viewport units when available (iOS) */
     body{ min-height: 100vh; }
     @supports (height: 100dvh){
       body{ min-height: 100dvh; }
     }
 
-    /* Stage is ALWAYS full-viewport so 50% is true mid-window */
+    /* Stage is ALWAYS full-viewport */
     #stage{
       position: fixed;
       top:0; left:0;
       width:100vw;
       height:100vh;
       pointer-events:none;
+      z-index: 20; /* above border */
     }
     @supports (height: 100dvh){
       #stage{ height:100dvh; }
@@ -78,28 +75,25 @@
       hyphens: none;
     }
 
-    /* thick border frame (FULL BLEED, always edge-to-edge) */
-#borderFrame{
-position: fixed;
-inset: 0;
-pointer-events: none;
-display: none;
-z-index: 999999; /* make absolutely sure nothing paints over it */
-}
-
-
-#borderFrame .b{
-position: fixed;
-background: transparent; /* set in JS */
-pointer-events: none;
-}
-
-
-/* Each side will be sized in JS */
-#borderFrame .top { left:0; right:0; top:0; height:0; }
-#borderFrame .bottom { left:0; right:0; bottom:0; height:0; }
-#borderFrame .left { top:0; bottom:0; left:0; width:0; }
-#borderFrame .right { top:0; bottom:0; right:0; width:0; }
+    /* Border frame — must ALWAYS be behind text + UI */
+    #borderFrame{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      display: none;
+      z-index: 5;  /* behind stage + UI */
+      overflow: visible;
+    }
+    #borderFrame .b{
+      position: fixed;
+      background: transparent; /* set in JS */
+      pointer-events: none;
+    }
+    /* Each side will be positioned/sized in JS */
+    #borderFrame .top { left:0; right:0; top:0; height:0; }
+    #borderFrame .bottom { left:0; right:0; bottom:0; height:0; }
+    #borderFrame .left { top:0; bottom:0; left:0; width:0; }
+    #borderFrame .right { top:0; bottom:0; right:0; width:0; }
 
     /* UI bar */
     #bar{
@@ -107,14 +101,17 @@ pointer-events: none;
       left:0; right:0;
       bottom: calc(env(safe-area-inset-bottom, 0px) + var(--barOffset));
       height: var(--barH);
-      padding: 0 10px calc(10px + env(safe-area-inset-bottom, 0px));
+
+      /* your request: 20px padding on each side */
+      padding: 0 20px calc(10px + env(safe-area-inset-bottom, 0px));
+
       box-sizing:border-box;
       pointer-events:auto;
       background: transparent;
       transition: opacity .18s ease, transform .18s ease;
 
-      /* Safety: never allow the bar to be taller than the viewport */
       max-height: calc(100vh - 8px);
+      z-index: 30; /* above border, above stage if needed */
     }
     @supports (height: 100dvh){
       #bar{ max-height: calc(100dvh - 8px); }
@@ -134,11 +131,14 @@ pointer-events: none;
       height:100%;
       box-sizing:border-box;
       overflow: visible;
+
+      transform: scale(var(--uiScale));
+      transform-origin: bottom center;
     }
 
     .row{
       display:flex;
-      gap:10px;
+      gap:12px;
       align-items:flex-end;
       flex-wrap:nowrap;
       min-width:0;
@@ -147,24 +147,7 @@ pointer-events: none;
     .grp{
       display:flex;
       flex-direction:column;
-      gap:4px;
-      min-width:0;
-      flex: 1 1 auto;
-    }
-
-    .grp.word{ flex: 0.62 0.62 0; }
-    .grp.context{ flex: 0.88 0.88 0; }
-    .grp.parts{ flex: 1.25 1.25 0; }
-
-    .grp.bg{ flex: 1.05 1.05 0; }
-    .grp.fg{ flex: 1.05 1.05 0; }
-    .grp.bd{ flex: 1.05 1.05 0; }
-
-    .labelRow{
-      display:flex;
-      justify-content:space-between;
-      align-items:baseline;
-      gap:10px;
+      gap:6px;
       min-width:0;
     }
 
@@ -179,6 +162,15 @@ pointer-events: none;
       display:block;
       white-space:nowrap;
     }
+
+    .labelRow{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:10px;
+      min-width:0;
+    }
+
     .val{
       font-size: 9px;
       letter-spacing:.10em;
@@ -222,15 +214,6 @@ pointer-events: none;
       color: var(--btnActive);
       border-width: 2px;
       font-weight: 900;
-    }
-
-    .rightCol{
-      display:flex;
-      gap:8px;
-      align-items:flex-end;
-      flex: 0 0 auto;
-      padding-left: 6px;
-      justify-content:flex-end;
     }
 
     .sliderRow{
@@ -283,13 +266,37 @@ pointer-events: none;
       border:0;
     }
 
+    /* NEW: two-zone layout row */
+    .twoZone{
+      display:flex;
+      gap:18px;
+      align-items:flex-end;
+      min-width:0;
+    }
+    .zoneLeft{
+      flex: 1 1 auto;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width:0;
+    }
+    .zoneRight{
+      flex: 0 0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      align-items:flex-end;
+      padding-left: 8px;
+    }
+
     @media(max-width: 980px){
       :root{
         --barH: clamp(250px, 34vh, 340px);
         --barOffset: 35px;
       }
-      .row{ flex-wrap:wrap; }
-      .sliderRow{ flex-wrap:wrap; }
+      .row, .sliderRow{ flex-wrap:wrap; }
+      .twoZone{ flex-wrap:wrap; }
+      .zoneRight{ align-items:flex-start; }
     }
 
     @media(max-width: 640px){
@@ -309,51 +316,45 @@ pointer-events: none;
   <div id="stage">
     <div id="phrase"></div>
   </div>
+
   <div id="borderFrame" aria-hidden="true">
-<div class="b top"></div>
-<div class="b right"></div>
-<div class="b bottom"></div>
-<div class="b left"></div>
-</div>
+    <div class="b top"></div>
+    <div class="b right"></div>
+    <div class="b bottom"></div>
+    <div class="b left"></div>
+  </div>
 
   <div id="bar">
     <div class="barInner">
 
-      <!-- Row 1: buttons -->
-      <div class="row">
-        <div class="grp word">
-          <div class="label">Word</div>
-          <div class="btnGroup" id="wordRow"></div>
+      <!-- NEW Row 1: colors on left, word-parts on right -->
+      <div class="twoZone">
+        <div class="zoneLeft">
+          <div class="grp">
+            <div class="label">Background Color</div>
+            <div class="btnGroup" id="bgColorsRow"></div>
+          </div>
+
+          <div class="grp">
+            <div class="label">Text Color</div>
+            <div class="btnGroup" id="fgColorsRow"></div>
+          </div>
+
+          <div class="grp">
+            <div class="label">Border Color</div>
+            <div class="btnGroup" id="bdColorsRow"></div>
+          </div>
         </div>
 
-        <div class="grp context">
-          <div class="label">Context</div>
-          <div class="btnGroup" id="contextRow"></div>
-        </div>
-
-        <div class="grp parts">
-          <div class="label">Parts</div>
-          <div class="btnGroup" id="partsRow"></div>
+        <div class="zoneRight">
+          <div class="grp" style="min-width: 210px;">
+            <div class="label">Words</div>
+            <div class="btnGroup" id="partsRow"></div>
+          </div>
         </div>
       </div>
 
-      <!-- Row 2: color palette toggles -->
-      <div class="row">
-        <div class="grp bg">
-          <div class="label">Background Color</div>
-          <div class="btnGroup" id="bgColorsRow"></div>
-        </div>
-        <div class="grp fg">
-          <div class="label">Text Color</div>
-          <div class="btnGroup" id="fgColorsRow"></div>
-        </div>
-        <div class="grp bd">
-          <div class="label">Border Color</div>
-          <div class="btnGroup" id="bdColorsRow"></div>
-        </div>
-      </div>
-
-      <!-- Row 3: sliders -->
+      <!-- Row 2: sliders -->
       <div class="sliderRow">
 
         <div class="ctrl">
@@ -388,7 +389,7 @@ pointer-events: none;
 
       </div>
 
-      <!-- Row 4: size/width/height + fullscreen -->
+      <!-- Row 3: size/width/height + fullscreen -->
       <div class="sliderRow">
 
         <div class="ctrl">
@@ -398,7 +399,6 @@ pointer-events: none;
 
         <div class="ctrl">
           <div class="labelRow"><div class="label">Height</div><div class="val" id="yVal">50%</div></div>
-          <!-- FULL RANGE: 0 (top) -> 100 (bottom); default 50 (center) -->
           <input id="ySlider" type="range" min="0" max="100" step="0.01" value="50">
         </div>
 
@@ -407,7 +407,7 @@ pointer-events: none;
           <input id="widthSlider" type="range" min="40" max="100" step="0.01" value="75">
         </div>
 
-        <div class="rightCol">
+        <div style="display:flex; gap:8px; align-items:flex-end; flex:0 0 auto;">
           <button id="fsBtn" type="button">Full screen</button>
         </div>
 
@@ -524,11 +524,7 @@ function setHsl(hex, h, s, l){
   return rgbToHex(out.r,out.g,out.b);
 }
 
-/* brightness “dimmer”:
-   - slider 0.5 => exact palette
-   - left => darker
-   - right => brighter + more saturated
-*/
+/* brightness “dimmer” */
 function applyDimmer(hex, sliderVal){
   const t = clamp(Number(sliderVal), 0, 1);
   const {r,g,b} = hexToRgb(hex);
@@ -550,8 +546,6 @@ function applyDimmer(hex, sliderVal){
 }
 
 /* ================= Controls ================= */
-const CONTEXT_OPTS = ["home","work","fun"];
-const WORD_OPTS = ["common","obscure"];
 const PART_OPTS = ["description","object","action","location"];
 const COLOR_OPTS = ["circus","beachy","fleshy","earthy","retro","future"];
 
@@ -614,19 +608,20 @@ function renderToggleRow(container, options, setRef, onChange){
 
 /* ================= Selection state ================= */
 const sel = {
-  context: new Set(CONTEXT_OPTS),
-  word: new Set(WORD_OPTS),
   parts: new Set(PART_OPTS),
+
   bgColor: new Set(COLOR_OPTS),
   fgColor: new Set(COLOR_OPTS),
   bdColor: new Set(COLOR_OPTS),
+
   borderEnabled: true,
   borderThickness: Number(bdThickEl.value)
 };
 
-/* ================= Vocab banks (FULL, expanded) ================= */
+/* ================= Vocab banks (your existing content) ================= */
 /* Descriptors */
-const DESC_COMMON = uniq([
+const DESC = uniq([
+  /* previously DESC_COMMON + DESC_OBSCURE combined */
   "brittle","woolen","velvety","ashen","glowing","ambiguous","antique","architectural",
   "baggy","bent","brassy","brilliant","bumpy","burnt","buttery","buzzing",
   "charming","crumbly","crunchy","crushed","crusty",
@@ -671,9 +666,7 @@ const DESC_COMMON = uniq([
   "gracefully arranged","lightly worn","tenderly handled","gently used",
   "herringbone-patterned","walnut","mahogany","pine","maple",
   "stone","quartz","emerald","ruby","diamond",
-  "granite","marble","soapstone","soapy"
-]);
-const DESC_OBSCURE = uniq([
+  "granite","marble","soapstone","soapy",
   "effervescent","despondent","petulant","hedonistic","gluttonous",
   "malnourished","overflowing","puffy","bloated","misaligned","transparent",
   "decaying","insular","plaintive","rueful","limpid",
@@ -684,8 +677,9 @@ const DESC_OBSCURE = uniq([
   "anfractuous","ossified","vermicular","sere","desiccated","caliginous"
 ]);
 
-/* Objects */
-const OBJ_BASE_HOME = uniq([
+/* Objects — union of all your object banks (no context) */
+const OBJECTS = uniq([
+  /* BASE HOME + WORK + FUN + user common/uncommon + OBJ_OBSCURE */
   "dish rack","drying rack","clothes line","shower head","kitchen sink","vanity mirror","hair brush","toilet paper",
   "coffee mug","tea pot","tea bag","coffee maker","french press","percolator",
   "frying pan","cutting board","crock pot","soupspoon",
@@ -697,30 +691,25 @@ const OBJ_BASE_HOME = uniq([
   "high heels","tights","pantyhose","cardigan","turtleneck","necklace","bracelet","wedding band","ring","pendant",
   "pizza box","mini fridge","refrigerator","oven","freezer","closet","hardwood floor","carpet","rug","upholstery",
   "remote control","computer monitor","ipad","tablet",
-  "wardrobe","drapery","portrait","trophy","moving boxes","linen napkin","room service tray","soap"
-]);
-const OBJ_BASE_WORK = uniq([
-  "computer monitor","keyboard","printer","xerox machine","photocopier","cash register",
+  "wardrobe","drapery","portrait","trophy","moving boxes","linen napkin","room service tray","soap",
+  "keyboard","printer","xerox machine","photocopier","cash register",
   "envelope","notebook","dictionary","paperback book",
   "workbench","sawhorse","chisel","paint brush","spray paint","ink wash","canvas","plywood","ladder","toolbox","tape measure","scissors",
   "drill press","table saw","bandsaw","vacuum cleaner","hot glue gun","dental pick","drill",
   "office cubicle","lecture hall","waiting room","doctor's office","library","gallery","museum",
-  "ATM"
-]);
-const OBJ_BASE_FUN = uniq([
+  "ATM",
   "seltzer","diner booth","martini","cocktail","wine glass",
   "taqueria","dive bar","dance club","punk club","rave","comedy club","microphone","record store",
   "playing cards","chess board","board game","video game","playstation",
   "slot machine","grand piano","pipe organ","drum kit","synthesizer",
   "bicycle","station wagon","hatchback","convertible","sports car","subaru forester",
   "water slide","trailhead","switchback","mountain lodge","skis",
-  "baseball bat",
-  "harmonica","folded map","ticket stub"
-]);
-const USER_COMMON_OBJECTS = uniq([
+  "baseball bat","harmonica","folded map","ticket stub",
+
+  /* user banks */
   "drinking glass","beer stein","high ball glass","ash tray","dust pan","chapstick",
   "dining room table","end table","bedside table","night stand","foot rest","foot stool",
-  "step ladder","ladder","scaffolding",
+  "step ladder","scaffolding",
   "beer can","beer bottle","canned cocktail","mocktail","mojito","margarita","pilsner","lager","guinness","draft beer",
   "rosé wine","glass of blush","hot toddy","green juice","celery juice","pomegranate juice","carrot juice","tomato juice",
   "noodles","legal pad","note pad","eye drops","bluetooth speaker","SUV","mini-van","lawn mower","air conditioner",
@@ -739,9 +728,19 @@ const USER_COMMON_OBJECTS = uniq([
   "catchers mitt","baseball glove","fingerless gloves","driving gloves","steering wheel",
   "gaming chair","rocking chair","vending machine",
   "slate tile","granite counter tops","bulletin board","tie pin","name tag","sheriff's badge",
-  "bunk beds","futon","keg of beer","fur pelt"
-]);
-const USER_UNCOMMON_OBJECTS = uniq([
+  "bunk beds","futon","keg of beer","fur pelt",
+
+  /* obscure objects */
+  "birdbath","birdcage","birdhouse","hourglass","sundial","pendulum","pocket watch",
+  "velvet rope","bank vault","water tower","traffic median","airport shuttle",
+  "dune buggy","dump truck","freight train","gondola",
+  "greenhouse","terrarium",
+  "record player","typewriter","ukulele","trombone","tambourine","saxophone","banjo","bagpipe",
+  "brownstone","townhouse","alleyway","dumpster","manhole cover","sewer",
+  "parking garage","parking lot","driveway",
+  "parachute","bungee cord","propeller","umbrella",
+  "cooler","cardboard box","tissue paper","newspaper","tombstone","baby bottle","maxi pad",
+  "deck chair","neon sign",
   "absinthe","fernet","aperol spritz","tequila sunrise","whisky sour","moo shu pork",
   "propeller beanie","metal detector","geiger counter","whippet","nitrous oxide","ketamine","heroin","DMT","salvia","cannabis","psilocybin","LSD",
   "laser pointer","dvd player","hedge trimmer","weed whacker","dirt bike","chopper","whirlygig","pinwheel",
@@ -752,44 +751,14 @@ const USER_UNCOMMON_OBJECTS = uniq([
   "director's chair","padded booth","straight jacket","hot dog cart","x-ray machine","samovar of coffee","electric kettle","air fryer",
   "wine decanter","whoopie cushion"
 ]);
-const OBJ_OBSCURE = uniq([
-  "birdbath","birdcage","birdhouse","hourglass","sundial","pendulum","pocket watch",
-  "velvet rope","bank vault","water tower","traffic median","airport shuttle",
-  "dune buggy","dump truck","freight train","gondola",
-  "greenhouse","terrarium",
-  "record player","typewriter","ukulele","trombone","tambourine","saxophone","banjo","bagpipe",
-  "brownstone","townhouse","alleyway","dumpster","manhole cover","sewer",
-  "parking garage","parking lot","driveway",
-  "parachute","bungee cord","propeller","umbrella",
-  "cooler","cardboard box","tissue paper","newspaper","tombstone","baby bottle","maxi pad",
-  "deck chair","neon sign"
-].concat(USER_UNCOMMON_OBJECTS));
 
-const OBJ_HOME_COMMON = uniq(OBJ_BASE_HOME.concat(USER_COMMON_OBJECTS));
-const OBJ_WORK_COMMON = uniq(OBJ_BASE_WORK.concat([
-  "legal pad","note pad","printed out pdf","instruction manual","name tag","sheriff's badge",
-  "scaffolding","step ladder","ladder","paint bucket","white glue","superglue","krazy glue","circuit breaker","circuit board","oled panel"
-]).concat(USER_COMMON_OBJECTS));
-const OBJ_FUN_COMMON  = uniq(OBJ_BASE_FUN.concat([
-  "beer stein","beer can","beer bottle","keg of beer","mocktail","mojito","margarita","pilsner","lager","guinness","hot toddy",
-  "vending machine","hot dog cart","padded booth","director's chair"
-]).concat(USER_COMMON_OBJECTS));
-
-const OBJECTS = {
-  home: { common: OBJ_HOME_COMMON, obscure: uniq(OBJ_HOME_COMMON.concat(OBJ_OBSCURE)) },
-  work: { common: OBJ_WORK_COMMON, obscure: uniq(OBJ_WORK_COMMON.concat(OBJ_OBSCURE)) },
-  fun:  { common: OBJ_FUN_COMMON,  obscure: uniq(OBJ_FUN_COMMON.concat(OBJ_OBSCURE)) }
-};
-
-/* Actions */
-const ACT_COMMON = uniq([
+/* Actions — union */
+const ACTIONS = uniq([
   "blowing in the wind","soaking wet","floating","stretched out","tilted","inverted",
   "broken","misaligned","rusty","folded neatly","left out overnight","cooling slightly","resting quietly","waiting in line",
   "balanced on a ledge","caught in the rain","glowing softly","drying on a rack","spilling a little","sitting untouched",
   "freshly unpacked","carefully stacked","sliding across a table","tucked into a drawer","leaning against a wall",
-  "half-finished","freshly cleaned","still warm","still damp","shaking slightly","humming faintly","flickering"
-]);
-const ACT_OBSCURE = uniq([
+  "half-finished","freshly cleaned","still warm","still damp","shaking slightly","humming faintly","flickering",
   "dripping quietly","vibrating faintly","flickering softly","humming to itself","half submerged",
   "zipping a suitcase slowly","resting your head against a train window","opening the shutters",
   "standing at the window while the city wakes","coffee cooling before the first sip",
@@ -799,18 +768,14 @@ const ACT_OBSCURE = uniq([
   "straining at the seams","taped up","freshly repaired","staining the counter","ringing slightly"
 ]);
 
-/* Locations */
-const LOC_HOME = uniq([
+/* Locations — union (no context) */
+const LOCATIONS = uniq([
   "in the bedroom","in the kitchen","in the bathroom","in the attic","on the balcony","in the basement","in the backyard","in the driveway",
   "in the apartment","in a spare bedroom","in a long-unused childhood bedroom","in a steamy bathroom","on a balcony chair",
-  "in the living room","in the dining room","in a home office","in a craft room","in a pantry","in a soaking tub"
-]);
-const LOC_WORK = uniq([
+  "in the living room","in the dining room","in a home office","in a craft room","in a pantry","in a soaking tub",
   "in the office","in the cubicle","in the workshop","in the studio","in the lecture hall","in the waiting room",
   "in the doctor's office","in the library","in a tv studio","in a corner office","in an open-plan office",
-  "in a ceramics studio","in a construction site","in a movie studio","in a display case","by a printing press"
-]);
-const LOC_FUN = uniq([
+  "in a ceramics studio","in a construction site","in a movie studio","in a display case","by a printing press",
   "at the beach","on the pier","in the swimming pool","on the sidewalk",
   "in a diner booth","at a dive bar","at a dance club","at a punk club","at a rave","at an open mic night",
   "by the fire pit","at the farm stand","at the hardware store",
@@ -820,9 +785,7 @@ const LOC_FUN = uniq([
   "at a movie theater","at an art house theater","at a record store","at a used book store","at a department store","in a food court",
   "in a vacant motel","in a high-rise apartment building","at the bleachers","in a graveyard","in a cemetery",
   "on a basketball court","on a tennis court","on a golf course","at a pumpkin patch","at a pet store","at a strip mall","at an outlet mall",
-  "at a runway show","in a cafeteria","in a city center","on the outskirts of town"
-]);
-const LOC_OBSCURE = uniq([
+  "at a runway show","in a cafeteria","in a city center","on the outskirts of town",
   "under the overpass","in the parking garage","in the parking lot","at the waterfront","by the water tower","in the alleyway",
   "in a bog","at the catacombs","at the garbage dump",
   "in an off-season seaside town","on an empty boardwalk","among folded deck chairs",
@@ -842,57 +805,12 @@ const LOC_OBSCURE = uniq([
   "at a strip club","at a gay bar","on the upper east side","in chicago","at madison square garden",
   "in portugal","in france","in rolling hills","in tall grasses","on a mowed lawn"
 ]);
-const USER_COMMON_LOCS = uniq([
-  "basketball court","tennis court","golf course","pumpkin patch","pet store","record store","drive-thru","movie theater","art house theater",
-  "shoe store","phone booth","hole in the wall restaurant","chiropractor office","pantry","basement","soaking tub","city center","outskirts of town",
-  "strip mall","outlet mall","runway show","open mic night","bleachers","graveyard","cemetery","couch","used book store","department store",
-  "kitchen","cafeteria","food court","annex","vacant motel","high-rise apartment building","house","home","living room","dining room","home office",
-  "man cave","craft room"
-]);
-const USER_UNCOMMON_LOCS = uniq([
-  "construction site","tv studio","corner office","amphitheater","acropolis","suspension bridge","dude ranch","rodeo","automotive plant",
-  "open-plan office","med spa","day spa","steam room","railroad dining car","back seat of a car","passenger seat of a car","drivers seat",
-  "display case","portugal","france","rolling hills","tall grasses","mowed lawn","casino floor","poker table","clown car","dune buggy",
-  "black box theater","improv class","gym class","english class","walk-in freezer","ceramics studio","breakfast nook","dressing room","wine bar",
-  "gentleman's club","book club","italian restaurant","mall of america","world trade center","eiffel tower","great wall of china","times square",
-  "SOHO","Dimes square","williamsburg","greenpoint","bushwick","dorm room","foot of the bed","strip club","gay bar","upper east side",
-  "movie studio","topless bar","campground","chicago","madison square garden","root cellar","wine cellar","bank vault","printing press",
-  "karaoke bar","avant garde art show","outsider art museum","modern art museum","contemporary art museum","trunk of a car","overhead bin",
-  "airplane","airport","theme park","haunted house","tenement building"
-]);
-
-const LOC_HOME_ALL = uniq(LOC_HOME.concat(USER_COMMON_LOCS));
-const LOC_WORK_ALL = uniq(LOC_WORK.concat(USER_UNCOMMON_LOCS).concat(USER_COMMON_LOCS));
-const LOC_FUN_ALL  = uniq(LOC_FUN.concat(USER_COMMON_LOCS).concat(USER_UNCOMMON_LOCS).concat(LOC_OBSCURE));
-
-function pickFromRarity(poolCommon, poolObscure, rarityKey){
-  if(rarityKey === "common") return poolCommon;
-  if(rarityKey === "obscure") return poolObscure;
-  return uniq(poolCommon.concat(poolObscure));
-}
 
 /* ================= Pickers (NO repeats until full cycle) ================= */
-function pickDescriptor(rarity){
-  const pool = pickFromRarity(DESC_COMMON, uniq(DESC_COMMON.concat(DESC_OBSCURE)), rarity);
-  return bagNext(`desc:${rarity}`, pool);
-}
-function pickObject(context, rarity){
-  const bank = (rarity === "common") ? OBJECTS[context].common
-             : (rarity === "obscure") ? OBJECTS[context].obscure
-             : uniq(OBJECTS[context].common.concat(OBJECTS[context].obscure));
-  return bagNext(`obj:${context}|${rarity}`, bank);
-}
-function pickAction(rarity){
-  const pool = pickFromRarity(ACT_COMMON, uniq(ACT_COMMON.concat(ACT_OBSCURE)), rarity);
-  return bagNext(`act:${rarity}`, pool);
-}
-function pickLocation(context, rarity){
-  const base = (context === "home") ? LOC_HOME_ALL : (context === "work") ? LOC_WORK_ALL : LOC_FUN_ALL;
-  const pool = (rarity === "common") ? base
-             : (rarity === "obscure") ? uniq(base.concat(LOC_OBSCURE).concat(USER_UNCOMMON_LOCS))
-             : uniq(base.concat(LOC_OBSCURE).concat(USER_UNCOMMON_LOCS));
-  return bagNext(`loc:${context}|${rarity}`, pool);
-}
+function pickDescriptor(){ return bagNext("desc", DESC); }
+function pickObject(){ return bagNext("obj", OBJECTS); }
+function pickAction(){ return bagNext("act", ACTIONS); }
+function pickLocation(){ return bagNext("loc", LOCATIONS); }
 
 /* ================= Color selection (NO repeats; always different) ================= */
 function unionColorsFrom(selectedPaletteNames){
@@ -913,7 +831,7 @@ function pickColorNonRepeating(key, paletteSet, excludeHexSet){
   return bagNext(key, pool);
 }
 
-/* ================= Phrase build (phrase changes ONLY on timer ticks) ================= */
+/* ================= Phrase build (simple, 4 parts only) ================= */
 const recentSetP = new Set();
 const recentQueue = [];
 const RECENT_P = 900;
@@ -927,7 +845,7 @@ function rememberPhrase(p){
   }
 }
 
-function buildPhrase(partsSet, rarity, context){
+function buildPhrase(partsSet){
   const useDesc = partsSet.has("description");
   const useObj  = partsSet.has("object");
   const useAct  = partsSet.has("action");
@@ -935,10 +853,10 @@ function buildPhrase(partsSet, rarity, context){
   if(!useDesc && !useObj && !useAct && !useLoc) return "";
 
   for(let tries=0; tries<600; tries++){
-    const desc = pickDescriptor(rarity);
-    const obj  = pickObject(context, rarity);
-    const act  = pickAction(rarity);
-    const loc  = pickLocation(context, rarity);
+    const desc = pickDescriptor();
+    const obj  = pickObject();
+    const act  = pickAction();
+    const loc  = pickLocation();
 
     let out = "";
     if(useDesc) out += desc + " ";
@@ -956,8 +874,6 @@ function buildPhrase(partsSet, rarity, context){
 }
 
 /* ================= UI render ================= */
-renderToggleRow(document.getElementById("contextRow"), CONTEXT_OPTS, sel.context, ()=>{});
-renderToggleRow(document.getElementById("wordRow"), WORD_OPTS, sel.word, ()=>{});
 renderToggleRow(document.getElementById("partsRow"), PART_OPTS, sel.parts, ()=>{});
 renderToggleRow(document.getElementById("bgColorsRow"), COLOR_OPTS, sel.bgColor, ()=>{});
 renderToggleRow(document.getElementById("fgColorsRow"), COLOR_OPTS, sel.fgColor, ()=>{});
@@ -992,9 +908,7 @@ const current = {
   phrase: "",
   bgBase: "#F7C6D0",
   fgBase: "#231423",
-  bdBase: "#231423",
-  context: "home",
-  rarity: "common"
+  bdBase: "#231423"
 };
 
 let timerId = null;
@@ -1005,7 +919,6 @@ function applyTypeAndLayout(){
   document.documentElement.style.setProperty("--textScale", scale);
   sizeVal.textContent = `${Math.round(scale*100)}%`;
 
-  // FULL RANGE: 0 -> 100 (true window percentage)
   const y = clamp(Number(yEl.value), 0, 100);
   document.documentElement.style.setProperty("--yPct", `${y}%`);
   yVal.textContent = `${Math.round(y)}%`;
@@ -1015,41 +928,59 @@ function applyTypeAndLayout(){
   widthVal.textContent = `${Math.round(w)}%`;
 }
 
+/* Border that grows inward AND outward.
+   We split thickness into inside + outside so the interior doesn't collapse on phones.
+*/
 function applyBorderStyle(colorHex){
-const frame = borderEl;
-const t = sel.borderEnabled ? clamp(sel.borderThickness, 0, 1) : 0;
+  const frame = borderEl;
+  const t = sel.borderEnabled ? clamp(sel.borderThickness, 0, 1) : 0;
 
+  if(!sel.borderEnabled || t <= 0){
+    frame.style.display = "none";
+    return;
+  }
+  frame.style.display = "block";
 
-if(!sel.borderEnabled || t <= 0){
-frame.style.display = "none";
-return;
-}
-frame.style.display = "block";
+  const minDim = Math.min(window.innerWidth, window.innerHeight);
+  const px = Math.max(1, Math.round(t * (minDim/2)));
 
+  /* Split: 55% inside, 45% outside (tweakable) */
+  const inside = Math.max(0, Math.round(px * 0.55));
+  const outside = Math.max(0, px - inside);
 
-// thickness in px (same intent as before)
-const minDim = Math.min(window.innerWidth, window.innerHeight);
-const px = Math.max(1, Math.round(t * (minDim/2)));
+  const topB = frame.querySelector(".top");
+  const rightB = frame.querySelector(".right");
+  const bottomB = frame.querySelector(".bottom");
+  const leftB = frame.querySelector(".left");
 
+  topB.style.background = colorHex;
+  rightB.style.background = colorHex;
+  bottomB.style.background = colorHex;
+  leftB.style.background = colorHex;
 
-const topB = frame.querySelector(".top");
-const rightB = frame.querySelector(".right");
-const bottomB = frame.querySelector(".bottom");
-const leftB = frame.querySelector(".left");
+  /* push outward by negative offsets, while thickness stays px */
+  topB.style.top = (-outside) + "px";
+  topB.style.height = px + "px";
 
+  bottomB.style.bottom = (-outside) + "px";
+  bottomB.style.height = px + "px";
 
-// color
-topB.style.background = colorHex;
-rightB.style.background = colorHex;
-bottomB.style.background = colorHex;
-leftB.style.background = colorHex;
+  leftB.style.left = (-outside) + "px";
+  leftB.style.width = px + "px";
 
+  rightB.style.right = (-outside) + "px";
+  rightB.style.width = px + "px";
 
-// sizes
-topB.style.height = px + "px";
-bottomB.style.height = px + "px";
-leftB.style.width = px + "px";
-rightB.style.width = px + "px";
+  /* ensure the side bars cover full height including outside */
+  leftB.style.top = (-outside) + "px";
+  leftB.style.bottom = (-outside) + "px";
+  rightB.style.top = (-outside) + "px";
+  rightB.style.bottom = (-outside) + "px";
+
+  topB.style.left = (-outside) + "px";
+  topB.style.right = (-outside) + "px";
+  bottomB.style.left = (-outside) + "px";
+  bottomB.style.right = (-outside) + "px";
 }
 
 function applyColorsLive(){
@@ -1094,12 +1025,7 @@ function scheduleTick(){
 
 /* ================= Frame generation ================= */
 function nextFrame(){
-  const ctx = bagNext("ctx", Array.from(sel.context));
-  const rar = bagNext("rar", Array.from(sel.word));
-  current.context = ctx || "home";
-  current.rarity = rar || "common";
-
-  current.phrase = buildPhrase(sel.parts, current.rarity, current.context);
+  current.phrase = buildPhrase(sel.parts);
   phraseEl.textContent = current.phrase;
 
   const bgBase = pickColorNonRepeating("bg", sel.bgColor, new Set());
