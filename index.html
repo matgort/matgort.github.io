@@ -81,19 +81,25 @@
     /* thick border frame (FULL BLEED, always edge-to-edge) */
 #borderFrame{
 position: fixed;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-
-
+inset: 0;
 pointer-events: none;
 display: none;
-
-
-/* Helps iOS avoid weird clipping */
-transform: translateZ(0);
+z-index: 999999; /* make absolutely sure nothing paints over it */
 }
+
+
+#borderFrame .b{
+position: fixed;
+background: transparent; /* set in JS */
+pointer-events: none;
+}
+
+
+/* Each side will be sized in JS */
+#borderFrame .top { left:0; right:0; top:0; height:0; }
+#borderFrame .bottom { left:0; right:0; bottom:0; height:0; }
+#borderFrame .left { top:0; bottom:0; left:0; width:0; }
+#borderFrame .right { top:0; bottom:0; right:0; width:0; }
 
     /* UI bar */
     #bar{
@@ -303,7 +309,12 @@ transform: translateZ(0);
   <div id="stage">
     <div id="phrase"></div>
   </div>
-  <div id="borderFrame"></div>
+  <div id="borderFrame" aria-hidden="true">
+<div class="b top"></div>
+<div class="b right"></div>
+<div class="b bottom"></div>
+<div class="b left"></div>
+</div>
 
   <div id="bar">
     <div class="barInner">
@@ -1005,15 +1016,40 @@ function applyTypeAndLayout(){
 }
 
 function applyBorderStyle(colorHex){
-  if(!sel.borderEnabled || sel.borderThickness <= 0){
-    borderEl.style.display = "none";
-    return;
-  }
-  borderEl.style.display = "block";
-  const thick = clamp(sel.borderThickness, 0, 1);
-  const minDim = Math.min(window.innerWidth, window.innerHeight);
-  const px = Math.round(thick * (minDim/2));
-  borderEl.style.boxShadow = `inset 0 0 0 ${px}px ${colorHex}`;
+const frame = borderEl;
+const t = sel.borderEnabled ? clamp(sel.borderThickness, 0, 1) : 0;
+
+
+if(!sel.borderEnabled || t <= 0){
+frame.style.display = "none";
+return;
+}
+frame.style.display = "block";
+
+
+// thickness in px (same intent as before)
+const minDim = Math.min(window.innerWidth, window.innerHeight);
+const px = Math.max(1, Math.round(t * (minDim/2)));
+
+
+const topB = frame.querySelector(".top");
+const rightB = frame.querySelector(".right");
+const bottomB = frame.querySelector(".bottom");
+const leftB = frame.querySelector(".left");
+
+
+// color
+topB.style.background = colorHex;
+rightB.style.background = colorHex;
+bottomB.style.background = colorHex;
+leftB.style.background = colorHex;
+
+
+// sizes
+topB.style.height = px + "px";
+bottomB.style.height = px + "px";
+leftB.style.width = px + "px";
+rightB.style.width = px + "px";
 }
 
 function applyColorsLive(){
