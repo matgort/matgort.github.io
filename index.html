@@ -1,940 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Prompt Flasher</title>
-  <style>
-    :root{
-      --fg: rgba(35,20,35,0.92);
-      --ui: rgba(35,20,35,0.70);
-      --ui3: rgba(35,20,35,0.22);
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Prompt Flasher</title>
+<style>
+:root{
+--fg: rgba(35,20,35,0.92);
+--ui: rgba(35,20,35,0.70);
+--ui3: rgba(35,20,35,0.22);
 
-      /* UI sizing */
-      --barH: clamp(190px, 23vh, 260px);
-      --barOffset: 50px;
 
-      /* UI scale +2% */
-      --uiScale: 1.02;
+/* UI sizing */
+--barH: clamp(190px, 23vh, 260px);
+--barOffset: 50px;
 
-      /* Phrase layout */
-      --textScale: 1;
-      --yPct: 50%;
-      --phraseW: 75vw;
-      --edgePad: 50px;
 
-      --btnActive: var(--fg);
-    }
+/* UI scale +2% */
+--uiScale: 1.02;
 
-    html, body{
-      margin:0; padding:0;
-      width:100%;
-      height:100%;
-      overflow:hidden;
-      background:#F7C6D0;
-      font-family: "Times New Roman", Times, Georgia, serif;
-      -webkit-text-size-adjust: 100%;
-    }
 
-    body{ min-height: 100vh; }
-    @supports (height: 100dvh){
-      body{ min-height: 100dvh; }
-    }
+/* Phrase layout */
+--textScale: 1;
+--yPct: 50%;
+--phraseW: 75vw;
+--edgePad: 50px;
 
-    /* Stage is ALWAYS full-viewport */
-    #stage{
-      position: fixed;
-      top:0; left:0;
-      width:100vw;
-      height:100vh;
-      pointer-events:none;
-      z-index: 20; /* above border */
-    }
-    @supports (height: 100dvh){
-      #stage{ height:100dvh; }
-    }
 
-    #phrase{
-      position:absolute;
-      left:50%;
-      top: var(--yPct);
-      transform: translate(-50%, -50%);
-      font-weight: 650;
-      font-size: calc(clamp(32px, 5vw, 92px) * var(--textScale));
-      line-height:1.12;
-      letter-spacing:.2px;
-      user-select:none;
-
-      width: var(--phraseW);
-      max-width: calc(100vw - (var(--edgePad) * 2));
-      text-align:center;
-
-      white-space: normal;
-      overflow-wrap: normal;
-      word-break: normal;
-      hyphens: none;
-    }
-
-    /* Border frame — ALWAYS behind text + UI */
-    #borderFrame{
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      display: none;
-      z-index: 5;
-      overflow: visible;
-    }
-    #borderFrame .b{
-      position: fixed;
-      background: transparent; /* set in JS */
-      pointer-events: none;
-    }
-    #borderFrame .top { left:0; right:0; top:0; height:0; }
-    #borderFrame .bottom { left:0; right:0; bottom:0; height:0; }
-    #borderFrame .left { top:0; bottom:0; left:0; width:0; }
-    #borderFrame .right { top:0; bottom:0; right:0; width:0; }
-
-    /* UI bar */
-    #bar{
-      position: fixed;
-      left:0; right:0;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + var(--barOffset));
-      height: var(--barH);
-
-      /* 20px padding from edges */
-      padding: 0 20px calc(10px + env(safe-area-inset-bottom, 0px));
-
-      box-sizing:border-box;
-      pointer-events:auto;
-      background: transparent;
-      transition: opacity .18s ease, transform .18s ease;
-
-      max-height: calc(100vh - 8px);
-      z-index: 30; /* above border */
-    }
-    @supports (height: 100dvh){
-      #bar{ max-height: calc(100dvh - 8px); }
-    }
-
-    #bar.hidden{
-      opacity:0;
-      transform: translateY(10px);
-      pointer-events:none;
-    }
-
-    .barInner{
-      padding-top: 18px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      height:100%;
-      box-sizing:border-box;
-      overflow: visible;
-
-      transform: scale(var(--uiScale));
-      transform-origin: bottom center;
-    }
-
-    .row{
-      display:flex;
-      gap:12px;
-      align-items:flex-end;
-      flex-wrap:nowrap;
-      min-width:0;
-    }
-
-    .centerRow{
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-    }
-
-    .colorsRow{
-      justify-content: space-between;
-      align-items:flex-end;
-      gap: 18px; /* separation between groups */
-    }
-
-    .grp{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      min-width:0;
-      flex: 1 1 0;
-    }
-
-    .grp.words{
-      flex: 0 0 auto;
-      align-items: center;
-    }
-
-    .label{
-      font-size: 9px;
-      letter-spacing:.10em;
-      text-transform:uppercase;
-      color: var(--ui);
-      user-select:none;
-      line-height:1;
-      opacity:.82;
-      display:block;
-      white-space:nowrap;
-    }
-
-    .labelRow{
-      display:flex;
-      justify-content:space-between;
-      align-items:baseline;
-      gap:10px;
-      min-width:0;
-    }
-
-    .val{
-      font-size: 9px;
-      letter-spacing:.10em;
-      text-transform:uppercase;
-      color: var(--ui);
-      opacity:.9;
-      user-select:none;
-      white-space:nowrap;
-    }
-
-    .btnGroup{
-      display:flex;
-      flex-wrap:wrap;
-      gap:4.5px;
-      align-items:center;
-      min-width:0;
-      overflow: visible;
-    }
-
-    .btnGroup.centered{
-      justify-content: center;
-    }
-
-    /* Palette layout: 2 rows x 3 columns */
-    .btnGroup.paletteGrid{
-      display:grid;
-      grid-template-columns: repeat(3, max-content);
-      grid-auto-rows: max-content;
-      column-gap: 10px;
-      row-gap: 6px;
-      align-items:center;
-    }
-
-    button{
-      font: inherit;
-      font-weight: 520;
-      font-size: 7.1px;
-      letter-spacing: .10em;
-      text-transform: uppercase;
-      color: var(--ui);
-      background: transparent;
-      border: 1px solid var(--ui3);
-      border-radius: 999px;
-      padding: 3.75px 6px;
-      cursor: pointer;
-      line-height: 1;
-      user-select: none;
-      white-space: nowrap;
-      transition: transform .05s ease, border-color .15s ease, color .15s ease, border-width .15s ease, font-weight .15s ease;
-    }
-    button:active{ transform: translateY(1px); }
-    button:hover{ color: var(--fg); border-color: var(--ui); }
-    button.active{
-      border-color: var(--btnActive);
-      color: var(--btnActive);
-      border-width: 2px;
-      font-weight: 900;
-    }
-
-    .sliderRow{
-      display:flex;
-      gap:12px;
-      align-items:flex-end;
-      flex-wrap:nowrap;
-      min-width:0;
-    }
-
-    .ctrl{
-      flex: 1 1 0;
-      display:flex;
-      flex-direction:column;
-      gap:4px;
-      min-width:0;
-    }
-
-    input[type=range]{
-      appearance:none;
-      width:100%;
-      height:16px;
-      background:transparent;
-      color: var(--fg);
-      margin:0;
-      padding:0;
-      touch-action: none;
-    }
-    input[type=range]::-webkit-slider-runnable-track{
-      height:2px;
-      background:var(--ui3);
-      border-radius:999px;
-    }
-    input[type=range]::-moz-range-track{
-      height:2px;
-      background:var(--ui3);
-      border-radius:999px;
-    }
-    input[type=range]::-webkit-slider-thumb{
-      appearance:none;
-      width:10px; height:10px;
-      border-radius:50%;
-      background: currentColor;
-      margin-top:-4px;
-    }
-    input[type=range]::-moz-range-thumb{
-      width:10px; height:10px;
-      border-radius:50%;
-      background: currentColor;
-      border:0;
-    }
-
-    @media(max-width: 980px){
-      :root{
-        --barH: clamp(250px, 34vh, 340px);
-        --barOffset: 35px;
-      }
-      .row, .sliderRow{ flex-wrap:wrap; }
-      .colorsRow{ justify-content: flex-start; }
-      .grp{ flex: 1 1 260px; }
-    }
-
-    @media(max-width: 640px){
-      :root{
-        --barH: clamp(270px, 40vh, 380px);
-        --barOffset: 25px;
-      }
-      #phrase{ font-size: calc(clamp(28px, 7vw, 70px) * var(--textScale)); }
-      button{ font-size: 6.8px; padding: 3.6px 5.3px; }
-      .label, .val{ font-size: 8.5px; }
-      .btnGroup{ gap:4px; }
-    }
-  </style>
-</head>
-
-<body>
-  <div id="stage">
-    <div id="phrase"></div>
-  </div>
-
-  <div id="borderFrame" aria-hidden="true">
-    <div class="b top"></div>
-    <div class="b right"></div>
-    <div class="b bottom"></div>
-    <div class="b left"></div>
-  </div>
-
-  <div id="bar">
-    <div class="barInner">
-
-      <!-- Line 1: centered word choice buttons -->
-      <div class="row centerRow">
-        <div class="grp words">
-          <div class="label">Word Choice</div>
-          <div class="btnGroup centered" id="partsRow"></div>
-        </div>
-      </div>
-
-      <!-- Line 2: colors (each is a 2x3 grid) -->
-      <div class="row colorsRow">
-        <div class="grp">
-          <div class="label">Background Color</div>
-          <div class="btnGroup paletteGrid" id="bgColorsRow"></div>
-        </div>
-
-        <div class="grp">
-          <div class="label">Text Color</div>
-          <div class="btnGroup paletteGrid" id="fgColorsRow"></div>
-        </div>
-
-        <div class="grp">
-          <div class="label">Border Color</div>
-          <div class="btnGroup paletteGrid" id="bdColorsRow"></div>
-        </div>
-      </div>
-
-      <!-- Slider rows unchanged -->
-      <div class="sliderRow">
-        <div class="ctrl">
-          <div class="labelRow"><div class="label">Speed</div><div class="val" id="speedVal">5s</div></div>
-          <input id="speedSlider" type="range" min="0" max="1" step="0.001" value="0.46">
-        </div>
-
-        <div class="ctrl">
-          <div class="labelRow"><div class="label">Background Brightness</div><div class="val" id="bgBrightVal">50%</div></div>
-          <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.5">
-        </div>
-
-        <div class="ctrl">
-          <div class="labelRow"><div class="label">Text Brightness</div><div class="val" id="fgBrightVal">50%</div></div>
-          <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.5">
-        </div>
-
-        <div class="ctrl">
-          <div class="labelRow"><div class="label">Border Brightness</div><div class="val" id="bdBrightVal">50%</div></div>
-          <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="0.5">
-        </div>
-
-        <div class="ctrl">
-          <div class="labelRow"><div class="label">Border Thick</div><div class="val" id="bdThickVal">18%</div></div>
-          <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.18">
-        </div>
-
-        <div class="ctrl" style="flex:0.55 0.55 0;">
-          <div class="labelRow"><div class="label">Border</div><div class="val">&nbsp;</div></div>
-          <button id="bdToggleBtn" type="button" class="active" style="height:16px; padding:0 10px; align-self:flex-start;">On</button>
-        </div>
-      </div>
-
-      <div class="sliderRow">
-        <div class="ctrl">
-          <div class="labelRow"><div class="label">Size</div><div class="val" id="sizeVal">100%</div></div>
-          <input id="sizeSlider" type="range" min="0.6" max="1.6" step="0.001" value="1.0">
-        </div>
-
-        <div class="ctrl">
-          <div class="labelRow"><div class="label">Height</div><div class="val" id="yVal">50%</div></div>
-          <input id="ySlider" type="range" min="0" max="100" step="0.01" value="50">
-        </div>
-
-        <div class="ctrl">
-          <div class="labelRow"><div class="label">Width</div><div class="val" id="widthVal">75%</div></div>
-          <input id="widthSlider" type="range" min="40" max="100" step="0.01" value="75">
-        </div>
-
-        <div style="display:flex; gap:8px; align-items:flex-end; flex:0 0 auto;">
-          <button id="fsBtn" type="button">Full screen</button>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-<script>
-/* ================= Helpers ================= */
-function uniq(arr){
-  const s = new Set();
-  for(const x of arr){
-    const v = String(x ?? "").trim().replace(/\s+/g," ");
-    if(v) s.add(v);
-  }
-  return Array.from(s);
-}
-function clamp(n,a,b){ return Math.max(a, Math.min(b,n)); }
-function lerp(a,b,t){ return a + (b-a)*t; }
-
-function shuffleInPlace(a){
-  for(let i=a.length-1;i>0;i--){
-    const j = (Math.random()*(i+1))|0;
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-  return a;
+--btnActive: var(--fg);
 }
 
-/* ================= Non-repeating shuffle bags ================= */
-const BAGS = new Map();
-function bagNext(key, pool){
-  const cleanPool = uniq(pool);
-  if(!cleanPool.length) return null;
 
-  const sig = cleanPool.join("␟");
-  const prev = BAGS.get(key);
-
-  if(!prev || prev._sig !== sig){
-    const arr = cleanPool.slice();
-    shuffleInPlace(arr);
-    BAGS.set(key, { arr, i: 0, _sig: sig });
-  }
-  const bag = BAGS.get(key);
-  if(bag.i >= bag.arr.length){
-    shuffleInPlace(bag.arr);
-    bag.i = 0;
-  }
-  const out = bag.arr[bag.i];
-  bag.i++;
-  return out;
+html, body{
+margin:0; padding:0;
+width:100%;
+height:100%;
+overflow:hidden;
+background:#F7C6D0;
+font-family: "Times New Roman", Times, Georgia, serif;
+-webkit-text-size-adjust: 100%;
 }
 
-/* ================= Palettes ================= */
-const PAL = {
-  circus: ["#FF6AD5","#FF8A00","#FF4D1A","#C85AE0","#FF007A"],
-  beachy: ["#BDE8FF","#8FB2CF","#CBE7FF","#445F86","#74A8E8"],
-  fleshy: ["#F7D59B","#F6B77D","#B7852F","#F7B59D","#E1780A"],
-  future: ["#9EDB00","#C86AD6","#F8C6A4","#B23A2B","#7FB1D9"],
-  retro:  ["#DDE6B7","#00AEB0","#D85A10","#B10D33","#F6A623"],
-  earthy: ["#A7B827","#D79A16","#536A00","#6F8A1A","#806200"]
-};
 
-/* ================= Color helpers ================= */
-function hexToRgb(hex){
-  const h = hex.replace("#","").trim();
-  const full = h.length === 3 ? h.split("").map(c=>c+c).join("") : h;
-  const n = parseInt(full,16);
-  return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 };
-}
-function rgbToHex(r,g,b){
-  const to = (v)=> v.toString(16).padStart(2,"0");
-  return "#" + to(r) + to(g) + to(b);
-}
-function rgbToHsl(r,g,b){
-  r/=255; g/=255; b/=255;
-  const max = Math.max(r,g,b), min = Math.min(r,g,b);
-  let h=0, s=0;
-  const l = (max+min)/2;
-  const d = max-min;
-  if(d !== 0){
-    s = d / (1 - Math.abs(2*l - 1));
-    switch(max){
-      case r: h = ((g-b)/d) % 6; break;
-      case g: h = (b-r)/d + 2; break;
-      case b: h = (r-g)/d + 4; break;
-    }
-    h *= 60;
-    if(h < 0) h += 360;
-  }
-  return {h, s, l};
-}
-function hslToRgb(h,s,l){
-  const c = (1 - Math.abs(2*l - 1)) * s;
-  const x = c * (1 - Math.abs(((h/60) % 2) - 1));
-  const m = l - c/2;
-  let rp=0,gp=0,bp=0;
-
-  if(0<=h && h<60){ rp=c; gp=x; bp=0; }
-  else if(60<=h && h<120){ rp=x; gp=c; bp=0; }
-  else if(120<=h && h<180){ rp=0; gp=c; bp=x; }
-  else if(180<=h && h<240){ rp=0; gp=x; bp=c; }
-  else if(240<=h && h<300){ rp=x; gp=0; bp=c; }
-  else { rp=c; gp=0; bp=x; }
-
-  return { r: Math.round((rp+m)*255), g: Math.round((gp+m)*255), b: Math.round((bp+m)*255) };
-}
-function setHsl(hex, h, s, l){
-  const out = hslToRgb(h, s, l);
-  return rgbToHex(out.r,out.g,out.b);
+body{ min-height: 100vh; }
+@supports (height: 100dvh){
+body{ min-height: 100dvh; }
 }
 
-function applyDimmer(hex, sliderVal){
-  const t = clamp(Number(sliderVal), 0, 1);
-  const {r,g,b} = hexToRgb(hex);
-  let {h,s,l} = rgbToHsl(r,g,b);
 
-  if(Math.abs(t - 0.5) < 1e-6) return hex;
-
-  if(t < 0.5){
-    const k = (0.5 - t) / 0.5;
-    const lMul = lerp(1.0, 0.42, k);
-    l = clamp(l * lMul, 0.08, 0.90);
-    s = clamp(s * lerp(1.0, 1.10, k), 0.18, 0.98);
-  }else{
-    const k = (t - 0.5) / 0.5;
-    l = clamp(l + (1 - l) * (0.33 * k), 0.08, 0.92);
-    s = clamp(s * lerp(1.0, 1.28, k), 0.18, 0.98);
-  }
-  return setHsl(hex, h, s, l);
+/* Stage is ALWAYS full-viewport */
+#stage{
+position: fixed;
+top:0; left:0;
+width:100vw;
+height:100vh;
+pointer-events:none;
+z-index: 20; /* above border */
+}
+@supports (height: 100dvh){
+#stage{ height:100dvh; }
 }
 
-/* ================= Controls ================= */
-const PART_OPTS = ["description","object","action","location"];
 
-/* IMPORTANT: ordered for the 2x3 grid
-   EARTHY  BEACHY  FLESHY
-   RETRO   FUTURE  CIRCUS */
-const COLOR_OPTS = ["earthy","beachy","fleshy","retro","future","circus"];
+#phrase{
+position:absolute;
+left:50%;
+top: var(--yPct);
+transform: translate(-50%, -50%);
+font-weight: 650;
+font-size: calc(clamp(32px, 5vw, 92px) * var(--textScale));
+line-height:1.12;
+letter-spacing:.2px;
+user-select:none;
 
-/* ================= DOM refs ================= */
-const phraseEl = document.getElementById("phrase");
-const barEl = document.getElementById("bar");
-const borderEl = document.getElementById("borderFrame");
 
-const speedEl = document.getElementById("speedSlider");
-const bgBrightEl = document.getElementById("bgBrightSlider");
-const fgBrightEl = document.getElementById("fgBrightSlider");
-const bdBrightEl = document.getElementById("bdBrightSlider");
+width: var(--phraseW);
+max-width: calc(100vw - (var(--edgePad) * 2));
+text-align:center;
 
-const sizeEl  = document.getElementById("sizeSlider");
-const yEl     = document.getElementById("ySlider");
-const widthEl = document.getElementById("widthSlider");
 
-const bdThickEl = document.getElementById("bdThickSlider");
-const bdToggleBtn = document.getElementById("bdToggleBtn");
-const fsBtn = document.getElementById("fsBtn");
-
-const speedVal = document.getElementById("speedVal");
-const bgBrightVal = document.getElementById("bgBrightVal");
-const fgBrightVal = document.getElementById("fgBrightVal");
-const bdBrightVal = document.getElementById("bdBrightVal");
-const sizeVal = document.getElementById("sizeVal");
-const yVal = document.getElementById("yVal");
-const widthVal = document.getElementById("widthVal");
-const bdThickVal = document.getElementById("bdThickVal");
-
-/* ================= UI button builders ================= */
-function mkBtn(label, onClick){
-  const b = document.createElement("button");
-  b.type = "button";
-  b.textContent = label;
-  b.addEventListener("click", onClick);
-  return b;
-}
-function syncButtons(container, setRef){
-  const btns = Array.from(container.querySelectorAll("button"));
-  for(const b of btns){
-    const k = b.textContent;
-    if(setRef.has(k)) b.classList.add("active");
-    else b.classList.remove("active");
-  }
-}
-function renderToggleRow(container, options, setRef, onChange){
-  container.innerHTML = "";
-  for(const opt of options){
-    const b = mkBtn(opt, ()=>{
-      if(setRef.has(opt)) setRef.delete(opt); else setRef.add(opt);
-      if(setRef.size === 0){ setRef.add(opt); }
-      syncButtons(container, setRef);
-      if(onChange) onChange();
-    });
-    container.appendChild(b);
-  }
-  syncButtons(container, setRef);
+white-space: normal;
+overflow-wrap: normal;
+word-break: normal;
+hyphens: none;
 }
 
-/* ================= Selection state ================= */
-const sel = {
-  parts: new Set(PART_OPTS),
-  bgColor: new Set(COLOR_OPTS),
-  fgColor: new Set(COLOR_OPTS),
-  bdColor: new Set(COLOR_OPTS),
-  borderEnabled: true,
-  borderThickness: Number(bdThickEl.value)
-};
 
-/* ================= Vocab banks ================= */
-const DESC = uniq([
-  "brittle","woolen","velvety","ashen","glowing","ambiguous","antique","architectural",
-  "wistful","pensive","yearning","plaintive","ethereal","reflective","nostalgic","reminiscent",
-  "diaphanous","opalescent","iridescent","nacreous","pellucid",
-  "dusty","dim","foggy","greasy","polished","powdery","burnished","tarnished","tilted","skewed",
-  "sweet","salty","sandy","strappy","poised","understated","restrained"
-]);
-
-const OBJECTS = uniq([
-  "frying pan","dish rack","toilet paper","coffee mug","tea pot","french press",
-  "lipstick","perfume bottle","hair brush","window","lamp","lampshade","bookshelf","curtains",
-  "pizza box","ipad","toolbox","tape measure","drill","plywood","ladder",
-  "diner booth","record store","ticket stub","vending machine","bicycle","board game",
-  "neon sign","brownstone","alleyway","dumpster","manhole cover","parking garage","hourglass"
-]);
-
-const ACTIONS = uniq([
-  "waiting in line","drying on a rack","cooling slightly","resting quietly","caught in the rain",
-  "glowing softly","leaning against a wall","still warm","still damp","half-finished",
-  "humming faintly","flickering","dripping quietly","zipping a suitcase slowly","people watching"
-]);
-
-const LOCATIONS = uniq([
-  "in the kitchen","in the bathroom","in the bedroom","in the living room","on the balcony",
-  "in the studio","in the workshop","in the office","in the library",
-  "in a diner booth","at a bus stop at dusk","on an empty train platform",
-  "in the alleyway","in the parking garage","at the waterfront","beneath a flickering neon sign"
-]);
-
-function pickDescriptor(){ return bagNext("desc", DESC); }
-function pickObject(){ return bagNext("obj", OBJECTS); }
-function pickAction(){ return bagNext("act", ACTIONS); }
-function pickLocation(){ return bagNext("loc", LOCATIONS); }
-
-/* ================= Color selection ================= */
-function unionColorsFrom(selectedPaletteNames){
-  const names = Array.from(selectedPaletteNames);
-  let out = [];
-  for(const n of names){
-    const pal = PAL[n];
-    if(pal && pal.length) out = out.concat(pal);
-  }
-  return uniq(out);
+/* Border frame — ALWAYS behind text + UI */
+#borderFrame{
+position: fixed;
+inset: 0;
+pointer-events: none;
+display: none;
+z-index: 5;
+overflow: visible;
 }
-function pickColorNonRepeating(key, paletteSet, excludeHexSet){
-  let pool = unionColorsFrom(paletteSet);
-  const allPool = uniq(Object.values(PAL).flat());
-  const ex = excludeHexSet ? new Set(excludeHexSet) : new Set();
-  const filtered = pool.filter(c => !ex.has(c));
-  pool = filtered.length ? filtered : allPool.filter(c => !ex.has(c));
-  return bagNext(key, pool);
-}
-
-/* ================= Phrase build ================= */
-const recentSetP = new Set();
-const recentQueue = [];
-const RECENT_P = 900;
-
-function rememberPhrase(p){
-  recentQueue.push(p);
-  recentSetP.add(p);
-  if(recentQueue.length > RECENT_P){
-    const old = recentQueue.shift();
-    recentSetP.delete(old);
-  }
-}
-
-function buildPhrase(partsSet){
-  const useDesc = partsSet.has("description");
-  const useObj  = partsSet.has("object");
-  const useAct  = partsSet.has("action");
-  const useLoc  = partsSet.has("location");
-  if(!useDesc && !useObj && !useAct && !useLoc) return "";
-
-  for(let tries=0; tries<600; tries++){
-    const desc = pickDescriptor();
-    const obj  = pickObject();
-    const act  = pickAction();
-    const loc  = pickLocation();
-
-    let out = "";
-    if(useDesc) out += desc + " ";
-    if(useObj) out += obj;
-    if(useAct) out += (out ? " " : "") + act;
-    if(useLoc) out += (out ? " " : "") + loc;
-
-    out = out.replace(/\s+/g," ").trim();
-    if(out && !recentSetP.has(out)){
-      rememberPhrase(out);
-      return out;
-    }
-  }
-  return " ";
-}
-
-/* ================= UI render ================= */
-renderToggleRow(document.getElementById("partsRow"), PART_OPTS, sel.parts, ()=>{});
-renderToggleRow(document.getElementById("bgColorsRow"), COLOR_OPTS, sel.bgColor, ()=>{});
-renderToggleRow(document.getElementById("fgColorsRow"), COLOR_OPTS, sel.fgColor, ()=>{});
-renderToggleRow(document.getElementById("bdColorsRow"), COLOR_OPTS, sel.bdColor, ()=>{});
-
-function setBorderBtn(){
-  bdToggleBtn.textContent = sel.borderEnabled ? "On" : "Off";
-  bdToggleBtn.classList.toggle("active", sel.borderEnabled);
-}
-
-/* ================= Speed mapping ================= */
-const SPEED_MIN_S = 0.01;
-const SPEED_MAX_S = 600;
-
-function speedFromSlider(t){
-  t = clamp(Number(t), 0, 1);
-  const ratio = SPEED_MAX_S / SPEED_MIN_S;
-  return SPEED_MIN_S * Math.pow(ratio, t);
-}
-function formatDuration(seconds){
-  if(seconds < 0.1) return `${Math.round(seconds*1000)}ms`;
-  if(seconds < 1) return `${seconds.toFixed(2)}s`;
-  if(seconds < 60) return `${seconds.toFixed(seconds < 10 ? 2 : 1)}s`;
-  const m = seconds / 60;
-  if(m < 10) return `${m.toFixed(2)}m`;
-  return `${m.toFixed(1)}m`;
-}
-function pctLabel(x){ return `${Math.round(clamp(Number(x),0,1)*100)}%`; }
-
-/* ================= Current frame ================= */
-const current = {
-  phrase: "",
-  bgBase: "#F7C6D0",
-  fgBase: "#231423",
-  bdBase: "#231423"
-};
-
-let timerId = null;
-
-/* ================= Layout + visual apply ================= */
-function applyTypeAndLayout(){
-  const scale = clamp(Number(sizeEl.value), 0.6, 1.6);
-  document.documentElement.style.setProperty("--textScale", scale);
-  sizeVal.textContent = `${Math.round(scale*100)}%`;
-
-  const y = clamp(Number(yEl.value), 0, 100);
-  document.documentElement.style.setProperty("--yPct", `${y}%`);
-  yVal.textContent = `${Math.round(y)}%`;
-
-  const w = clamp(Number(widthEl.value), 40, 100);
-  document.documentElement.style.setProperty("--phraseW", `${w}vw`);
-  widthVal.textContent = `${Math.round(w)}%`;
-}
-
-/* Border grows inward AND outward */
-function applyBorderStyle(colorHex){
-  const frame = borderEl;
-  const t = sel.borderEnabled ? clamp(sel.borderThickness, 0, 1) : 0;
-
-  if(!sel.borderEnabled || t <= 0){
-    frame.style.display = "none";
-    return;
-  }
-  frame.style.display = "block";
-
-  const minDim = Math.min(window.innerWidth, window.innerHeight);
-  const px = Math.max(1, Math.round(t * (minDim/2)));
-
-  const inside = Math.max(0, Math.round(px * 0.55));
-  const outside = Math.max(0, px - inside);
-
-  const topB = frame.querySelector(".top");
-  const rightB = frame.querySelector(".right");
-  const bottomB = frame.querySelector(".bottom");
-  const leftB = frame.querySelector(".left");
-
-  topB.style.background = colorHex;
-  rightB.style.background = colorHex;
-  bottomB.style.background = colorHex;
-  leftB.style.background = colorHex;
-
-  topB.style.top = (-outside) + "px";
-  topB.style.height = px + "px";
-  topB.style.left = (-outside) + "px";
-  topB.style.right = (-outside) + "px";
-
-  bottomB.style.bottom = (-outside) + "px";
-  bottomB.style.height = px + "px";
-  bottomB.style.left = (-outside) + "px";
-  bottomB.style.right = (-outside) + "px";
-
-  leftB.style.left = (-outside) + "px";
-  leftB.style.width = px + "px";
-  leftB.style.top = (-outside) + "px";
-  leftB.style.bottom = (-outside) + "px";
-
-  rightB.style.right = (-outside) + "px";
-  rightB.style.width = px + "px";
-  rightB.style.top = (-outside) + "px";
-  rightB.style.bottom = (-outside) + "px";
-}
-
-function applyColorsLive(){
-  const bg = applyDimmer(current.bgBase, Number(bgBrightEl.value));
-  let fg  = applyDimmer(current.fgBase, Number(fgBrightEl.value));
-  let bd  = applyDimmer(current.bdBase, Number(bdBrightEl.value));
-
-  if(bg.toLowerCase() === fg.toLowerCase()){
-    const alt = pickColorNonRepeating("fg:antiEqual", sel.fgColor, new Set([current.bgBase]));
-    if(alt) current.fgBase = alt;
-    fg = applyDimmer(current.fgBase, Number(fgBrightEl.value));
-  }
-  if(bd.toLowerCase() === bg.toLowerCase()){
-    const altB = pickColorNonRepeating("bd:antiEqual", sel.bdColor, new Set([current.bgBase]));
-    if(altB) current.bdBase = altB;
-    bd = applyDimmer(current.bdBase, Number(bdBrightEl.value));
-  }
-
-  document.body.style.background = bg;
-  phraseEl.style.color = fg;
-
-  document.documentElement.style.setProperty("--fg", fg);
-  document.documentElement.style.setProperty("--btnActive", fg);
-
-  applyBorderStyle(bd);
-
-  bgBrightVal.textContent = pctLabel(bgBrightEl.value);
-  fgBrightVal.textContent = pctLabel(fgBrightEl.value);
-  bdBrightVal.textContent = pctLabel(bdBrightEl.value);
-  bdThickVal.textContent = `${Math.round(clamp(sel.borderThickness,0,1)*100)}%`;
-}
-
-function scheduleTick(){
-  if(timerId) clearTimeout(timerId);
-  const seconds = speedFromSlider(speedEl.value);
-  speedVal.textContent = formatDuration(seconds);
-  timerId = setTimeout(()=>{
-    nextFrame();
-    scheduleTick();
-  }, Math.max(10, Math.round(seconds*1000)));
-}
-
-/* ================= Frame generation ================= */
-function nextFrame(){
-  current.phrase = buildPhrase(sel.parts);
-  phraseEl.textContent = current.phrase;
-
-  const bgBase = pickColorNonRepeating("bg", sel.bgColor, new Set());
-  current.bgBase = bgBase || current.bgBase;
-
-  const fgBase = pickColorNonRepeating("fg", sel.fgColor, new Set([current.bgBase]));
-  current.fgBase = fgBase || current.fgBase;
-
-  const bdBase = pickColorNonRepeating("bd", sel.bdColor, new Set([current.bgBase, current.fgBase]));
-  current.bdBase = bdBase || current.bdBase;
-
-  applyColorsLive();
-}
-
-/* ================= UI hide after inactivity ================= */
-let hideTimer = null;
-function showUI(){
-  barEl.classList.remove("hidden");
-  if(hideTimer) clearTimeout(hideTimer);
-  hideTimer = setTimeout(()=> barEl.classList.add("hidden"), 5000);
-}
-["mousemove","mousedown","touchstart","keydown","wheel"].forEach(evt=>{
-  window.addEventListener(evt, showUI, {passive:true});
-});
-
-/* ================= Events ================= */
-speedEl.addEventListener("input", ()=>{ scheduleTick(); showUI(); });
-bgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); showUI(); });
-fgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); showUI(); });
-bdBrightEl.addEventListener("input", ()=>{ applyColorsLive(); showUI(); });
-
-bdThickEl.addEventListener("input", ()=>{
-  sel.borderThickness = clamp(Number(bdThickEl.value), 0, 1);
-  applyColorsLive();
-  showUI();
-});
-
-sizeEl.addEventListener("input", ()=>{ applyTypeAndLayout(); showUI(); });
-yEl.addEventListener("input", ()=>{ applyTypeAndLayout(); showUI(); });
-widthEl.addEventListener("input", ()=>{ applyTypeAndLayout(); showUI(); });
-
-bdToggleBtn.addEventListener("click", ()=>{
-  sel.borderEnabled = !sel.borderEnabled;
-  setBorderBtn();
-  applyColorsLive();
-  showUI();
-});
-
-fsBtn.addEventListener("click", async ()=>{
-  try{
-    if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  }catch(e){}
-  showUI();
-});
-
-/* ================= Start ================= */
-(function init(){
-  setBorderBtn();
-  applyTypeAndLayout();
-
-  bgBrightVal.textContent = pctLabel(bgBrightEl.value);
-  fgBrightVal.textContent = pctLabel(fgBrightEl.value);
-  bdBrightVal.textContent = pctLabel(bdBrightEl.value);
-  bdThickVal.textContent = `${Math.round(clamp(sel.borderThickness,0,1)*100)}%`;
-  speedVal.textContent = formatDuration(speedFromSlider(speedEl.value));
-
-  nextFrame();
-  scheduleTick();
-  showUI();
-})();
-
-window.addEventListener("resize", ()=>{
-  applyTypeAndLayout();
-  applyColorsLive();
-});
-</script>
-</body>
+#borderFrame .b{
+position: fixed;
 </html>
