@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -625,22 +626,22 @@ const sel = {
 /* ================= Vocab banks (CONSOLIDATED: 4 categories only) ================= */
 /* Descriptors (DESC_COMMON + DESC_OBSCURE) */
 const DESC = uniq([
-  "brittle","woolen","velvety","ashen","glowing","ambiguous","antique","architectural",
+  "brittle","woolen","velvety","ashen","antique","stately",
   "baggy","bent","brassy","brilliant","bumpy","burnt","buttery","buzzing",
-  "charming","crumbly","crunchy","crushed","crusty",
-  "drafty","dreamy","dusty","dim",
-  "feathery","flashy","flavorful","fleshy","foggy","foamy","frosted","fruity","fried","furry",
-  "gentle","ghostly","gigantic","giggling","greasy",
-  "hard","hungry","happy","jealous","joyful","jazzy","jiggly",
+  "charming","crumbly","crunchy","lightly crushed",
+  "drafty","dreamy","dusty","dimly lit",
+  "feathery","flashy","flavorful","fleshy","foamy","frosted","fruity","fried","furry",
+  "gentle","ghostly","gigantic","greasy",
+  "hard","jealous","joyful","jazzy","jiggly",
   "leisurely","lively","messy","moldy","mysterious","nervous","oily","orderly","ornamental",
   "painted","pearly","pillowy","poetic","poignant","polished","powdery",
-  "ribbed","risky","rocky",
+  "ribbed","rocky",
   "salty","sandy","scrambled","sculpted","sculptural","slimy","slippery","smelly","smoggy",
   "soft","stormy","strange","strappy","sweet",
   "thick","thirsty","windy","worried","wrapped",
   "sweaty","sunset","daybreak","elevated","elongated","smooth","curly","twisted","wiggly",
   "burnished","reclusive","exploratory","introverted",
-  "dingy","patched","repaired","tarnished","dented","angled","tilted","distorted","skewed","melted","enlarged",
+  "dingy","patched","repaired","tarnished","melted","enlarged",
   "moist","dewy","plump","buff","extended","compact","oversized","skimpy",
   "malaise","ennui","weary","blasé","detached","indifferent","futile","languid","listless",
   "vivacious","zestful","vigorous","verve","élan","immersed","flowing","delighted","radiant","witty","buoyant","spontaneous","lighthearted",
@@ -654,31 +655,23 @@ const DESC = uniq([
   "hairy","bald","shaved","stubbly","rough","matte","glossy",
   "refined","understated","restrained","poised","tailored","classical",
   "grand","petite","considered","ritualistic","witchy",
-  "dried out","toweled off","lumpy","mindful","civilized","unhurried","guarded",
+  "dried out","lumpy","mindful","civilized","unhurried","guarded",
   "formal","discreet","reserved","confident",
   "diaphanous","opalescent","iridescent","mother-of-pearl","inlaid",
-  "sunken","padded","carpeted",
-  "glowering","sullen","beaming","unctuous","supple","undulating",
+  "sunken","padded","carpeted","sullen","supple","undulating",
   "ubiquitous","obsequious",
   "dulcet","flickering","fugitive","insular","smoky","atonal","hushed","muted",
   "esoteric","arcane","hermetic","cryptic",
   "wistful","pensive","yearning","plaintive","ethereal","reflective",
   "nostalgic","reminiscent","unspoken","unrequited",
-  "accepting","tempered","subdued","settled","composed","veiled",
-  "balanced","effortlessly arranged","nonchalantly placed","tasteful","delicate","proportional",
+  "accepting","tempered","subdued","veiled",
+  "balanced","tasteful","delicate","poorly proportioned",
   "gracefully arranged","lightly worn","tenderly handled","gently used",
-  "herringbone-patterned","walnut","mahogany","pine","maple",
-  "stone","quartz","emerald","ruby","diamond",
-  "granite","marble","soapstone","soapy",
-
-  "effervescent","despondent","petulant","hedonistic","gluttonous",
-  "malnourished","overflowing","puffy","bloated","misaligned","transparent",
-  "decaying","insular","plaintive","rueful","limpid",
-  "fugitive","hermetic","cryptic","atonal","unctuous",
-  "obsequious","sycophantic","cadent","lacustrine","sepulchral","umbra","penumbral",
-  "crepuscular","fuliginous","brumal","noctilucent","nacreous","pellucid",
-  "coriaceous","friable","pulverulent","saponaceous","glabrous","hirsute",
-  "anfractuous","ossified","vermicular","sere","desiccated","caliginous"
+  "herringbone","stone","quartz","emerald","ruby","diamond encrusted",
+  "granite","marble","soapstone","soapy","tie-died","asymmetrical","unbalanced","effervescent","despondent","petulant","hedonistic","gluttonous",
+  "malnourished","overflowing","puffy","bloated","maladjusted","transparent","transluscent","decaying","insular","plaintive","rueful","hermetic","cryptic","atonal","unctuous",
+  "obsequious","a sycophantic",
+  "anti-fascist","ossified","vermicular","serene","freshly repaired","compact","pocket-sized","distended","muscular","lithe","
 ]);
 
 /* Objects (ALL merged; no context / no common/obscure split) */
@@ -737,20 +730,18 @@ const OBJECTS = uniq([
   "catchers mitt","baseball glove","fingerless gloves","driving gloves","steering wheel",
   "gaming chair","rocking chair","vending machine",
   "slate tile","granite counter tops","bulletin board","tie pin","name tag","sheriff's badge",
-  "bunk beds","futon","keg of beer","fur pelt",
+  "bunk beds","futon","keg of beer","fur pelt","participation trophy","
 
   /* user uncommon objects + obscure objects */
-  "absinthe","fernet","aperol spritz","tequila sunrise","whisky sour","moo shu pork",
-  "propeller beanie","metal detector","geiger counter","whippet","nitrous oxide","ketamine","heroin","DMT","salvia","cannabis","psilocybin","LSD",
-  "laser pointer","dvd player","hedge trimmer","weed whacker","dirt bike","chopper","whirlygig","pinwheel",
+  "absinthe","fernet","aperol spritz","tequila shot","whisky sour","moo shu pork",
+  "propeller beanie","metal detector","geiger counter","nitrous oxide canister","baggie of ketamine","heroin spoon","bag of weed","mushroom chocolate","tab of acid",
+  "laser pointer","dvd player","hedge trimmer","weed whacker","dirt bike","chopper","pinwheel",
   "solar panel","sprinter van","ford bronco","riding lawn mower",
   "instruction manual","printed out pdf","roku tv","flip phone","trade paperback","dvd box set","blu-ray player","cd-rom",
   "oled panel","circuit board","circuit breaker","portable fan",
   "croquet mallet","croquette","sizzling fajita platter","bi bim bap","wedge salad",
   "director's chair","padded booth","straight jacket","hot dog cart","x-ray machine","samovar of coffee","electric kettle","air fryer",
-  "wine decanter","whoopie cushion",
-
-  "birdbath","birdcage","birdhouse","hourglass","sundial","pendulum","pocket watch",
+  "wine decanter","whoopie cushion","sound board","alarm bell","birdbath","birdcage","birdhouse","hourglass","sundial","pendulum","pocket watch",
   "velvet rope","bank vault","water tower","traffic median","airport shuttle",
   "dune buggy","dump truck","freight train","gondola",
   "greenhouse","terrarium",
@@ -758,25 +749,41 @@ const OBJECTS = uniq([
   "brownstone","townhouse","alleyway","dumpster","manhole cover","sewer",
   "parking garage","parking lot","driveway",
   "parachute","bungee cord","propeller","umbrella",
-  "cooler","cardboard box","tissue paper","newspaper","tombstone","baby bottle","maxi pad",
-  "deck chair","neon sign"
+  "cooler","cardboard box","tissue box","newspaper","tombstone","baby bottle","maxi pad",
+  "deck chair","neon sign","fidget spinner","pack of cigarettes","bow tie","christmas lights","shop vac","crushed cicodin","line of cocaine","hash pipe","opium tea","welding mask","latex mask","leather gloves","hairpiece","chunky heels","reading glasses","tap shoes","kitten heels","sensible pumps","strappy sandals","potted plant","succulent garden","old washing machine","
 ]);
 
 /* Actions (ACT_COMMON + ACT_OBSCURE) */
 const ACTIONS = uniq([
-  "blowing in the wind","soaking wet","floating","stretched out","tilted","inverted",
-  "broken","misaligned","rusty","folded neatly","left out overnight","cooling slightly","resting quietly","waiting in line",
+  "blowing in the wind","soaking wet","floating","stretched out","upside-down",
+  "broken","misaligned","rusted","folded neatly","left out overnight","cooling slightly","resting quietly","waiting in line",
   "balanced on a ledge","caught in the rain","glowing softly","drying on a rack","spilling a little","sitting untouched",
   "freshly unpacked","carefully stacked","sliding across a table","tucked into a drawer","leaning against a wall",
   "half-finished","freshly cleaned","still warm","still damp","shaking slightly","humming faintly","flickering",
 
   "dripping quietly","vibrating faintly","flickering softly","humming to itself","half submerged",
-  "zipping a suitcase slowly","resting your head against a train window","opening the shutters",
-  "standing at the window while the city wakes","coffee cooling before the first sip",
-  "butter melting on warm toast","lighting a candle","blowing out a candle","applying perfume",
-  "people watching","caught in summer rain","glowing under dappled light",
-  "pressed into velvet","caught under neon","sweating through paper","smudged at the edges","warped by heat",
-  "straining at the seams","taped up","freshly repaired","staining the counter","ringing slightly"
+  "zipping a suitcase slowly","resting against a window","opening the shutters",
+  "standing at the window while the city wakes","steaming",
+  "melting on a slice of warm toast","lighting a candle","blowing out a candle","gently dabbing perfume",
+  "people watching","caught in a summer rain","under dappled light",
+  "pressed into velvet","soaked in sweat","smudged at the edges","warped by heat",
+  "straining at the seams","taped up","staining the counter","ringing slightly","treading mud onto the carpet","a little damp","glistening","knocked over","getting a tattoo","shoplifting","crushing garlic","slicing onions",
+  "wandering aimlessly","jogging first thing in the morning","pulled a muscle","picking a scab","popping a pimple","vibrating",
+  "flossing aggressively","sunbathing","polishing boots","making a smoothie","gesturing wildly","fidgeting anxiously","impatiently waiting",
+  "soul-searching","looking within","filled with an overwhelming sense of dread","overcome with malaise","suffering silently","is dented on the corner",
+  "slightly angled","heavily distorted","with a skewed perspective","shopping","bored","is smoking a cigarette","sucking on a vape pen",
+  "blowing smoke rings","doing kegels","effortlessly arranged","nonchalantly tossed aside","with chipped paint","wrapped in plastic",
+  "mounted to the wall","cast in bronze","buried in the back yard","stuck in mud","splayed apart","cast aside","smoldering","glistening",
+  "growing taller","getting shorter","shrinking","singing softly","touching itself","throwing a frisbee","playing mini golf","getting a haircut","floating",
+  "drying out in the sun","resigned to its fate","crunching the numbers","driving a tractor","buried under rubble","rescued from danger","stuck in a rut",
+  "approaching middle age","on its last legs","kicking back","searching for meaning","losing weight","rocking back and forth","self-soothing",
+  "comparison shopping","filled with jealousy","stuck in traffic","is getting annoyed","rolling downhill","putting its feet up","tapping lightly",
+  "scratching itself","masturbating furiously","committing pergery","serving on a jury","performing surgery","studying German","flipping through a magazine",
+  "wearing cutoffs","wearing a bikini","strutting its stuff","freak dancing","doing the macarena","twisting and turning","spinning in circles","pogo dancing",
+  "bouncing up and down","buying crypto","lip-syncing","covered in vaseline","lubed up","toweled dry","resting","taking a load off","emitting a high pitched sound","howling",
+  "hooting","smiling","frowning","weeping","grinning to itself","standing alone","looking out the window","staring into the middle-distance","losing interest","bored","grumpy","cranky","clingy","getting the ick",
+  "sitting on a balcony","left out in the cold","getting moldy","licking its wounds","sick of arguing","with nothing to say","keeping its head down","sobbing softly","caught crying","holding back tears","jacking off",
+  "committing fraud","on the run","in hiding","tucked into bed","hiding under the covers","stuck in a tree","carving marble","falling down","toppled over","perfectly posed","out of reach","sipping from a hip flask","doing a keg stand","dehydrated","a little damp","stewing in its own juices","marinating overnight","sitting under a heat lamp","under scrutiny","rollerblading","getting a vitamin drip","squeezing lemons","dancing in the moonlight","dancing in the rain","feeling dried out","meditating","doomscrolling","checking instagram","logging off","with a cracked screen","with a thick accent","tightly wound","carved from a block of wood","getting reupholstered","leaning back","dancing","covered in paint","in a bath robe","in a nightgown","with a bouquet of flowers","under a pile of clothes","cast aside","at the bottom of a well","in despair","overcome with happiness","proud of itself","with incredible skin","blemish-free","dewy-faced","doe eyed","feeling betrayed","got dumped","caught in the rip current","pulled out to see","overeating","binge drinking","hedonistically indulging","sailing due east","riding a dirtbike","landing a kickflip","getting its nails done","getting its hair done","getting its eyebrows tweezed","feeling discouraged","lazily napping","faking an orgasm","practically melting","is ready for a change","is burning bridges","is mending fences","is pissed off","is being gently caressed","all scratched up","is getting wasted","feeling blue","is all tuckered out","is over it","is sitting on its side","is draped in silk","is getting encased in resin","is becoming oxidized","being ignored","getting chilly","working through something"
 ]);
 
 /* Locations (ALL merged; keep “in/at/on/by…” phrases) */
@@ -787,21 +794,21 @@ const LOCATIONS = uniq([
   "in the living room","in the dining room","in a home office","in a craft room","in a pantry","in a soaking tub",
 
   /* work */
-  "in the office","in the cubicle","in the workshop","in the studio","in the lecture hall","in the waiting room",
+  "in the office","in a cubicle","in a shoemaker's workshop","in the studio","in the lecture hall","in the waiting room",
   "in the doctor's office","in the library","in a tv studio","in a corner office","in an open-plan office",
   "in a ceramics studio","in a construction site","in a movie studio","in a display case","by a printing press",
 
   /* fun */
   "at the beach","on the pier","in the swimming pool","on the sidewalk",
-  "in a diner booth","at a dive bar","at a dance club","at a punk club","at a rave","at an open mic night",
+  "Sitting in a diner booth","at a dive bar","at the club","at a rave","at an open mic night",
   "by the fire pit","at the farm stand","at the hardware store",
   "on the trail","on a dirt road","at the trailhead",
   "in the amusement park","in the arcade","in an airport lounge","at a rooftop bar",
-  "at a bus stop at dusk","on an empty train platform","at a ferry terminal in fog",
-  "at a movie theater","at an art house theater","at a record store","at a used book store","at a department store","in a food court",
-  "in a vacant motel","in a high-rise apartment building","at the bleachers","in a graveyard","in a cemetery",
+  "at a bus stop at dusk","on an empty train platform","at a foggy ferry terminal",
+  "stuck to the floor of a movie theater","at an art house theater","at a record store","at a used book store","at a department store","in a food court",
+  "in a vacant motel","in a high-rise apartment building","at the top of the bleachers","buried in a shallow grave","in a cemetery",
   "on a basketball court","on a tennis court","on a golf course","at a pumpkin patch","at a pet store","at a strip mall","at an outlet mall",
-  "at a runway show","in a cafeteria","in a city center","on the outskirts of town",
+  "while walking the runway show","in a cafeteria","in a city center","on the outskirts of town","at a beauty pageant","
 
   /* obscure / extra */
   "under the overpass","in the parking garage","in the parking lot","at the waterfront","by the water tower","in the alleyway",
@@ -813,15 +820,15 @@ const LOCATIONS = uniq([
   "in a railroad dining car","in the back seat of a car","in the passenger seat of a car","in the driver's seat",
   "in a walk-in freezer","in a breakfast nook","in a dressing room","in a wine bar","in a karaoke bar",
   "in a bank vault","in a root cellar","in a wine cellar","in the trunk of a car","in an overhead bin",
-  "in an airplane","in an airport","in a theme park","in a haunted house","in a tenement building",
+  "in an airplane","in an airport","in a theme park","in a haunted house","in a renovated tenement building",
   "at an amphitheater","at the acropolis","on a suspension bridge","at a dude ranch","at a rodeo","in an automotive plant",
   "in a med spa","in a day spa","in a steam room","at a casino floor","at a poker table","in a clown car","in a dune buggy",
   "in a black box theater","in an improv class","in gym class","in english class",
-  "at a book club","in an italian restaurant","at mall of america","at the world trade center",
+  "at a book club","in an italian restaurant","in the mall of america","at the world trade center",
   "at the eiffel tower","at the great wall of china","in times square","in soho","in dimes square",
   "in williamsburg","in greenpoint","in bushwick","in a dorm room","at the foot of the bed",
   "at a strip club","at a gay bar","on the upper east side","in chicago","at madison square garden",
-  "in portugal","in france","in rolling hills","in tall grasses","on a mowed lawn"
+  "on the waterfront in portugal","in the south of france","in rolling hills","in tall grasses","on a mowed lawn","in carnegie hall","hanging out","in a loft space","at a pawn shop","at the bottom of a lake","at a beachfront bonfire","on the last day of school","while riding on the back of a horse"
 ]);
 
 /* Pickers (NO repeats until cycle) */
