@@ -1,15 +1,21 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#F7C6D0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>Object Poems</title>
 
   <style>
     :root{
-      --fg: rgba(35,20,35,0.92);
-      --ui: rgba(35,20,35,0.70);
-      --ui3: rgba(35,20,35,0.22);
+      --fg: rgba(0,0,0,0.92);
+      --ui: rgba(0,0,0,0.72);
+      --ui3: rgba(0,0,0,0.20);
+      --vh: 1vh;
 
       /* UI sizing (gold-standard) */
       --barH: clamp(175px, 21vh, 240px); /* slightly squished vertically */
@@ -20,6 +26,7 @@
 
       /* Phrase layout */
       --textScale: 1;
+      --fitScale: 1;
       --yPct: 50%;
       --phraseW: 75vw;
       --edgePad: 50px;
@@ -65,22 +72,16 @@
       -webkit-text-size-adjust: 100%;
     }
 
-    body{ min-height: 100vh; }
-    @supports (height: 100dvh){
-      body{ min-height: 100dvh; }
-    }
+    body{ min-height: calc(var(--vh, 1vh) * 100); }
 
     /* Stage above border, below UI */
     #stage{
       position: fixed;
       top:0; left:0;
       width:100vw;
-      height:100vh;
+      height: calc(var(--vh, 1vh) * 100);
       pointer-events:none;
       z-index: 20;
-    }
-    @supports (height: 100dvh){
-      #stage{ height:100dvh; }
     }
 
     #phrase{
@@ -89,7 +90,7 @@
       top: var(--yPct);
       transform: translate(-50%, -50%);
       font-weight: 650;
-      font-size: calc(clamp(32px, 5vw, 92px) * var(--textScale));
+      font-size: calc(clamp(32px, 5vw, 92px) * var(--textScale) * var(--fitScale));
       line-height:1.12;
       letter-spacing:.2px;
       user-select:none;
@@ -159,7 +160,7 @@
       margin-right: auto;
 
       text-align:center;
-      color: rgba(35,20,35,0.55);
+      color: var(--ui);
     }
     #titleBlock .title{
       font-size: 15.5px;
@@ -191,11 +192,8 @@
       pointer-events:auto; /* clickable */
       background: transparent;
 
-      max-height: calc(100vh - 8px);
+      max-height: calc(var(--vh, 1vh) * 100 - 8px);
       overflow: visible;
-    }
-    @supports (height: 100dvh){
-      #bar{ max-height: calc(100dvh - 8px); }
     }
 
     .barInner{
@@ -292,9 +290,24 @@
       user-select: none;
       white-space: nowrap;
       transition: transform .05s ease, border-color .15s ease, color .15s ease, background-color .15s ease;
+      -webkit-tap-highlight-color: transparent;
     }
     button:active{ transform: translateY(1px); }
     button:hover{ color: var(--fg); border-color: var(--ui); }
+
+    .colorBtn{
+      background: var(--btnBg, transparent);
+      border-color: var(--ui3);
+      color: var(--ui);
+    }
+    .colorBtn:hover{
+      filter: brightness(0.5);
+      color: var(--ui);
+      border-color: var(--ui3);
+    }
+    .colorBtn:not(.on){
+      background: transparent;
+    }
 
     .btnGroup{
       display:flex;
@@ -305,6 +318,19 @@
       overflow: visible;
     }
     .btnGroup.centered{ justify-content: center; }
+
+    .actionSlot{
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+      margin-left:auto;
+      flex: 0 0 auto;
+    }
+    .actionBtn{
+      text-align:center;
+      min-width: 110px;
+    }
+
 
     .ssBtn{
       height: var(--pillH);
@@ -329,6 +355,7 @@
       color: var(--fg) !important;
       border-color: var(--fg) !important;
     }
+    .ssBtn:hover{ filter: brightness(0.5); }
 
     .sliderRow{
       display:flex;
@@ -349,7 +376,7 @@
       width:100%;
       height:16px;
       background:transparent;
-      color: var(--fg);
+      color: var(--thumbCol, var(--fg));
       margin:0;
       padding:0;
       touch-action: none;
@@ -384,13 +411,14 @@
       gap:5px;
       width:100%;
       max-width:100%;
+      align-items:center;
     }
     .swatchHeader{
       display:flex;
       justify-content: space-between;
       gap: 10px;
       align-items: baseline;
-      width: 100%;
+      width: fit-content;
     }
     .hoverVal{ min-width: 7ch; text-align: right; }
 
@@ -399,9 +427,10 @@
       flex-wrap:nowrap;
       gap: 10px;
       align-items:center;
-      justify-content:flex-start;
+      justify-content:center;
       min-width:0;
       max-width: 100%;
+      width: fit-content;
     }
 
     .swatch{
@@ -410,10 +439,10 @@
       padding: 0;
       border-radius: 999px;
       border: var(--swOuter) solid var(--fg);
-      background: transparent;
-      box-shadow: none;
+      background: color-mix(in srgb, var(--fillCol) 18%, transparent);
+      box-shadow: inset 0 0 0 var(--swRing) color-mix(in srgb, var(--ringCol) 30%, transparent);
       cursor: pointer;
-      transition: transform .05s ease, opacity .12s ease, box-shadow .12s ease, background-color .12s ease;
+      transition: transform .05s ease, filter .12s ease, box-shadow .12s ease, background-color .12s ease;
     }
     .swatch:active{ transform: translateY(1px); }
 
@@ -421,12 +450,36 @@
       background: var(--fillCol);
       box-shadow: inset 0 0 0 var(--swRing) var(--ringCol);
     }
-    .swatch:not(.on):hover{
-      background: color-mix(in srgb, var(--fillCol) 30%, transparent);
-      box-shadow: inset 0 0 0 var(--swRing) color-mix(in srgb, var(--ringCol) 42%, transparent);
-      opacity: 0.95;
+    .swatch:hover{ filter: brightness(0.5); }
+
+    @supports not (color-mix(in srgb, red 30%, transparent)){
+      .swatch{
+        background: transparent;
+        box-shadow: inset 0 0 0 var(--swRing) var(--ringCol);
+        opacity: 0.75;
+      }
+      .swatch.on{
+        background: var(--fillCol);
+        opacity: 1;
+      }
     }
-    .swatch.on:hover{ opacity: 0.96; }
+
+    @media (pointer: coarse){
+      :root{
+        --pillH: 18px;
+        --pillPadX: 12px;
+        --pillFont: 7.6px;
+      }
+      button{ font-size: 7.4px; padding: 5px 8px; }
+      input[type=range]{ height: 22px; }
+      input[type=range]::-webkit-slider-thumb{
+        width:14px; height:14px;
+        margin-top:-6px;
+      }
+      input[type=range]::-moz-range-thumb{
+        width:14px; height:14px;
+      }
+    }
 
     @media(max-width: 980px){
       :root{
@@ -449,7 +502,7 @@
         --uiMaxW: 620px;
         --titlePadTop: 16px;
       }
-      #phrase{ font-size: calc(clamp(28px, 7vw, 70px) * var(--textScale)); }
+      #phrase{ font-size: calc(clamp(28px, 7vw, 70px) * var(--textScale) * var(--fitScale)); }
       #titleBlock .title{ font-size: 14px; }
       #titleBlock .sub{ font-size: 10px; }
       button{ font-size: 6.8px; padding: 3.4px 5.3px; }
@@ -462,7 +515,7 @@
 
 <body>
   <div id="stage">
-    <div id="phrase"></div>
+    <div id="phrase" role="status" aria-live="polite"></div>
   </div>
 
   <div id="borderFrame" aria-hidden="true">
@@ -476,7 +529,7 @@
   <div id="uiWrap">
     <div id="titleBlock" aria-hidden="true">
       <div class="title">Object Poems</div>
-      <div class="sub">written by Margot DeMarco, randomized by ChatGPT</div>
+      <div class="sub">written by Margot DeMarco, arranged by ChatGPT</div>
     </div>
 
     <div id="bar">
@@ -513,19 +566,17 @@
           </div>
 
           <div class="ctrl">
-            <div class="labelRow"><div class="label">Border Thickness</div><div class="val" id="bdThickVal">100%</div></div>
-            <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="1">
+            <div class="labelRow"><div class="label">Border Thickness</div><div class="val" id="bdThickVal">75%</div></div>
+            <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.55">
           </div>
 
-          <div class="ctrl" style="flex:0.55 0.55 0;">
-            <div class="labelRow"><div class="label">Border</div><div class="val">&nbsp;</div></div>
+          <div class="actionSlot">
             <button
               id="bdToggleBtn"
               type="button"
-              class="ssBtn on"
-              aria-pressed="true"
-              style="height:var(--pillH); padding:0 var(--pillPadX); align-self:flex-start;">
-              On
+              class="colorBtn actionBtn borderBtn"
+              aria-pressed="true">
+              Border
             </button>
           </div>
         </div>
@@ -533,7 +584,7 @@
         <div class="sliderRow">
           <div class="ctrl">
             <div class="labelRow"><div class="label">Size</div><div class="val" id="sizeVal">100%</div></div>
-            <input id="sizeSlider" type="range" min="0.6" max="1.6" step="0.001" value="1.0">
+            <input id="sizeSlider" type="range" min="0.6" max="1.6" step="0.001" value="0.8">
           </div>
 
           <div class="ctrl">
@@ -546,8 +597,8 @@
             <input id="widthSlider" type="range" min="40" max="100" step="0.01" value="50">
           </div>
 
-          <div style="display:flex; gap:8px; align-items:flex-end; flex:0 0 auto;">
-            <button id="fsBtn" type="button">Full screen</button>
+          <div class="actionSlot">
+            <button id="fsBtn" type="button" class="colorBtn actionBtn">Full screen</button>
           </div>
         </div>
 
@@ -607,6 +658,28 @@ function shuffleInPlace(a){
     [a[i],a[j]]=[a[j],a[i]];
   }
   return a;
+}
+
+function setViewportVars(){
+  const vv = window.visualViewport;
+  const h = (vv ? vv.height : window.innerHeight) * 0.01;
+  document.documentElement.style.setProperty("--vh", `${h}px`);
+}
+
+function getViewportSize(){
+  const vv = window.visualViewport;
+  return {
+    w: vv ? vv.width : window.innerWidth,
+    h: vv ? vv.height : window.innerHeight
+  };
+}
+
+function parsePx(val){
+  const n = Number(String(val || "").replace("px","").trim());
+  return Number.isFinite(n) ? n : 0;
+}
+function getRootVarPx(name){
+  return parsePx(getComputedStyle(document.documentElement).getPropertyValue(name));
 }
 
 /* ================= Non-repeating shuffle bags ================= */
@@ -727,10 +800,48 @@ function lightestHexFromPalette(palName){
   }
   return best;
 }
+function darkestHexFromPalette(palName){
+  const pal = PAL[palName] || [];
+  let best = pal[0] || "#000000";
+  let bestL = 2;
+  for(const hex of pal){
+    const {r,g,b} = hexToRgb(hex);
+    const {l} = rgbToHsl(r,g,b);
+    if(l < bestL){
+      bestL = l;
+      best = hex;
+    }
+  }
+  return best;
+}
 
 /* ================= Controls ================= */
 const PART_OPTS = ["description","object","action","location"];
 const COLOR_OPTS = ["earthy","beachy","fleshy","retro","future","circus"];
+const SLIDER_PALS = ["circus","beachy","fleshy","retro","future","earthy","circus","beachy"];
+const palCycleIndex = {};
+const swatchRowOffset = { bg: 0, fg: 0, bd: 0 };
+
+function initPaletteCycles(){
+  for(const name of COLOR_OPTS) palCycleIndex[name] = 0;
+  const palLen = (PAL[COLOR_OPTS[0]] || []).length || 5;
+  swatchRowOffset.bg = Math.floor(Math.random() * palLen);
+  swatchRowOffset.fg = Math.floor(Math.random() * palLen);
+  swatchRowOffset.bd = Math.floor(Math.random() * palLen);
+}
+function paletteColor(name, offset=0){
+  const pal = PAL[name] || [];
+  if(!pal.length) return "#000000";
+  const idx = palCycleIndex[name] ?? 0;
+  return pal[(idx + offset) % pal.length];
+}
+function advancePaletteCycle(){
+  for(const name of COLOR_OPTS){
+    const pal = PAL[name] || [];
+    if(!pal.length) continue;
+    palCycleIndex[name] = (palCycleIndex[name] + 1) % pal.length;
+  }
+}
 
 /* ================= DOM refs ================= */
 const phraseEl = document.getElementById("phrase");
@@ -764,6 +875,11 @@ const bdThickVal = document.getElementById("bdThickVal");
 const bgHover = document.getElementById("bgHover");
 const fgHover = document.getElementById("fgHover");
 const bdHover = document.getElementById("bdHover");
+
+const sliderEls = [
+  speedEl, bgBrightEl, fgBrightEl, bdBrightEl,
+  bdThickEl, sizeEl, yEl, widthEl
+];
 
 /* ================= Selection state ================= */
 const sel = {
@@ -991,19 +1107,7 @@ function pickObject(){ return bagNext("obj", OBJECTS); }
 function pickAction(){ return bagNext("act", ACTIONS); }
 function pickLocation(){ return bagNext("loc", LOCATIONS); }
 
-/* ================= Phrase build (strong de-dupe, safe) ================= */
-const recentSetP = new Set();
-const recentQueue = [];
-const RECENT_P = 900;
-
-function rememberPhrase(p){
-  recentQueue.push(p);
-  recentSetP.add(p);
-  if(recentQueue.length > RECENT_P){
-    const old = recentQueue.shift();
-    recentSetP.delete(old);
-  }
-}
+/* ================= Phrase build ================= */
 function safeStr(x){ return (x == null) ? "" : String(x).trim(); }
 
 function buildPhrase(partsSet){
@@ -1013,27 +1117,19 @@ function buildPhrase(partsSet){
   const useLoc  = partsSet.has("location");
   if(!useDesc && !useObj && !useAct && !useLoc) return "";
 
-  for(let tries=0; tries<900; tries++){
-    const desc = safeStr(pickDescriptor());
-    const obj  = safeStr(pickObject());
-    const act  = safeStr(pickAction());
-    const loc  = safeStr(pickLocation());
+  const desc = safeStr(pickDescriptor());
+  const obj  = safeStr(pickObject());
+  const act  = safeStr(pickAction());
+  const loc  = safeStr(pickLocation());
 
-    let out = "";
-    if(useDesc && desc) out += desc + " ";
-    if(useObj && obj) out += obj;
-    if(useAct && act) out += (out ? " " : "") + act;
-    if(useLoc && loc) out += (out ? " " : "") + loc;
+  let out = "";
+  if(useDesc && desc) out += desc + " ";
+  if(useObj && obj) out += obj;
+  if(useAct && act) out += (out ? " " : "") + act;
+  if(useLoc && loc) out += (out ? " " : "") + loc;
 
-    out = out.replace(/\s+/g," ").trim();
-    if(!out) return "";
-
-    if(!recentSetP.has(out)){
-      rememberPhrase(out);
-      return out;
-    }
-  }
-  return "";
+  out = out.replace(/\s+/g," ").trim();
+  return out;
 }
 
 /* ================= Color selection ================= */
@@ -1047,18 +1143,25 @@ function unionColorsFrom(selectedPaletteNames){
   return uniq(out);
 }
 
-function pickColorNonRepeating(key, paletteSet, excludeHexSet, lastHex){
-  let pool = unionColorsFrom(paletteSet);
+function pickColorNonRepeating(key, paletteSet, excludeHexSet){
+  const pool = unionColorsFrom(paletteSet);
   const allPool = uniq(Object.values(PAL).flat());
-
+  const basePool = pool.length ? pool : allPool;
   const ex = new Set(excludeHexSet ? Array.from(excludeHexSet) : []);
-  if(lastHex) ex.add(lastHex);
+  const filtered = basePool.filter(c => !ex.has(c));
+  const usePool = filtered.length ? filtered : basePool;
+  return bagNext(key, usePool);
+}
 
-  let filtered = pool.filter(c => !ex.has(c));
-  if(!filtered.length) filtered = allPool.filter(c => !ex.has(c));
-  if(!filtered.length) filtered = allPool;
-
-  return bagNext(key, filtered);
+function consumeColorFromBag(key, paletteSet, targetHex){
+  const pool = unionColorsFrom(paletteSet);
+  const allPool = uniq(Object.values(PAL).flat());
+  const basePool = pool.length ? pool : allPool;
+  for(let i=0; i<basePool.length; i++){
+    const c = bagNext(key, basePool);
+    if(c === targetHex) return c;
+  }
+  return targetHex;
 }
 
 /* ================= Current frame ================= */
@@ -1071,6 +1174,16 @@ const current = {
 
 const last = { phrase:"", bg:"", fg:"", bd:"" };
 let timerId = null;
+let isFirstFrame = true;
+
+function setCalmStart(){
+  const palName = COLOR_OPTS[Math.floor(Math.random() * COLOR_OPTS.length)];
+  const bg = lightestHexFromPalette(palName);
+  const fg = darkestHexFromPalette(palName);
+  current.bgBase = consumeColorFromBag("bg", sel.bgColor, bg);
+  current.fgBase = consumeColorFromBag("fg", sel.fgColor, fg);
+  current.bdBase = consumeColorFromBag("bd", sel.bdColor, fg);
+}
 
 /* ================= UI builders ================= */
 function renderSentenceButtons(){
@@ -1091,7 +1204,8 @@ function renderSentenceButtons(){
     b.textContent = opt;
 
     const palName = partToPal[opt];
-    const bg = lightestHexFromPalette(palName);
+    const bg = paletteColor(palName, 0);
+    b.style.setProperty("--ssPal", palName);
     b.style.setProperty("--ssBg", bg);
 
     if(sel.parts.has(opt)) b.classList.add("on");
@@ -1110,18 +1224,28 @@ function renderSentenceButtons(){
   }
 }
 
-function palettePair(name){
+function refreshSentenceButtonColors(){
+  document.querySelectorAll("#partsRow .ssBtn").forEach(btn=>{
+    const pal = btn.style.getPropertyValue("--ssPal").trim() || "earthy";
+    btn.style.setProperty("--ssBg", paletteColor(pal, 0));
+  });
+}
+
+function palettePair(name, offset=0){
   const pal = PAL[name] || [];
-  const fill = pal[2] || pal[0] || "#999999";
-  const ring = pal[0] || pal[1] || "#cccccc";
+  if(!pal.length) return { fill: "#999999", ring: "#cccccc" };
+  const fill = paletteColor(name, offset);
+  const ring = paletteColor(name, offset + 2);
   return { fill, ring };
 }
 
-function renderSwatchRow(rowEl, hoverEl, setRef){
+function renderSwatchRow(rowEl, hoverEl, setRef, rowKey){
   rowEl.innerHTML = "";
+  if(rowKey) rowEl.dataset.row = rowKey;
 
   for(const name of COLOR_OPTS){
-    const {fill, ring} = palettePair(name);
+    const offset = swatchRowOffset[rowKey] || 0;
+    const {fill, ring} = palettePair(name, offset);
     const sw = document.createElement("button");
     sw.type = "button";
     sw.className = "swatch" + (setRef.has(name) ? " on" : "");
@@ -1151,6 +1275,70 @@ function renderSwatchRow(rowEl, hoverEl, setRef){
   });
 }
 
+function refreshSwatchColors(){
+  document.querySelectorAll(".swatch").forEach(sw=>{
+    const name = sw.dataset.name;
+    const row = sw.closest(".swatchRow")?.dataset.row || "bg";
+    const offset = swatchRowOffset[row] || 0;
+    const {fill, ring} = palettePair(name, offset);
+    sw.style.setProperty("--fillCol", fill);
+    sw.style.setProperty("--ringCol", ring);
+  });
+}
+
+function syncSwatchHeaderWidths(){
+  requestAnimationFrame(()=>{
+    document.querySelectorAll(".swatchRow").forEach(row=>{
+      const header = row.parentElement.querySelector(".swatchHeader");
+      if(!header) return;
+      const w = row.getBoundingClientRect().width;
+      header.style.width = w > 0 ? `${w}px` : "auto";
+      header.style.marginLeft = "auto";
+      header.style.marginRight = "auto";
+      row.style.marginLeft = "auto";
+      row.style.marginRight = "auto";
+    });
+  });
+}
+
+function applySliderThumbColors(){
+  sliderEls.forEach((el, i)=>{
+    const palName = SLIDER_PALS[i % SLIDER_PALS.length];
+    const pal = PAL[palName] || [];
+    const offset = pal.length ? (i % pal.length) : 0;
+    const col = paletteColor(palName, offset);
+    el.style.setProperty("--thumbCol", col);
+  });
+}
+
+function applyButtonColors(){
+  const fsPal = "retro";
+  fsBtn.style.setProperty("--btnBg", paletteColor(fsPal, 1));
+  fsBtn.style.setProperty("--btnBd", paletteColor(fsPal, 3));
+
+  const bdPal = "circus";
+  bdToggleBtn.style.setProperty("--btnBg", paletteColor(bdPal, 0));
+  bdToggleBtn.style.setProperty("--btnBd", paletteColor(bdPal, 2));
+}
+
+function syncActionButtonWidths(){
+  requestAnimationFrame(()=>{
+    const w = fsBtn.getBoundingClientRect().width;
+    if(w > 0){
+      bdToggleBtn.style.width = `${w}px`;
+      fsBtn.style.width = `${w}px`;
+    }
+  });
+}
+
+function applyAccentColors(){
+  refreshSwatchColors();
+  refreshSentenceButtonColors();
+  applySliderThumbColors();
+  applyButtonColors();
+  syncActionButtonWidths();
+}
+
 /* ================= Type + layout ================= */
 function applyTypeAndLayout(){
   const scale = clamp(Number(sizeEl.value), 0.6, 1.6);
@@ -1164,6 +1352,36 @@ function applyTypeAndLayout(){
   const w = clamp(Number(widthEl.value), 40, 100);
   document.documentElement.style.setProperty("--phraseW", `${w}vw`);
   widthVal.textContent = `${Math.round(w)}%`;
+
+  fitPhraseToBox();
+}
+
+function fitPhraseToBox(){
+  const text = (phraseEl.textContent || "").trim();
+  if(!text){
+    document.documentElement.style.setProperty("--fitScale", "1");
+    return;
+  }
+
+  document.documentElement.style.setProperty("--fitScale", "1");
+
+  requestAnimationFrame(()=>{
+    const rect = phraseEl.getBoundingClientRect();
+    if(rect.width <= 0 || rect.height <= 0) return;
+
+    const { w: vw, h: vh } = getViewportSize();
+    const edgePad = getRootVarPx("--edgePad");
+    const widthPct = clamp(Number(widthEl.value), 40, 100) / 100;
+
+    const maxW = Math.min(vw * widthPct, vw - (edgePad * 2));
+    const maxH = vh - (edgePad * 2);
+
+    let scale = Math.min(maxW / rect.width, maxH / rect.height, 1);
+    if(!Number.isFinite(scale) || scale <= 0) scale = 1;
+    scale = clamp(scale, 0.6, 1);
+
+    document.documentElement.style.setProperty("--fitScale", scale.toFixed(3));
+  });
 }
 
 /* Border grows inward AND outward */
@@ -1177,8 +1395,9 @@ function applyBorderStyle(colorHex){
   }
   frame.style.display = "block";
 
-  const minDim = Math.min(window.innerWidth, window.innerHeight);
-  const px = Math.max(1, Math.round(t * (minDim/2)));
+  const { w, h } = getViewportSize();
+  const maxDim = Math.max(w, h);
+  const px = Math.max(1, Math.round(t * (maxDim/2)));
 
   const outside = Math.max(0, Math.round(px * 0.35));
 
@@ -1240,21 +1459,18 @@ function applyColorsLive(){
   let bd  = applyDimmer(current.bdBase, Number(bdBrightEl.value));
 
   if(bg.toLowerCase() === fg.toLowerCase()){
-    const alt = pickColorNonRepeating("fg:antiEqual", sel.fgColor, new Set([current.bgBase]), last.fg);
+    const alt = pickColorNonRepeating("fg:antiEqual", sel.fgColor, new Set([current.bgBase]));
     if(alt) current.fgBase = alt;
     fg = applyDimmer(current.fgBase, Number(fgBrightEl.value));
   }
   if(bd.toLowerCase() === bg.toLowerCase()){
-    const altB = pickColorNonRepeating("bd:antiEqual", sel.bdColor, new Set([current.bgBase]), last.bd);
+    const altB = pickColorNonRepeating("bd:antiEqual", sel.bdColor, new Set([current.bgBase]));
     if(altB) current.bdBase = altB;
     bd = applyDimmer(current.bdBase, Number(bdBrightEl.value));
   }
 
   document.body.style.background = bg;
   phraseEl.style.color = fg;
-
-  /* Make swatch outlines/text follow current fg */
-  document.documentElement.style.setProperty("--fg", fg);
 
   applyBorderStyle(bd);
 
@@ -1266,9 +1482,28 @@ function applyColorsLive(){
 
 /* ================= Border toggle button sync ================= */
 function setBorderBtn(){
-  bdToggleBtn.textContent = sel.borderEnabled ? "On" : "Off";
+  bdToggleBtn.textContent = "Border";
   bdToggleBtn.classList.toggle("on", sel.borderEnabled);
   bdToggleBtn.setAttribute("aria-pressed", sel.borderEnabled ? "true" : "false");
+}
+
+/* ================= Fullscreen helpers ================= */
+const fsApi = {
+  request: document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen || document.documentElement.msRequestFullscreen,
+  exit: document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen
+};
+function isFullscreen(){
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+}
+function syncFullscreenBtn(){
+  if(!fsApi.request || !fsApi.exit){
+    fsBtn.style.display = "none";
+    return;
+  }
+  fsBtn.textContent = "Full screen";
+  const on = isFullscreen();
+  fsBtn.classList.toggle("on", on);
+  fsBtn.setAttribute("aria-pressed", on ? "true" : "false");
 }
 
 /* ================= Tick loop ================= */
@@ -1286,30 +1521,32 @@ function scheduleTick(){
 function nextFrame(){
   let p = buildPhrase(sel.parts);
 
-  if(p && p === last.phrase){
-    for(let i=0; i<60 && p === last.phrase; i++){
-      p = buildPhrase(sel.parts);
-    }
-  }
-
   current.phrase = p;
   phraseEl.textContent = current.phrase;
   last.phrase = current.phrase;
 
-  const bgBase = pickColorNonRepeating("bg", sel.bgColor, new Set(), last.bg);
-  current.bgBase = bgBase || current.bgBase;
+  fitPhraseToBox();
 
-  const fgBase = pickColorNonRepeating("fg", sel.fgColor, new Set([current.bgBase]), last.fg);
-  current.fgBase = fgBase || current.fgBase;
+  if(isFirstFrame){
+    isFirstFrame = false;
+  }else{
+    const bgBase = pickColorNonRepeating("bg", sel.bgColor, new Set());
+    current.bgBase = bgBase || current.bgBase;
 
-  const bdBase = pickColorNonRepeating("bd", sel.bdColor, new Set([current.bgBase, current.fgBase]), last.bd);
-  current.bdBase = bdBase || current.bdBase;
+    const fgBase = pickColorNonRepeating("fg", sel.fgColor, new Set([current.bgBase]));
+    current.fgBase = fgBase || current.fgBase;
+
+    const bdBase = pickColorNonRepeating("bd", sel.bdColor, new Set([current.bgBase, current.fgBase]));
+    current.bdBase = bdBase || current.bdBase;
+  }
 
   last.bg = current.bgBase;
   last.fg = current.fgBase;
   last.bd = current.bdBase;
 
   applyColorsLive();
+  advancePaletteCycle();
+  applyAccentColors();
 }
 
 /* ================= UI hide after inactivity (now hides title too) ================= */
@@ -1348,19 +1585,33 @@ bdToggleBtn.addEventListener("click", ()=>{
 
 fsBtn.addEventListener("click", async ()=>{
   try{
-    if(!document.fullscreenElement) await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
+    if(!fsApi.request || !fsApi.exit) return;
+    if(!isFullscreen()) await fsApi.request.call(document.documentElement);
+    else await fsApi.exit.call(document);
   }catch(e){}
+  syncFullscreenBtn();
   showUI();
 });
 
+document.addEventListener("fullscreenchange", syncFullscreenBtn);
+document.addEventListener("webkitfullscreenchange", syncFullscreenBtn);
+
 /* ================= Start ================= */
 (function init(){
+  setViewportVars();
+  if(window.visualViewport){
+    window.visualViewport.addEventListener("resize", setViewportVars, {passive:true});
+    window.visualViewport.addEventListener("scroll", setViewportVars, {passive:true});
+  }
+
+  initPaletteCycles();
   renderSentenceButtons();
 
-  renderSwatchRow(document.getElementById("bgColorsRow"), bgHover, sel.bgColor);
-  renderSwatchRow(document.getElementById("fgColorsRow"), fgHover, sel.fgColor);
-  renderSwatchRow(document.getElementById("bdColorsRow"), bdHover, sel.bdColor);
+  renderSwatchRow(document.getElementById("bgColorsRow"), bgHover, sel.bgColor, "bg");
+  renderSwatchRow(document.getElementById("fgColorsRow"), fgHover, sel.fgColor, "fg");
+  renderSwatchRow(document.getElementById("bdColorsRow"), bdHover, sel.bdColor, "bd");
+  applyAccentColors();
+  syncSwatchHeaderWidths();
 
   sel.borderEnabled = true;
   sel.borderThickness = clamp(Number(bdThickEl.value), 0, 1);
@@ -1374,14 +1625,19 @@ fsBtn.addEventListener("click", async ()=>{
   bdThickVal.textContent = `${Math.round(clamp(sel.borderThickness,0,1)*100)}%`;
   speedVal.textContent = formatDuration(speedFromSlider(speedEl.value));
 
+  syncFullscreenBtn();
+  setCalmStart();
   nextFrame();
   scheduleTick();
   showUI();
 })();
 
 window.addEventListener("resize", ()=>{
+  setViewportVars();
   applyTypeAndLayout();
   applyColorsLive();
+  syncSwatchHeaderWidths();
+  syncActionButtonWidths();
 });
 </script>
 </body>
