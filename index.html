@@ -590,7 +590,7 @@
 
           <div class="ctrl">
             <div class="labelRow"><div class="label">Border Thickness</div><div class="val" id="bdThickVal">75%</div></div>
-            <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.55">
+            <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.65">
           </div>
 
           <div class="actionSlot">
@@ -1655,6 +1655,11 @@ document.addEventListener("webkitfullscreenchange", syncFullscreenBtn);
 
   syncFullscreenBtn();
   setCalmStart();
+  const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+  if(isCoarse){
+    bdThickEl.value = "0.40";
+    sel.borderThickness = 0.40;
+  }
   nextFrame();
   scheduleTick();
   showUI();
