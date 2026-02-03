@@ -308,6 +308,11 @@
     .colorBtn:not(.on){
       background: transparent;
     }
+    .colorBtn.disabled{
+      opacity: 0.55;
+      cursor: default;
+      filter: none;
+    }
 
     .btnGroup{
       display:flex;
@@ -509,6 +514,24 @@
       .label, .val{ font-size: 8.5px; }
       .btnGroup{ gap:4px; }
       .swatchRow{ gap: 9px; flex-wrap:wrap; }
+    }
+
+    @media(max-width: 480px), (max-height: 720px){
+      :root{
+        --barH: clamp(210px, 30vh, 250px);
+        --barOffset: 8px;
+        --uiScale: 0.96;
+        --uiPadX: 14px;
+      }
+      #bar{ overflow: hidden; }
+      .barInner{
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 16px;
+      }
+      #titleBlock{ gap: 4px; }
+      #titleBlock .title{ letter-spacing: .18em; }
+      #titleBlock .sub{ letter-spacing: .08em; }
     }
   </style>
 </head>
