@@ -1335,7 +1335,7 @@ function applySliderThumbColors(){
 }
 
 function applyButtonColors(){
-  const fsPal = "retro";
+  const fsPal = "fleshy";
   fsBtn.style.setProperty("--btnBg", paletteColor(fsPal, 1));
   fsBtn.style.setProperty("--btnBd", paletteColor(fsPal, 3));
 
@@ -1420,7 +1420,8 @@ function applyBorderStyle(colorHex){
 
   const { w, h } = getViewportSize();
   const maxDim = Math.max(w, h);
-  const px = Math.max(1, Math.round(t * (maxDim/2)));
+  const tAdj = Math.pow(t, 1.6);
+  const px = Math.max(1, Math.round(tAdj * (maxDim/2)));
 
   const outside = Math.max(0, Math.round(px * 0.35));
 
@@ -1520,9 +1521,12 @@ function isFullscreen(){
 }
 function syncFullscreenBtn(){
   if(!fsApi.request || !fsApi.exit){
-    fsBtn.style.display = "none";
+    fsBtn.classList.add("disabled");
+    fsBtn.setAttribute("aria-disabled", "true");
     return;
   }
+  fsBtn.classList.remove("disabled");
+  fsBtn.removeAttribute("aria-disabled");
   fsBtn.textContent = "Full screen";
   const on = isFullscreen();
   fsBtn.classList.toggle("on", on);
@@ -1609,6 +1613,7 @@ bdToggleBtn.addEventListener("click", ()=>{
 fsBtn.addEventListener("click", async ()=>{
   try{
     if(!fsApi.request || !fsApi.exit) return;
+    if(fsBtn.classList.contains("disabled")) return;
     if(!isFullscreen()) await fsApi.request.call(document.documentElement);
     else await fsApi.exit.call(document);
   }catch(e){}
