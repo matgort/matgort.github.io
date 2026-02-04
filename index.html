@@ -2511,6 +2511,50 @@ function swapItPronounsForPerson(actionStr){
   return s.replace(/\b(itself|its|it)\b(?!')/g, (m)=> map[m] || m);
 }
 
+/* ================= Phrase non-repeat (persists across reloads) ================= */
+const RECENT_PHRASES_MAX = 1200;
+const RECENT_PHRASES_KEY = "sculpture_poems_recent_phrases_v1";
+let recentPhraseQueue = [];
+let recentPhraseSet = new Set();
+let recentPhraseSaveTimer = null;
+
+function loadRecentPhrases(){
+  try{
+    const raw = localStorage.getItem(RECENT_PHRASES_KEY);
+    if(!raw) return;
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return;
+    const clean = arr.map(x => String(x || "").trim()).filter(Boolean);
+    recentPhraseQueue = clean.slice(-RECENT_PHRASES_MAX);
+    recentPhraseSet = new Set(recentPhraseQueue);
+  }catch(e){}
+}
+
+function scheduleSaveRecentPhrases(){
+  if(recentPhraseSaveTimer) return;
+  recentPhraseSaveTimer = window.setTimeout(()=>{
+    recentPhraseSaveTimer = null;
+    try{
+      localStorage.setItem(
+        RECENT_PHRASES_KEY,
+        JSON.stringify(recentPhraseQueue.slice(-RECENT_PHRASES_MAX))
+      );
+    }catch(e){}
+  }, 1200);
+}
+
+function rememberRecentPhrase(p){
+  const s = String(p || "").trim();
+  if(!s) return;
+  recentPhraseQueue.push(s);
+  recentPhraseSet.add(s);
+  while(recentPhraseQueue.length > RECENT_PHRASES_MAX){
+    const old = recentPhraseQueue.shift();
+    recentPhraseSet.delete(old);
+  }
+  scheduleSaveRecentPhrases();
+}
+
 function buildPhrase(partsSet){
   const useDesc = partsSet.has("description");
   const useObj  = partsSet.has("object");
@@ -2519,22 +2563,36 @@ function buildPhrase(partsSet){
   const useLoc  = partsSet.has("location");
   if(!useDesc && !useObj && !usePerson && !useAct && !useLoc) return "";
 
-  const desc = useDesc ? safeStr(pickDescriptor(useObj, usePerson)) : "";
-  const obj  = useObj ? safeStr(pickObject()) : "";
-  const person = usePerson ? safeStr(pickPerson()) : "";
-  let act  = safeStr(pickAction());
-  if(usePerson && act) act = swapItPronounsForPerson(act);
-  const loc  = safeStr(pickLocation());
+  let lastOut = "";
+  const MAX_TRIES = 600;
 
-  let out = "";
-  if(useDesc && desc) out += desc + " ";
-  if(useObj && obj) out += obj;
-  if(usePerson && person) out += person;
-  if(useAct && act) out += (out ? " " : "") + act;
-  if(useLoc && loc) out += (out ? " " : "") + loc;
+  for(let tries=0; tries<MAX_TRIES; tries++){
+    const desc = useDesc ? safeStr(pickDescriptor(useObj, usePerson)) : "";
+    const obj  = useObj ? safeStr(pickObject()) : "";
+    const person = usePerson ? safeStr(pickPerson()) : "";
+    let act  = useAct ? safeStr(pickAction()) : "";
+    if(usePerson && useAct && act) act = swapItPronounsForPerson(act);
+    const loc  = useLoc ? safeStr(pickLocation()) : "";
 
-  out = out.replace(/\s+/g," ").trim();
-  return out;
+    let out = "";
+    if(useDesc && desc) out += desc + " ";
+    if(useObj && obj) out += obj;
+    if(usePerson && person) out += person;
+    if(useAct && act) out += (out ? " " : "") + act;
+    if(useLoc && loc) out += (out ? " " : "") + loc;
+
+    out = out.replace(/\s+/g," ").trim();
+    if(!out) continue;
+    lastOut = out;
+
+    if(!recentPhraseSet.has(out)){
+      rememberRecentPhrase(out);
+      return out;
+    }
+  }
+
+  if(lastOut) rememberRecentPhrase(lastOut);
+  return lastOut;
 }
 
 /* ================= Color selection ================= */
@@ -2552,10 +2610,19 @@ function pickColorNonRepeating(key, paletteSet, excludeHexSet){
   const pool = unionColorsFrom(paletteSet);
   const allPool = uniq(Object.values(PAL).flat());
   const basePool = pool.length ? pool : allPool;
-  const ex = new Set(excludeHexSet ? Array.from(excludeHexSet) : []);
-  const filtered = basePool.filter(c => !ex.has(c));
-  const usePool = filtered.length ? filtered : basePool;
-  return bagNext(key, usePool);
+  const avoid = new Set((excludeHexSet ? Array.from(excludeHexSet) : []).map(normHex));
+  if(!avoid.size) return bagNext(key, basePool);
+
+  // Important: we always draw from the same (stable) pool for this key so the shuffle bag
+  // can complete a full cycle before repeating. If a draw hits an avoided color, we consume
+  // it and keep going (so it can come back after the bag resets).
+  const maxTries = Math.max(1, basePool.length);
+  for(let i=0; i<maxTries; i++){
+    const c = bagNext(key, basePool);
+    if(!avoid.has(normHex(c))) return c;
+  }
+  // If everything is avoided, just return the next color anyway.
+  return bagNext(key, basePool);
 }
 
 function consumeColorFromBag(key, paletteSet, targetHex){
@@ -2625,7 +2692,6 @@ function restoreSceneAt(index){
   phraseEl.innerHTML = formatPhraseText(current.phrase);
   smartPhraseWidth();
   applyColorsLive();
-  applyAccentColors();
   syncHistoryButtons();
 }
 
@@ -2824,57 +2890,32 @@ function renderSwatchRow(rowEl, hoverEl, setRef, rowKey){
   });
 }
 
-function assignUiButtonColors(){
-  // Rule: never let two buttons share the exact same fill color at the same time.
-  // We allocate from the palette colors each time we apply accents (per poem / per refresh).
-  const used = new Set(); // normalized hex strings
+function refreshSwatchColors(){
+  document.querySelectorAll(".swatch").forEach(sw=>{
+    const name = sw.dataset.name;
+    const row = sw.closest(".swatchRow")?.dataset.row || "bg";
+    const offset = swatchRowOffset[row] || 0;
+    const {fill, ring} = palettePair(name, offset);
+    sw.style.setProperty("--fillCol", fill);
+    sw.style.setProperty("--ringCol", ring);
+  });
+}
+
+function applyButtonColors(){
   const bgAvoid = getBgLiveHex();
 
-  // Swatches (18 total): 3 rows x 6 palettes.
-  const rowKeys = ["bg","fg","bd"];
-  for(const rowKey of rowKeys){
-    const rowEl = document.querySelector(`.swatchRow[data-row='${rowKey}']`);
-    if(!rowEl) continue;
-    const startOffset = swatchRowOffset[rowKey] || 0;
-    for(const palName of COLOR_OPTS){
-      const sw = rowEl.querySelector(`.swatch[data-name='${palName}']`);
-      if(!sw) continue;
-      const fill = pickUniquePaletteColor(palName, startOffset, used, bgAvoid);
-      const ring = pickRingColor(palName, startOffset + 2, bgAvoid, fill);
-      sw.style.setProperty("--fillCol", fill);
-      sw.style.setProperty("--ringCol", ring);
-    }
-  }
+  // Card + fullscreen buttons
+  if(bdToggleBtn) bdToggleBtn.style.setProperty("--btnBg", paletteColorAvoid("circus", 0, bgAvoid));
+  if(fsBtn) fsBtn.style.setProperty("--btnBg", paletteColorAvoid("fleshy", 1, bgAvoid));
 
-  // Sentence structure buttons (5): keep them in their assigned palettes.
-  const partsRow = document.getElementById("partsRow");
-  if(partsRow){
-    Array.from(partsRow.children).forEach((btn, i)=>{
-      const pal = btn.style.getPropertyValue("--ssPal").trim() || "earthy";
-      const fill = pickUniquePaletteColor(pal, i, used, bgAvoid);
-      btn.style.setProperty("--ssBg", fill);
-    });
-  }
+  // Title extras
+  if(screenshotBtn) screenshotBtn.style.setProperty("--btnBg", paletteColorAvoid("retro", 1, bgAvoid));
+  if(lockLayoutBtn) lockLayoutBtn.style.setProperty("--btnBg", paletteColorAvoid("earthy", 2, bgAvoid));
 
-  // Action buttons (Card / Full screen) + Title extras.
-  if(bdToggleBtn){
-    // Card used to share the circus palette; move it to beachy to keep all fills unique.
-    bdToggleBtn.style.setProperty("--btnBg", pickUniquePaletteColor("beachy", 0, used, bgAvoid));
-  }
-  if(fsBtn){
-    fsBtn.style.setProperty("--btnBg", pickUniquePaletteColor("fleshy", 0, used, bgAvoid));
-  }
-  if(screenshotBtn){
-    screenshotBtn.style.setProperty("--btnBg", pickUniquePaletteColor("retro", 0, used, bgAvoid));
-  }
-  if(lockLayoutBtn){
-    lockLayoutBtn.style.setProperty("--btnBg", pickUniquePaletteColor("earthy", 0, used, bgAvoid));
-  }
-
-  // Playback buttons: any remaining unused palette colors.
-  if(prevPoemBtn) prevPoemBtn.style.setProperty("--btnBg", pickUniqueAnyColor(used, bgAvoid));
-  if(pausePoemBtn) pausePoemBtn.style.setProperty("--btnBg", pickUniqueAnyColor(used, bgAvoid));
-  if(nextPoemBtn) nextPoemBtn.style.setProperty("--btnBg", pickUniqueAnyColor(used, bgAvoid));
+  // Playback buttons (3 different palettes chosen on init)
+  if(prevPoemBtn) prevPoemBtn.style.setProperty("--btnBg", paletteColorAvoid(titleCtrlTheme.prev, 0, bgAvoid));
+  if(pausePoemBtn) pausePoemBtn.style.setProperty("--btnBg", paletteColorAvoid(titleCtrlTheme.pause, 0, bgAvoid));
+  if(nextPoemBtn) nextPoemBtn.style.setProperty("--btnBg", paletteColorAvoid(titleCtrlTheme.next, 0, bgAvoid));
 }
 
 function syncSwatchHeaderWidths(){
@@ -2925,8 +2966,10 @@ function syncActionButtonWidths(){
 }
 
 function applyAccentColors(){
+  refreshSwatchColors();
+  refreshSentenceButtonColors();
   applySliderThumbColors();
-  assignUiButtonColors();
+  applyButtonColors();
 }
 
 /* ================= Type + layout ================= */
@@ -3300,12 +3343,12 @@ function applyColorsLive(){
   let bd  = applyDimmer(current.bdBase, Number(bdBrightEl.value));
 
   if(bg.toLowerCase() === fg.toLowerCase()){
-    const alt = pickColorNonRepeating("fg:antiEqual", sel.fgColor, new Set([current.bgBase]));
+    const alt = pickColorNonRepeating("fg", sel.fgColor, new Set([current.bgBase]));
     if(alt) current.fgBase = alt;
     fg = applyDimmer(current.fgBase, Number(fgBrightEl.value));
   }
   if(bd.toLowerCase() === bg.toLowerCase()){
-    const altB = pickColorNonRepeating("bd:antiEqual", sel.bdColor, new Set([current.bgBase]));
+    const altB = pickColorNonRepeating("bd", sel.bdColor, new Set([current.bgBase, current.fgBase]));
     if(altB) current.bdBase = altB;
     bd = applyDimmer(current.bdBase, Number(bdBrightEl.value));
   }
@@ -3315,8 +3358,8 @@ function applyColorsLive(){
 
   applyCardStyle(bd);
 
-  // Keep button fills unique and distinct from the current background.
-  assignUiButtonColors();
+  // Update UI accents (swatches, buttons, slider dots) after background is applied.
+  applyAccentColors();
 
   bgBrightVal.textContent = pctLabel(bgBrightEl.value);
   fgBrightVal.textContent = pctLabel(fgBrightEl.value);
@@ -3375,6 +3418,7 @@ function nextFrame(){
 
   smartPhraseWidth();
 
+  const wasFirst = isFirstFrame;
   if(isFirstFrame){
     isFirstFrame = false;
   }else if(!isLayoutLocked){
@@ -3388,15 +3432,15 @@ function nextFrame(){
     current.bdBase = bdBase || current.bdBase;
   }
 
+  if(!isLayoutLocked && !wasFirst){
+    advancePaletteCycle();
+  }
+
   last.bg = current.bgBase;
   last.fg = current.fgBase;
   last.bd = current.bdBase;
 
   applyColorsLive();
-  if(!isLayoutLocked){
-    advancePaletteCycle();
-    applyAccentColors();
-  }
   commitGeneratedScene();
 }
 
@@ -3523,6 +3567,8 @@ window.addEventListener("keydown", (e)=>{
     window.visualViewport.addEventListener("resize", setViewportVars, {passive:true});
     window.visualViewport.addEventListener("scroll", setViewportVars, {passive:true});
   }
+
+  loadRecentPhrases();
 
   initPaletteCycles();
   renderSentenceButtons();
