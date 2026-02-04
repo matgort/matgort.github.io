@@ -191,7 +191,7 @@
       justify-content:center;
       align-items:center;
       pointer-events: auto;
-      margin-top: 24px; /* lowered ~20px */
+      margin-top: 26px; /* lowered ~20px +2px (closer to Screenshot row) */
     }
     #titleExtras{
       display:flex;
@@ -200,7 +200,7 @@
       justify-content:center;
       align-items:center;
       pointer-events: auto;
-      margin-top: 10px;
+      margin-top: 8px; /* -2px so Screenshot stays put while playback row drops */
     }
     #screenshotBtn{
       height: var(--pillH);
@@ -208,10 +208,10 @@
       font-size: var(--pillFont);
       min-width: 128px;
     }
-    #lockCompositionBtn{ margin-top: 8px; }
+    #lockCompositionBtn{ margin-top: 6px; }
 
     .lockBtn{
-      height: var(--pillH);
+      height: calc(var(--pillH) + 1px);
       width: 34px; /* match playback icon pills */
       padding: 1px 0 0 0; /* +1px breathing room above the glyph */
       font-size: var(--pillFont);
@@ -863,7 +863,7 @@
           <span class="lockIcons" aria-hidden="true">
             <!-- Open lock (default) -->
             <svg class="lockSvg lockSvg--open" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-              <rect x="5" y="10" width="14" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <rect x="5" y="10" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
               <!-- Open shackle: pivots on the right + slightly raised -->
               <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" transform="translate(34 -1) scale(-1 1)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <!-- Slot -->
@@ -871,7 +871,7 @@
             </svg>
             <!-- Closed lock (hover when unlocked, default when locked) -->
             <svg class="lockSvg lockSvg--closed" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-              <rect x="5" y="10" width="14" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <rect x="5" y="10" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
               <!-- Slightly taller closed shackle -->
               <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <!-- Keyhole -->
