@@ -208,23 +208,19 @@
       font-size: var(--pillFont);
       min-width: 128px;
     }
+    #lockCompositionBtn{ margin-top: 8px; }
 
     .lockBtn{
       height: var(--pillH);
-      padding: 0 12px;
+      width: 34px; /* match playback icon pills */
+      padding: 1px 0 0 0; /* +1px breathing room above the glyph */
       font-size: var(--pillFont);
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      gap: 8px;
-      min-width: 128px;
+      position: relative; /* tooltip anchor */
     }
     .lockBtn:hover{ filter: none; }
-    .lockBtn .lockText{ display:none; }
-    .lockBtn:not(.locked) .lockText--lock{ display:inline; }
-    .lockBtn.locked .lockText--locked{ display:inline; }
-    .lockBtn.locked:hover .lockText{ display:none; }
-    .lockBtn.locked:hover .lockText--unlock{ display:inline; opacity: .72; }
 
     .lockIcons{
       position: relative;
@@ -232,41 +228,51 @@
       height: 14px;
       display:inline-block;
       flex: 0 0 auto;
+      opacity: 0.72;
     }
-    .lockIcons .fa-solid{
+    .lockIcons .lockSvg{
       position:absolute;
       inset:0;
       transition: opacity 140ms ease;
     }
-    .lockBtn .fa-lock-open{ opacity: 1; }
-    .lockBtn .fa-lock{ opacity: 0; }
-    .lockBtn.locked .fa-lock-open{ opacity: 0; }
-    .lockBtn.locked .fa-lock{ opacity: 1; }
-    .lockBtn.locked:hover .fa-lock-open{ opacity: 1; }
-    .lockBtn.locked:hover .fa-lock{ opacity: 0; }
-
-    /* Minimal FA-style icons without loading Font Awesome (uses masks). */
-    .fa-solid{
-      display:inline-block;
+    .lockSvg{
       width: 14px;
       height: 14px;
-      color: inherit;
-    }
-    .fa-solid::before{
-      content:"";
       display:block;
-      width:100%;
-      height:100%;
-      background-color: currentColor;
-      -webkit-mask: var(--faMask) center/contain no-repeat;
-      mask: var(--faMask) center/contain no-repeat;
+      overflow: visible;
     }
-    .fa-lock{
-      --faMask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M17%209h-1V7a4%204%200%200%200-8%200v2H7a2%202%200%200%200-2%202v9a2%202%200%200%200%202%202h10a2%202%200%200%200%202-2v-9a2%202%200%200%200-2-2zm-6%200V7a2%202%200%201%201%204%200v2h-4z%27/%3E%3C/svg%3E");
+    .lockBtn .lockSvg--open{ opacity: 1; }
+    .lockBtn .lockSvg--closed{ opacity: 0; }
+    .lockBtn.locked .lockSvg--open{ opacity: 0; }
+    .lockBtn.locked .lockSvg--closed{ opacity: 1; }
+    .lockBtn:not(.locked):hover .lockSvg--open{ opacity: 0; }
+    .lockBtn:not(.locked):hover .lockSvg--closed{ opacity: 1; }
+    .lockBtn.locked:hover .lockSvg--open{ opacity: 1; }
+    .lockBtn.locked:hover .lockSvg--closed{ opacity: 0; }
+
+    @media (hover: hover) and (pointer: fine){
+      .lockBtn[data-tip]::after{
+        content: attr(data-tip);
+        position: absolute;
+        left: 50%;
+        top: calc(100% + 8px);
+        transform: translate(-50%, -4px);
+        color: var(--ui);
+        font-size: 9px;
+        letter-spacing: .10em;
+        text-transform: uppercase;
+        line-height: 1;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .12s ease, transform .12s ease;
+      }
+      .lockBtn[data-tip]:hover::after{
+        opacity: .9;
+        transform: translate(-50%, 0);
+      }
     }
-    .fa-lock-open{
-      --faMask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M17%209H8V7a4%204%200%200%201%207.6-1.6l-1.8.8A2%202%200%200%200%2010%207v2H7a2%202%200%200%200-2%202v9a2%202%200%200%200%202%202h10a2%202%200%200%200%202-2v-9a2%202%200%200%200-2-2z%27/%3E%3C/svg%3E");
-    }
+
     .iconBtn{
       width: 34px;
       height: var(--pillH);
@@ -306,9 +312,13 @@
       color: var(--ui);
       border-color: var(--ui3);
     }
-    .iconBtn:hover::before{
-      background: color-mix(in srgb, var(--btnBg) 50%, transparent);
+    .iconBtn:hover::before,
+    .iconBtn.forceHover::before{
+      background: color-mix(in srgb, var(--btnBg) 70%, transparent);
       filter: none;
+    }
+    .iconBtn:active::before{
+      background: color-mix(in srgb, var(--btnBg) 70%, transparent);
     }
     .iconBtn:disabled:hover{
       filter: none;
@@ -405,7 +415,7 @@
     }
     .grp.words{
       flex: 0 0 auto;
-      align-items: center;
+      align-items: stretch;
     }
 
     .label{
@@ -469,11 +479,26 @@
     .colorBtn:not(.on){
       background: transparent;
     }
-    .colorBtn:hover{
+    .colorBtn:not(.on):hover,
+    .colorBtn.forceHover:not(.on){
       background: color-mix(in srgb, var(--btnBg) 50%, transparent);
       filter: none;
       color: var(--ui);
       border-color: var(--ui3);
+    }
+    .colorBtn.on:hover,
+    .colorBtn.forceHover.on{
+      background: color-mix(in srgb, var(--btnBg) 70%, transparent);
+      filter: none;
+      color: var(--ui);
+      border-color: transparent;
+    }
+    .colorBtn:not(.on):active{
+      /* Helps Safari apply the hover fill immediately on click. */
+      background: color-mix(in srgb, var(--btnBg) 50%, transparent);
+    }
+    .colorBtn.on:active{
+      background: color-mix(in srgb, var(--btnBg) 70%, transparent);
     }
     .colorBtn.disabled{
       opacity: 0.55;
@@ -519,6 +544,21 @@
       text-align: center;
       padding: 0 2px;
     }
+
+    /* Center the "Sentence Structure" title while keeping the tiny on/off indicator on the right. */
+    .grp.words .labelRow{
+      position: relative;
+      justify-content: flex-end;
+      width: 100%;
+    }
+    .grp.words .labelRow .label{
+      position:absolute;
+      left:50%;
+      transform: translateX(-50%);
+    }
+    .grp.words .labelRow .hoverVal{
+      margin-left: auto;
+    }
     .actionBtn{
       text-align:center;
       width: 100%;
@@ -549,11 +589,25 @@
       color: var(--ui);
       border-color: var(--ui3);
     }
-    .ssBtn:hover{
+    .ssBtn:not(.on):hover,
+    .ssBtn.forceHover:not(.on){
       background: color-mix(in srgb, var(--ssBg) 50%, transparent);
       filter: none;
       color: var(--ui);
       border-color: var(--ui3);
+    }
+    .ssBtn.on:hover,
+    .ssBtn.forceHover.on{
+      background: color-mix(in srgb, var(--ssBg) 70%, transparent);
+      filter: none;
+      color: var(--ui);
+      border-color: transparent;
+    }
+    .ssBtn:not(.on):active{
+      background: color-mix(in srgb, var(--ssBg) 50%, transparent);
+    }
+    .ssBtn.on:active{
+      background: color-mix(in srgb, var(--ssBg) 70%, transparent);
     }
 
     .sliderRow{
@@ -658,10 +712,25 @@
       background: var(--fillCol);
       box-shadow: inset 0 0 0 var(--swRing) var(--ringCol);
     }
-    .swatch:hover{
+    .swatch:not(.on):hover,
+    .swatch.forceHover:not(.on){
       background: color-mix(in srgb, var(--fillCol) 50%, transparent);
       box-shadow: inset 0 0 0 var(--swRing) color-mix(in srgb, var(--ringCol) 50%, transparent);
       filter: none;
+    }
+    .swatch.on:hover,
+    .swatch.forceHover.on{
+      background: color-mix(in srgb, var(--fillCol) 70%, transparent);
+      box-shadow: inset 0 0 0 var(--swRing) color-mix(in srgb, var(--ringCol) 70%, transparent);
+      filter: none;
+    }
+    .swatch:not(.on):active{
+      background: color-mix(in srgb, var(--fillCol) 50%, transparent);
+      box-shadow: inset 0 0 0 var(--swRing) color-mix(in srgb, var(--ringCol) 50%, transparent);
+    }
+    .swatch.on:active{
+      background: color-mix(in srgb, var(--fillCol) 70%, transparent);
+      box-shadow: inset 0 0 0 var(--swRing) color-mix(in srgb, var(--ringCol) 70%, transparent);
     }
 
     @supports not (color-mix(in srgb, red 30%, transparent)){
@@ -790,13 +859,24 @@
       </div>
       <div id="titleExtras" aria-label="Extras">
         <button id="screenshotBtn" type="button" class="colorBtn" aria-label="Screenshot (S)">Screenshot</button>
-        <button id="lockLayoutBtn" type="button" class="colorBtn lockBtn" aria-label="Lock layout" aria-pressed="false">
-          <span class="lockText lockText--lock">Lock layout</span>
-          <span class="lockText lockText--locked">Locked layout</span>
-          <span class="lockText lockText--unlock">Unlock layout</span>
+        <button id="lockCompositionBtn" type="button" class="colorBtn lockBtn" aria-label="Lock composition" aria-pressed="false" data-tip="lock composition">
           <span class="lockIcons" aria-hidden="true">
-            <i class="fa-solid fa-lock-open"></i>
-            <i class="fa-solid fa-lock"></i>
+            <!-- Open lock (default) -->
+            <svg class="lockSvg lockSvg--open" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+              <rect x="5" y="10" width="14" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <!-- Open shackle: pivots on the right + slightly raised -->
+              <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" transform="translate(34 -1) scale(-1 1)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- Slot -->
+              <rect x="9" y="15" width="6" height="2" fill="currentColor"/>
+            </svg>
+            <!-- Closed lock (hover when unlocked, default when locked) -->
+            <svg class="lockSvg lockSvg--closed" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+              <rect x="5" y="10" width="14" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              <!-- Slightly taller closed shackle -->
+              <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- Keyhole -->
+              <rect x="11" y="14" width="2" height="5" fill="currentColor"/>
+            </svg>
           </span>
         </button>
       </div>
@@ -808,7 +888,10 @@
         <!-- SENTENCE STRUCTURE -->
         <div class="row centerRow">
           <div class="grp words">
-            <div class="label">Sentence Structure</div>
+            <div class="labelRow">
+              <div class="label">Sentence Structure</div>
+              <div class="val hoverVal" id="partsHover">&nbsp;</div>
+            </div>
             <div class="btnGroup centered" id="partsRow"></div>
           </div>
         </div>
@@ -1252,7 +1335,7 @@ const prevPoemBtn = document.getElementById("prevPoemBtn");
 const pausePoemBtn = document.getElementById("pausePoemBtn");
 const nextPoemBtn = document.getElementById("nextPoemBtn");
 const screenshotBtn = document.getElementById("screenshotBtn");
-const lockLayoutBtn = document.getElementById("lockLayoutBtn");
+const lockCompositionBtn = document.getElementById("lockCompositionBtn");
 
 const speedVal = document.getElementById("speedVal");
 const bgBrightVal = document.getElementById("bgBrightVal");
@@ -1267,6 +1350,7 @@ const bdThickVal = document.getElementById("bdThickVal");
 const bgHover = document.getElementById("bgHover");
 const fgHover = document.getElementById("fgHover");
 const bdHover = document.getElementById("bdHover");
+const partsHover = document.getElementById("partsHover");
 
 const sliderEls = [
   speedEl, bgBrightEl, fgBrightEl, bdBrightEl,
@@ -2648,7 +2732,7 @@ const last = { phrase:"", bg:"", fg:"", bd:"" };
 let timerId = null;
 let isFirstFrame = true;
 let isPaused = false;
-let isLayoutLocked = false;
+let isCompositionLocked = false;
 
 /* ================= Playback history ================= */
 const HISTORY_MAX = 1000;
@@ -2739,15 +2823,17 @@ function togglePaused(){
   setPaused(!isPaused);
 }
 
-function syncLayoutLockBtn(){
-  if(!lockLayoutBtn) return;
-  lockLayoutBtn.classList.toggle("locked", isLayoutLocked);
-  lockLayoutBtn.classList.toggle("on", isLayoutLocked);
-  lockLayoutBtn.setAttribute("aria-pressed", isLayoutLocked ? "true" : "false");
+function syncCompositionLockBtn(){
+  if(!lockCompositionBtn) return;
+  lockCompositionBtn.classList.toggle("locked", isCompositionLocked);
+  lockCompositionBtn.classList.toggle("on", isCompositionLocked);
+  lockCompositionBtn.setAttribute("aria-pressed", isCompositionLocked ? "true" : "false");
+  lockCompositionBtn.setAttribute("aria-label", isCompositionLocked ? "Unlock composition" : "Lock composition");
+  lockCompositionBtn.dataset.tip = isCompositionLocked ? "unlock composition" : "lock composition";
 }
-function toggleLayoutLock(){
-  isLayoutLocked = !isLayoutLocked;
-  syncLayoutLockBtn();
+function toggleCompositionLock(){
+  isCompositionLocked = !isCompositionLocked;
+  syncCompositionLockBtn();
 }
 
 function goPrevPoem(){
@@ -2779,6 +2865,16 @@ function setCalmStart(){
 function renderSentenceButtons(){
   const container = document.getElementById("partsRow");
   container.innerHTML = "";
+  let stickyLabel = "";
+
+  function setPartsHoverText(t){
+    if(!partsHover) return;
+    if(t){
+      partsHover.textContent = String(t).toLowerCase();
+    }else{
+      partsHover.innerHTML = "&nbsp;";
+    }
+  }
 
   const partToPal = {
     description: "earthy",
@@ -2818,10 +2914,25 @@ function renderSentenceButtons(){
         const name = btn.textContent;
         btn.classList.toggle("on", sel.parts.has(name));
       });
+
+      stickyLabel = sel.parts.has(opt) ? "on" : "off";
+      setPartsHoverText(stickyLabel);
     });
 
     container.appendChild(b);
   }
+
+  container.addEventListener("mouseover", (e)=>{
+    const btn = e.target.closest(".ssBtn");
+    if(!btn) return;
+    const name = btn.textContent;
+    if(!name) return;
+    // Show the action (what clicking will do).
+    setPartsHoverText(sel.parts.has(name) ? "off" : "on");
+  });
+  container.addEventListener("mouseleave", ()=>{
+    setPartsHoverText(stickyLabel);
+  });
 }
 
 function refreshSentenceButtonColors(){
@@ -2910,7 +3021,7 @@ function applyButtonColors(){
 
   // Title extras
   if(screenshotBtn) screenshotBtn.style.setProperty("--btnBg", paletteColorAvoid("retro", 1, bgAvoid));
-  if(lockLayoutBtn) lockLayoutBtn.style.setProperty("--btnBg", paletteColorAvoid("earthy", 2, bgAvoid));
+  if(lockCompositionBtn) lockCompositionBtn.style.setProperty("--btnBg", paletteColorAvoid("earthy", 1, bgAvoid));
 
   // Playback buttons (3 different palettes chosen on init)
   if(prevPoemBtn) prevPoemBtn.style.setProperty("--btnBg", paletteColorAvoid(titleCtrlTheme.prev, 0, bgAvoid));
@@ -3181,10 +3292,71 @@ function groupClientRectsIntoLines(rects){
     }));
 }
 
+function getRenderedLinesForScreenshot(){
+  const raw = String(phraseEl.textContent || "").replace(/\r/g, "");
+  const text = raw.replace(/\s+/g, " ").trim();
+  if(!text) return [];
+
+  // "one word per line" mode
+  if(clamp(Number(widthEl.value), 0, 100) === 0){
+    return text.split(/\s+/).filter(Boolean);
+  }
+
+  // If the DOM contains <br> for any reason, trust it.
+  if(phraseEl.querySelector("br")){
+    return String(phraseEl.innerText || "")
+      .replace(/\r/g, "")
+      .split("\n")
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  // Normal mode is a single text node (we set innerHTML to plain text).
+  const node = phraseEl.firstChild;
+  if(!node || node.nodeType !== Node.TEXT_NODE){
+    return [text];
+  }
+
+  const words = [];
+  const re = /\S+/g;
+  let m;
+  while((m = re.exec(node.data))){
+    words.push({ word: m[0], start: m.index, end: m.index + m[0].length });
+  }
+  if(!words.length) return [text];
+
+  const lines = [];
+  const range = document.createRange();
+  const EPS = 2.0;
+  let curTop = null;
+  let cur = [];
+
+  for(const w of words){
+    range.setStart(node, w.start);
+    range.setEnd(node, w.end);
+    const r = range.getBoundingClientRect();
+    if(!r || r.width <= 0 || r.height <= 0) continue;
+    if(curTop == null){
+      curTop = r.top;
+      cur.push(w.word);
+      continue;
+    }
+    if(Math.abs(r.top - curTop) <= EPS){
+      cur.push(w.word);
+    }else{
+      if(cur.length) lines.push(cur.join(" "));
+      cur = [w.word];
+      curTop = r.top;
+    }
+  }
+  if(cur.length) lines.push(cur.join(" "));
+
+  return lines.length ? lines : [text];
+}
+
 function takeScreenshot(){
   try{
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const { w: vw, h: vh } = getViewportSize();
     const dpr = Math.max(1, Math.round((window.devicePixelRatio || 1) * 100) / 100);
 
     const canvas = document.createElement("canvas");
@@ -3208,8 +3380,8 @@ function takeScreenshot(){
     }
 
     // Text
-    const text = (phraseEl.innerText || "").replace(/\r/g, "");
-    if(text.trim()){
+    const lines = getRenderedLinesForScreenshot();
+    if(lines.length){
       const cs = getComputedStyle(phraseEl);
       const fontSize = cs.fontSize || "48px";
       const fontWeight = cs.fontWeight || "600";
@@ -3220,7 +3392,6 @@ function takeScreenshot(){
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
 
-      const lines = text.split("\n");
       const lineRects = groupClientRectsIntoLines(phraseInkRects());
       const n = Math.min(lines.length, lineRects.length);
 
@@ -3248,12 +3419,25 @@ function takeScreenshot(){
     canvas.toBlob((blob)=>{
       if(!blob) return;
       const now = new Date();
-      const pad = (n)=> String(n).padStart(2, "0");
-      const stamp = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+      const dateStamp = `${now.getMonth() + 1}.${now.getDate()}.${now.getFullYear()}`;
+      const pad2 = (n)=> String(n).padStart(2, "0");
+      const dayKey = `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+
+      let n = 1;
+      try{
+        const k = `sculpture_poems_screenshot_counter_${dayKey}`;
+        const prev = Math.floor(Number(localStorage.getItem(k) || "0"));
+        n = (Number.isFinite(prev) && prev >= 0) ? (prev + 1) : 1;
+        localStorage.setItem(k, String(n));
+      }catch(e){
+        window.__sculpturePoemsScreenshotN = (window.__sculpturePoemsScreenshotN || 0) + 1;
+        n = window.__sculpturePoemsScreenshotN;
+      }
+
       const a = document.createElement("a");
       const url = URL.createObjectURL(blob);
       a.href = url;
-      a.download = `object-poem_${stamp}.png`;
+      a.download = `Poem-${dateStamp}-${n}.png`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -3421,7 +3605,7 @@ function nextFrame(){
   const wasFirst = isFirstFrame;
   if(isFirstFrame){
     isFirstFrame = false;
-  }else if(!isLayoutLocked){
+  }else if(!isCompositionLocked){
     const bgBase = pickColorNonRepeating("bg", sel.bgColor, new Set());
     current.bgBase = bgBase || current.bgBase;
 
@@ -3432,7 +3616,7 @@ function nextFrame(){
     current.bdBase = bdBase || current.bdBase;
   }
 
-  if(!isLayoutLocked && !wasFirst){
+  if(!isCompositionLocked && !wasFirst){
     advancePaletteCycle();
   }
 
@@ -3456,6 +3640,24 @@ function showUI(){
 });
 
 /* ================= Events ================= */
+// Safari sometimes fails to re-apply :hover styles immediately after a click when classes toggle.
+// This adds a tiny "forceHover" class while the pointer is over the button to keep hover fills consistent.
+(function initForceHoverFix(){
+  if(!window.matchMedia) return;
+  const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  if(!canHover) return;
+
+  document.addEventListener("pointerdown", (e)=>{
+    const btn = e.target && e.target.closest ? e.target.closest("button") : null;
+    if(!btn) return;
+    btn.classList.add("forceHover");
+
+    const clear = ()=> btn.classList.remove("forceHover");
+    btn.addEventListener("mouseleave", clear, {once:true});
+    btn.addEventListener("pointercancel", clear, {once:true});
+  }, true);
+})();
+
 speedEl.addEventListener("input", ()=>{ scheduleTick(); showUI(); });
 bgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); showUI(); });
 fgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); showUI(); });
@@ -3504,7 +3706,7 @@ if(prevPoemBtn) prevPoemBtn.addEventListener("click", ()=>{ goPrevPoem(); showUI
 if(pausePoemBtn) pausePoemBtn.addEventListener("click", ()=>{ togglePaused(); showUI(); });
 if(nextPoemBtn) nextPoemBtn.addEventListener("click", ()=>{ goNextPoem(); showUI(); });
 if(screenshotBtn) screenshotBtn.addEventListener("click", ()=>{ snapScreenshot(); showUI(); });
-if(lockLayoutBtn) lockLayoutBtn.addEventListener("click", ()=>{ toggleLayoutLock(); showUI(); });
+if(lockCompositionBtn) lockCompositionBtn.addEventListener("click", ()=>{ toggleCompositionLock(); showUI(); });
 
 window.addEventListener("keydown", (e)=>{
   if(e.repeat) return;
@@ -3594,7 +3796,7 @@ window.addEventListener("keydown", (e)=>{
 
   syncFullscreenBtn();
   syncPauseBtn();
-  syncLayoutLockBtn();
+  syncCompositionLockBtn();
   setCalmStart();
   const isCoarse = window.matchMedia("(pointer: coarse)").matches;
   if(isCoarse){
