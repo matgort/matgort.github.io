@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <title>Object Poems</title>
+  <title>Sculpture Poems</title>
 
   <style>
     :root{
@@ -35,6 +35,9 @@
       --pillH: 16px;
       --pillPadX: 10px;
       --pillFont: 7.1px;
+
+      /* Right-side action buttons (Card / Full screen) */
+      --actionW: 86px;
 
       /* Swatches */
       --swOuter: 1px;
@@ -89,40 +92,41 @@
       left:50%;
       top: var(--yPct);
       transform: translate(-50%, -50%);
+      user-select:none;
+
+      text-align:center;
+      width: 100vw;
+      max-width: 100vw;
+      z-index: 25;
+    }
+
+    #phraseText{
+      display:block;
+      margin-left: auto;
+      margin-right: auto;
       font-weight: 650;
       font-size: calc(clamp(32px, 5vw, 92px) * var(--textScale) * var(--fitScale));
       line-height:1.12;
       letter-spacing:.2px;
-      user-select:none;
-
       width: var(--phraseW);
       max-width: calc(100vw - (var(--edgePad) * 2));
       text-align:center;
-
       white-space: normal;
       overflow-wrap: normal;
       word-break: normal;
       hyphens: none;
     }
 
-    /* Border behind everything */
-    #borderFrame{
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      display: none;
-      z-index: 5;
-      overflow: visible;
-    }
-    #borderFrame .b{
-      position: fixed;
+    /* Card behind phrase */
+    #card{
+      position:absolute;
+      left:50%;
+      top: var(--yPct);
+      transform: translate(-50%, -50%);
       background: transparent;
       pointer-events: none;
+      z-index: 10;
     }
-    #borderFrame .top { left:0; right:0; top:0; height:0; }
-    #borderFrame .bottom { left:0; right:0; bottom:0; height:0; }
-    #borderFrame .left { top:0; bottom:0; left:0; width:0; }
-    #borderFrame .right { top:0; bottom:0; right:0; width:0; }
 
     /* ===== UI wrapper (title + bar) =====
        Title is now part of this UI and fades with it.
@@ -139,6 +143,10 @@
       opacity:0;
       transform: translateY(10px);
     }
+    #uiWrap.hidden #bar,
+    #uiWrap.hidden #titleBlock{
+      pointer-events: none;
+    }
 
     /* ===== Title (inside uiWrap, NOT pointer-interactive) ===== */
     #titleBlock{
@@ -147,7 +155,7 @@
       left: 0;
       right: 0;
       z-index: 40;
-      pointer-events: none;
+      pointer-events: auto;
 
       display:flex;
       flex-direction:column;
@@ -176,6 +184,160 @@
       line-height: 1.2;
       font-weight: 560;
       opacity: .88;
+    }
+    #titleControls{
+      display:flex;
+      gap: 10px;
+      justify-content:center;
+      align-items:center;
+      pointer-events: auto;
+      margin-top: 24px; /* lowered ~20px */
+    }
+    #titleExtras{
+      display:flex;
+      flex-direction: column;
+      gap: 8px;
+      justify-content:center;
+      align-items:center;
+      pointer-events: auto;
+      margin-top: 10px;
+    }
+    #screenshotBtn{
+      height: var(--pillH);
+      padding: 0 12px;
+      font-size: var(--pillFont);
+      min-width: 128px;
+    }
+
+    .lockBtn{
+      height: var(--pillH);
+      padding: 0 12px;
+      font-size: var(--pillFont);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+      min-width: 128px;
+    }
+    .lockBtn:hover{ filter: none; }
+    .lockBtn .lockText{ display:none; }
+    .lockBtn:not(.locked) .lockText--lock{ display:inline; }
+    .lockBtn.locked .lockText--locked{ display:inline; }
+    .lockBtn.locked:hover .lockText{ display:none; }
+    .lockBtn.locked:hover .lockText--unlock{ display:inline; opacity: .72; }
+
+    .lockIcons{
+      position: relative;
+      width: 14px;
+      height: 14px;
+      display:inline-block;
+      flex: 0 0 auto;
+    }
+    .lockIcons .fa-solid{
+      position:absolute;
+      inset:0;
+      transition: opacity 140ms ease;
+    }
+    .lockBtn .fa-lock-open{ opacity: 1; }
+    .lockBtn .fa-lock{ opacity: 0; }
+    .lockBtn.locked .fa-lock-open{ opacity: 0; }
+    .lockBtn.locked .fa-lock{ opacity: 1; }
+    .lockBtn.locked:hover .fa-lock-open{ opacity: 1; }
+    .lockBtn.locked:hover .fa-lock{ opacity: 0; }
+
+    /* Minimal FA-style icons without loading Font Awesome (uses masks). */
+    .fa-solid{
+      display:inline-block;
+      width: 14px;
+      height: 14px;
+      color: inherit;
+    }
+    .fa-solid::before{
+      content:"";
+      display:block;
+      width:100%;
+      height:100%;
+      background-color: currentColor;
+      -webkit-mask: var(--faMask) center/contain no-repeat;
+      mask: var(--faMask) center/contain no-repeat;
+    }
+    .fa-lock{
+      --faMask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M17%209h-1V7a4%204%200%200%200-8%200v2H7a2%202%200%200%200-2%202v9a2%202%200%200%200%202%202h10a2%202%200%200%200%202-2v-9a2%202%200%200%200-2-2zm-6%200V7a2%202%200%201%201%204%200v2h-4z%27/%3E%3C/svg%3E");
+    }
+    .fa-lock-open{
+      --faMask: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Cpath%20d%3D%27M17%209H8V7a4%204%200%200%201%207.6-1.6l-1.8.8A2%202%200%200%200%2010%207v2H7a2%202%200%200%200-2%202v9a2%202%200%200%200%202%202h10a2%202%200%200%200%202-2v-9a2%202%200%200%200-2-2z%27/%3E%3C/svg%3E");
+    }
+    .iconBtn{
+      width: 34px;
+      height: var(--pillH);
+      padding: 0;
+      letter-spacing: 0;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border-color: var(--ui3);
+      color: var(--ui);
+      background: transparent;
+      position: relative;
+    }
+    .iconBtn::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius: inherit;
+      background: var(--btnBg, transparent);
+    }
+    .iconBtn svg{
+      width: 14px;
+      height: 14px;
+      display:block;
+      position: relative;
+      z-index: 1;
+    }
+    #pausePoemBtn .playIcon{ display:none; }
+    #pausePoemBtn.paused .pauseIcon{ display:none; }
+    #pausePoemBtn.paused .playIcon{ display:block; }
+    .iconBtn:disabled{
+      opacity: 0.35;
+      cursor: default;
+      background: transparent !important;
+    }
+    .iconBtn:hover{
+      color: var(--ui);
+      border-color: var(--ui3);
+    }
+    .iconBtn:hover::before{
+      background: color-mix(in srgb, var(--btnBg) 50%, transparent);
+      filter: none;
+    }
+    .iconBtn:disabled:hover{
+      filter: none;
+      color: var(--ui);
+      border-color: var(--ui3);
+    }
+    .iconBtn:disabled:hover::before{ filter: none; }
+
+    @media (hover: hover) and (pointer: fine){
+      .iconBtn[data-tip]::after{
+        content: attr(data-tip);
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 8px);
+        transform: translate(-50%, 4px);
+        color: var(--ui);
+        font-size: 9px;
+        letter-spacing: .10em;
+        text-transform: uppercase;
+        line-height: 1;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .12s ease, transform .12s ease;
+      }
+      .iconBtn[data-tip]:hover::after{
+        opacity: .9;
+        transform: translate(-50%, 0);
+      }
     }
 
     /* ===== UI bar ===== */
@@ -293,20 +455,25 @@
       -webkit-tap-highlight-color: transparent;
     }
     button:active{ transform: translateY(1px); }
-    button:hover{ color: var(--fg); border-color: var(--ui); }
+    button:hover{ color: var(--ui); border-color: var(--ui3); }
+
+    /* When a button is "on", kill the outline entirely (keeps sliders unaffected). */
+    button.on{ border-color: transparent !important; }
+    button.on:hover{ border-color: transparent !important; }
 
     .colorBtn{
       background: var(--btnBg, transparent);
       border-color: var(--ui3);
       color: var(--ui);
     }
-    .colorBtn:hover{
-      filter: brightness(0.5);
-      color: var(--ui);
-      border-color: var(--ui3);
-    }
     .colorBtn:not(.on){
       background: transparent;
+    }
+    .colorBtn:hover{
+      background: color-mix(in srgb, var(--btnBg) 50%, transparent);
+      filter: none;
+      color: var(--ui);
+      border-color: var(--ui3);
     }
     .colorBtn.disabled{
       opacity: 0.55;
@@ -327,13 +494,35 @@
     .actionSlot{
       display:flex;
       align-items:flex-end;
-      justify-content:center;
+      justify-content:flex-end;
       margin-left:auto;
       flex: 0 0 auto;
+      width: var(--actionW);
+    }
+    .actionGroup{
+      display:flex;
+      flex-direction: column;
+      align-items:center;
+      gap: 6px;
+      width: var(--actionW);
+    }
+    .actionText{
+      font-size: 9px;
+      letter-spacing:.10em;
+      text-transform:uppercase;
+      color: var(--ui);
+      user-select:none;
+      line-height:1;
+      opacity:.82;
+      white-space:nowrap;
+      width: 100%;
+      text-align: center;
+      padding: 0 2px;
     }
     .actionBtn{
       text-align:center;
-      min-width: 110px;
+      width: 100%;
+      min-width: 0;
     }
 
 
@@ -356,11 +545,16 @@
       border-color: transparent;
     }
     .ssBtn:not(.on){
-      background: transparent !important;
-      color: var(--fg) !important;
-      border-color: var(--fg) !important;
+      background: transparent;
+      color: var(--ui);
+      border-color: var(--ui3);
     }
-    .ssBtn:hover{ filter: brightness(0.5); }
+    .ssBtn:hover{
+      background: color-mix(in srgb, var(--ssBg) 50%, transparent);
+      filter: none;
+      color: var(--ui);
+      border-color: var(--ui3);
+    }
 
     .sliderRow{
       display:flex;
@@ -402,12 +596,15 @@
       border-radius:50%;
       background: currentColor;
       margin-top:-4px;
+      border: 1px solid var(--ui);
+      box-sizing: border-box;
     }
     input[type=range]::-moz-range-thumb{
       width:10px; height:10px;
       border-radius:50%;
       background: currentColor;
-      border:0;
+      border: 1px solid var(--ui);
+      box-sizing: border-box;
     }
 
     .swatchWrap{
@@ -438,14 +635,20 @@
       width: fit-content;
     }
 
+    #phraseText.oneWord{
+      white-space: normal;
+      width: 100%;
+      max-width: 100%;
+    }
+
     .swatch{
       width: var(--swW);
       height: var(--pillH);
       padding: 0;
       border-radius: 999px;
       border: var(--swOuter) solid var(--fg);
-      background: color-mix(in srgb, var(--fillCol) 18%, transparent);
-      box-shadow: inset 0 0 0 var(--swRing) color-mix(in srgb, var(--ringCol) 30%, transparent);
+      background: transparent;
+      box-shadow: none;
       cursor: pointer;
       transition: transform .05s ease, filter .12s ease, box-shadow .12s ease, background-color .12s ease;
     }
@@ -455,28 +658,44 @@
       background: var(--fillCol);
       box-shadow: inset 0 0 0 var(--swRing) var(--ringCol);
     }
-    .swatch:hover{ filter: brightness(0.5); }
+    .swatch:hover{
+      background: color-mix(in srgb, var(--fillCol) 50%, transparent);
+      box-shadow: inset 0 0 0 var(--swRing) color-mix(in srgb, var(--ringCol) 50%, transparent);
+      filter: none;
+    }
 
     @supports not (color-mix(in srgb, red 30%, transparent)){
       .swatch{
         background: transparent;
-        box-shadow: inset 0 0 0 var(--swRing) var(--ringCol);
-        opacity: 0.75;
+        box-shadow: none;
+        opacity: 1;
       }
       .swatch.on{
         background: var(--fillCol);
-        opacity: 1;
+        box-shadow: inset 0 0 0 var(--swRing) var(--ringCol);
       }
+      .swatch:hover{
+        background: var(--fillCol);
+        box-shadow: inset 0 0 0 var(--swRing) var(--ringCol);
+        opacity: 0.85;
+      }
+
+      .colorBtn:hover{ background: var(--btnBg, transparent); }
+      .ssBtn:hover{ background: var(--ssBg); }
+      .iconBtn:hover::before{ background: var(--btnBg, transparent); }
     }
 
-    @media (pointer: coarse){
-      :root{
-        --pillH: 18px;
-        --pillPadX: 12px;
-        --pillFont: 7.6px;
-      }
-      button{ font-size: 7.4px; padding: 5px 8px; }
-      input[type=range]{ height: 22px; }
+@media (pointer: coarse){
+  :root{
+    --pillH: 18px;
+    --pillPadX: 12px;
+    --pillFont: 7.6px;
+    --actionW: 94px;
+  }
+  button{ font-size: 7.4px; padding: 5px 8px; }
+  .iconBtn{ width: 42px; height: var(--pillH); padding: 0; }
+  .iconBtn svg{ width: 18px; height: 18px; }
+  input[type=range]{ height: 22px; }
       input[type=range]::-webkit-slider-thumb{
         width:14px; height:14px;
         margin-top:-6px;
@@ -507,7 +726,7 @@
         --uiMaxW: 620px;
         --titlePadTop: 16px;
       }
-      #phrase{ font-size: calc(clamp(28px, 7vw, 70px) * var(--textScale) * var(--fitScale)); }
+      #phraseText{ font-size: calc(clamp(28px, 7vw, 70px) * var(--textScale) * var(--fitScale)); }
       #titleBlock .title{ font-size: 14px; }
       #titleBlock .sub{ font-size: 10px; }
       button{ font-size: 6.8px; padding: 3.4px 5.3px; }
@@ -538,21 +757,49 @@
 
 <body>
   <div id="stage">
-    <div id="phrase" role="status" aria-live="polite"></div>
-  </div>
-
-  <div id="borderFrame" aria-hidden="true">
-    <div class="b top"></div>
-    <div class="b right"></div>
-    <div class="b bottom"></div>
-    <div class="b left"></div>
+    <div id="card" aria-hidden="true"></div>
+    <div id="phrase" role="status" aria-live="polite">
+      <span id="phraseText"></span>
+    </div>
   </div>
 
   <!-- UI WRAP: title + bar (fades together) -->
   <div id="uiWrap">
-    <div id="titleBlock" aria-hidden="true">
-      <div class="title">Object Poems</div>
+    <div id="titleBlock">
+      <div class="title">Sculpture Poems</div>
       <div class="sub">written by Margot DeMarco, arranged by ChatGPT</div>
+      <div id="titleControls" aria-label="Playback controls">
+        <button id="prevPoemBtn" type="button" class="iconBtn" aria-label="Previous poem (Left arrow)" data-tip="back">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <button id="pausePoemBtn" type="button" class="iconBtn" aria-label="Pause (Space)" aria-pressed="false" data-tip="play/pause">
+          <svg class="pauseIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M7 6h3v12H7zM14 6h3v12h-3z" fill="currentColor"/>
+          </svg>
+          <svg class="playIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M9 7l10 5-10 5V7z" fill="currentColor"/>
+          </svg>
+        </button>
+        <button id="nextPoemBtn" type="button" class="iconBtn" aria-label="Next poem (Right arrow)" data-tip="forward">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      <div id="titleExtras" aria-label="Extras">
+        <button id="screenshotBtn" type="button" class="colorBtn" aria-label="Screenshot (S)">Screenshot</button>
+        <button id="lockLayoutBtn" type="button" class="colorBtn lockBtn" aria-label="Lock layout" aria-pressed="false">
+          <span class="lockText lockText--lock">Lock layout</span>
+          <span class="lockText lockText--locked">Locked layout</span>
+          <span class="lockText lockText--unlock">Unlock layout</span>
+          <span class="lockIcons" aria-hidden="true">
+            <i class="fa-solid fa-lock-open"></i>
+            <i class="fa-solid fa-lock"></i>
+          </span>
+        </button>
+      </div>
     </div>
 
     <div id="bar">
@@ -569,45 +816,48 @@
         <!-- SLIDERS -->
         <div class="sliderRow">
           <div class="ctrl">
-            <div class="labelRow"><div class="label">Speed</div><div class="val" id="speedVal">7.0s</div></div>
-            <input id="speedSlider" type="range" min="0" max="1" step="0.001" value="0.595">
+            <div class="labelRow"><div class="label">Background Brightness</div><div class="val" id="bgBrightVal">50%</div></div>
+            <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.50">
           </div>
 
           <div class="ctrl">
-            <div class="labelRow"><div class="label">Background Brightness</div><div class="val" id="bgBrightVal">70%</div></div>
-            <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.70">
+            <div class="labelRow"><div class="label">Text Brightness</div><div class="val" id="fgBrightVal">0%</div></div>
+            <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
           </div>
 
           <div class="ctrl">
-            <div class="labelRow"><div class="label">Text Brightness</div><div class="val" id="fgBrightVal">17%</div></div>
-            <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.17">
+            <div class="labelRow"><div class="label">Card Brightness</div><div class="val" id="bdBrightVal">100%</div></div>
+            <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
           </div>
 
           <div class="ctrl">
-            <div class="labelRow"><div class="label">Border Brightness</div><div class="val" id="bdBrightVal">50%</div></div>
-            <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="0.50">
-          </div>
-
-          <div class="ctrl">
-            <div class="labelRow"><div class="label">Border Thickness</div><div class="val" id="bdThickVal">75%</div></div>
-            <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.65">
+            <div class="labelRow"><div class="label">Card Size</div><div class="val" id="bdThickVal">30%</div></div>
+            <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.30">
           </div>
 
           <div class="actionSlot">
-            <button
-              id="bdToggleBtn"
-              type="button"
-              class="colorBtn actionBtn borderBtn"
-              aria-pressed="true">
-              Border
-            </button>
+            <div class="actionGroup" aria-label="Card">
+              <div class="actionText">Card</div>
+              <button
+                id="bdToggleBtn"
+                type="button"
+                class="colorBtn actionBtn"
+                aria-pressed="true">
+                On
+              </button>
+            </div>
           </div>
         </div>
 
         <div class="sliderRow">
           <div class="ctrl">
-            <div class="labelRow"><div class="label">Size</div><div class="val" id="sizeVal">100%</div></div>
-            <input id="sizeSlider" type="range" min="0.6" max="1.6" step="0.001" value="0.8">
+            <div class="labelRow"><div class="label">Speed</div><div class="val" id="speedVal">7.0s</div></div>
+            <input id="speedSlider" type="range" min="0" max="1" step="0.001" value="0.595">
+          </div>
+
+          <div class="ctrl">
+            <div class="labelRow"><div class="label">Text Size</div><div class="val" id="sizeVal">40%</div></div>
+            <input id="sizeSlider" type="range" min="0" max="150" step="0.1" value="40">
           </div>
 
           <div class="ctrl">
@@ -616,12 +866,15 @@
           </div>
 
           <div class="ctrl">
-            <div class="labelRow"><div class="label">Width</div><div class="val" id="widthVal">50%</div></div>
-            <input id="widthSlider" type="range" min="40" max="100" step="0.01" value="50">
+            <div class="labelRow"><div class="label">Width</div><div class="val" id="widthVal">40%</div></div>
+            <input id="widthSlider" type="range" min="0" max="100" step="0.01" value="40">
           </div>
 
           <div class="actionSlot">
-            <button id="fsBtn" type="button" class="colorBtn actionBtn">Full screen</button>
+            <div class="actionGroup" aria-label="Full screen">
+              <div class="actionText">Full screen</div>
+              <button id="fsBtn" type="button" class="colorBtn actionBtn" aria-pressed="false">Off</button>
+            </div>
           </div>
         </div>
 
@@ -650,7 +903,7 @@
           <div class="grp">
             <div class="swatchWrap">
               <div class="swatchHeader">
-                <div class="label">Border Colors</div>
+                <div class="label">Card Colors</div>
                 <div class="val hoverVal" id="bdHover">&nbsp;</div>
               </div>
               <div class="swatchRow" id="bdColorsRow"></div>
@@ -668,7 +921,8 @@ function uniq(arr){
   const s = new Set();
   for(const x of arr){
     const v = String(x ?? "").trim().replace(/\s+/g," ");
-    if(v) s.add(v);
+    const v2 = v.toLowerCase();
+    if(v2) s.add(v2);
   }
   return Array.from(s);
 }
@@ -703,6 +957,12 @@ function parsePx(val){
 }
 function getRootVarPx(name){
   return parsePx(getComputedStyle(document.documentElement).getPropertyValue(name));
+}
+function getRootVarVw(name){
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  if(v.endsWith("vw")) return Number(v.replace("vw","").trim());
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 }
 
 /* ================= Non-repeating shuffle bags ================= */
@@ -839,11 +1099,12 @@ function darkestHexFromPalette(palName){
 }
 
 /* ================= Controls ================= */
-const PART_OPTS = ["description","object","action","location"];
+const PART_OPTS = ["description","object","person","action","location"];
 const COLOR_OPTS = ["earthy","beachy","fleshy","retro","future","circus"];
 const SLIDER_PALS = ["circus","beachy","fleshy","retro","future","earthy","circus","beachy"];
 const palCycleIndex = {};
 const swatchRowOffset = { bg: 0, fg: 0, bd: 0 };
+const titleCtrlTheme = { prev: "beachy", pause: "fleshy", next: "circus" };
 
 function initPaletteCycles(){
   for(const name of COLOR_OPTS) palCycleIndex[name] = 0;
@@ -851,12 +1112,115 @@ function initPaletteCycles(){
   swatchRowOffset.bg = Math.floor(Math.random() * palLen);
   swatchRowOffset.fg = Math.floor(Math.random() * palLen);
   swatchRowOffset.bd = Math.floor(Math.random() * palLen);
+
+  // Title transport controls: pick 3 different palettes so the buttons don't match.
+  const picks = COLOR_OPTS.slice();
+  shuffleInPlace(picks);
+  titleCtrlTheme.prev = picks[0] || "beachy";
+  titleCtrlTheme.pause = picks[1] || picks[0] || "fleshy";
+  titleCtrlTheme.next = picks[2] || picks[0] || "circus";
 }
 function paletteColor(name, offset=0){
   const pal = PAL[name] || [];
   if(!pal.length) return "#000000";
   const idx = palCycleIndex[name] ?? 0;
   return pal[(idx + offset) % pal.length];
+}
+function normHex(hex){
+  return String(hex || "").trim().toLowerCase();
+}
+function getBgLiveHex(){
+  // Prefer the actual rendered background; fall back to what we'd compute right now.
+  const live = normHex(current.bgLive);
+  if(live) return live;
+  return normHex(applyDimmer(current.bgBase, Number(bgBrightEl.value)));
+}
+function paletteColorAvoid(palName, offset=0, avoidHex=""){
+  const pal = PAL[palName] || [];
+  if(!pal.length) return "#000000";
+  const avoid = normHex(avoidHex);
+  const idx = palCycleIndex[palName] ?? 0;
+  if(!avoid) return pal[(idx + offset) % pal.length];
+
+  for(let i=0; i<pal.length; i++){
+    const c = pal[(idx + offset + i) % pal.length];
+    if(normHex(c) !== avoid) return c;
+  }
+  return pal[(idx + offset) % pal.length];
+}
+
+function nudgeHex(hex, lDelta=0.07){
+  const {r,g,b} = hexToRgb(hex);
+  let {h,s,l} = rgbToHsl(r,g,b);
+  l = clamp(l + lDelta, 0, 1);
+  return setHsl(hex, h, s, l);
+}
+
+function pickUniquePaletteColor(palName, startOffset, usedNormSet, avoidHex=""){
+  const pal = PAL[palName] || [];
+  if(!pal.length) return "#000000";
+  const avoid = normHex(avoidHex);
+  const idx = palCycleIndex[palName] ?? 0;
+
+  // First pass: avoid background + avoid already-used colors.
+  for(let i=0; i<pal.length; i++){
+    const c = pal[(idx + startOffset + i) % pal.length];
+    const cn = normHex(c);
+    if(cn === avoid) continue;
+    if(usedNormSet && usedNormSet.has(cn)) continue;
+    if(usedNormSet) usedNormSet.add(cn);
+    return c;
+  }
+
+  // Second pass: if the only remaining option matches background, nudge it so it's not identical.
+  for(let i=0; i<pal.length; i++){
+    const c = pal[(idx + startOffset + i) % pal.length];
+    const cn = normHex(c);
+    if(usedNormSet && usedNormSet.has(cn)) continue;
+    const out = (cn === avoid) ? nudgeHex(c, 0.06) : c;
+    if(usedNormSet) usedNormSet.add(normHex(out));
+    return out;
+  }
+
+  // Fallback: any unused color from any palette (nudged if needed).
+  return pickUniqueAnyColor(usedNormSet, avoidHex);
+}
+
+function pickUniqueAnyColor(usedNormSet, avoidHex=""){
+  const avoid = normHex(avoidHex);
+  for(const palName of COLOR_OPTS){
+    const pal = PAL[palName] || [];
+    const idx = palCycleIndex[palName] ?? 0;
+    for(let i=0; i<pal.length; i++){
+      const c = pal[(idx + i) % pal.length];
+      const cn = normHex(c);
+      if(cn === avoid) continue;
+      if(usedNormSet && usedNormSet.has(cn)) continue;
+      if(usedNormSet) usedNormSet.add(cn);
+      return c;
+    }
+  }
+  // Absolute last resort: re-use a color, nudged.
+  const first = (PAL[COLOR_OPTS[0]] || [])[0] || "#000000";
+  const out = nudgeHex(first, 0.09);
+  if(usedNormSet) usedNormSet.add(normHex(out));
+  return out;
+}
+
+function pickRingColor(palName, startOffset, avoidHex="", fillHex=""){
+  const pal = PAL[palName] || [];
+  if(!pal.length) return "#cccccc";
+  const idx = palCycleIndex[palName] ?? 0;
+  const avoid = normHex(avoidHex);
+  const fillN = normHex(fillHex);
+  for(let i=0; i<pal.length; i++){
+    const c = pal[(idx + startOffset + i) % pal.length];
+    const cn = normHex(c);
+    if(cn === fillN) continue;
+    if(cn === avoid) continue;
+    return c;
+  }
+  return pal[(idx + startOffset) % pal.length];
 }
 function advancePaletteCycle(){
   for(const name of COLOR_OPTS){
@@ -867,10 +1231,10 @@ function advancePaletteCycle(){
 }
 
 /* ================= DOM refs ================= */
-const phraseEl = document.getElementById("phrase");
+const phraseEl = document.getElementById("phraseText");
 const uiWrapEl = document.getElementById("uiWrap");
 const barEl = document.getElementById("bar");
-const borderEl = document.getElementById("borderFrame");
+const cardEl = document.getElementById("card");
 
 const speedEl = document.getElementById("speedSlider");
 const bgBrightEl = document.getElementById("bgBrightSlider");
@@ -884,6 +1248,11 @@ const widthEl = document.getElementById("widthSlider");
 const bdThickEl = document.getElementById("bdThickSlider");
 const bdToggleBtn = document.getElementById("bdToggleBtn");
 const fsBtn = document.getElementById("fsBtn");
+const prevPoemBtn = document.getElementById("prevPoemBtn");
+const pausePoemBtn = document.getElementById("pausePoemBtn");
+const nextPoemBtn = document.getElementById("nextPoemBtn");
+const screenshotBtn = document.getElementById("screenshotBtn");
+const lockLayoutBtn = document.getElementById("lockLayoutBtn");
 
 const speedVal = document.getElementById("speedVal");
 const bgBrightVal = document.getElementById("bgBrightVal");
@@ -906,7 +1275,7 @@ const sliderEls = [
 
 /* ================= Selection state ================= */
 const sel = {
-  parts: new Set(PART_OPTS),
+  parts: new Set(["description","person","action","location"]),
   bgColor: new Set(COLOR_OPTS),
   fgColor: new Set(COLOR_OPTS),
   bdColor: new Set(COLOR_OPTS),
@@ -914,240 +1283,1253 @@ const sel = {
   borderThickness: Number(bdThickEl.value)
 };
 
-/* ================= Vocab banks (CONSOLIDATED: 4 categories only) ================= */
-/* Descriptors (DESC_COMMON + DESC_OBSCURE) */
-const DESC = uniq([
-  "brittle","woolen","velvety","ashen","antique","stately",
-  "baggy","bent","brassy","brilliant","bumpy","burnt","buttery","buzzing",
-  "charming","crumbly","crunchy","lightly crushed",
-  "drafty","dreamy","dusty","dimly lit",
-  "feathery","flashy","flavorful","fleshy","foamy","frosted","fruity","fried","furry",
-  "gentle","ghostly","gigantic","greasy",
-  "hard","jealous","joyful","jazzy","jiggly",
-  "leisurely","lively","messy","moldy","mysterious","nervous","oily","orderly","ornamental",
-  "painted","pearly","pillowy","poetic","poignant","polished","powdery",
-  "ribbed","rocky",
-  "salty","sandy","scrambled","sculpted","sculptural","slimy","slippery","smelly","smoggy",
-  "soft","stormy","strange","strappy","sweet",
-  "thick","thirsty","windy","worried","wrapped",
-  "sweaty","sunset","daybreak","elevated","elongated","smooth","curly","twisted","wiggly",
-  "burnished","reclusive","exploratory","introverted",
-  "dingy","patched","repaired","tarnished","melted","enlarged",
-  "moist","dewy","plump","buff","extended","compact","oversized","skimpy",
-  "malaise","ennui","weary","blasé","detached","indifferent","futile","languid","listless",
-  "vivacious","zestful","vigorous","verve","élan","immersed","flowing","delighted","radiant","witty","buoyant","spontaneous","lighthearted",
-  "attentive","subtle","nuanced","deft","precise","perceptive","evocative","suggestive",
-  "sparkly","glittery",
-  "loud","silent","muffled",
-  "wet","damp","dry","cracked",
-  "spilt","spoiled","rotten","fresh","growing","withering",
-  "elegant","crude","muscular","lean","long","short","tall","slim","chubby",
-  "cute","ugly","beautiful","contrasting",
-  "hairy","bald","shaved","stubbly","rough","matte","glossy",
-  "refined","understated","restrained","poised","tailored","classical",
-  "grand","petite","considered","ritualistic","witchy",
-  "dried out","lumpy","mindful","civilized","unhurried","guarded",
-  "formal","discreet","reserved","confident",
-  "diaphanous","opalescent","iridescent","mother-of-pearl","inlaid",
-  "sunken","padded","carpeted","sullen","supple","undulating",
-  "ubiquitous","obsequious",
-  "dulcet","flickering","fugitive","insular","smoky","atonal","hushed","muted",
-  "esoteric","arcane","hermetic","cryptic",
-  "wistful","pensive","yearning","plaintive","ethereal","reflective",
-  "nostalgic","reminiscent","unspoken","unrequited",
-  "accepting","tempered","subdued","veiled",
-  "balanced","tasteful","delicate","poorly proportioned",
-  "gracefully arranged","lightly worn","tenderly handled","gently used",
-  "herringbone","stone","quartz","emerald","ruby","diamond encrusted",
-  "granite","marble","soapstone","soapy","tie-died","asymmetrical","unbalanced","effervescent","despondent","petulant","hedonistic","gluttonous",
-  "malnourished","overflowing","puffy","bloated","maladjusted","transparent","translucent","decaying","plaintive","rueful","unctuous",
-  "a sycophantic",
-  "anti-fascist","ossified","vermicular","serene","freshly repaired","compact","pocket-sized","distended","muscular","lithe"
-]);
+/* ================= Vocab banks ================= */
+/*
+  Editing tips:
+  - One entry per line.
+  - Blank lines are fine.
+  - Everything is lowercased + de-duped at runtime.
+*/
+function vocabLines(str){
+  return uniq(
+    str
+      .split("\n")
+      .map(s => String(s).replace(/\r/g, "").trim())
+      .filter(Boolean)
+      .map(s => s.toLowerCase())
+  );
+}
 
-/* Objects (ALL merged; no context / no common/obscure split) */
-const OBJECTS = uniq([
-  "dish rack","drying rack","clothes line","shower head","kitchen sink","vanity mirror","hair brush","toilet paper",
-  "coffee mug","tea pot","tea bag","coffee maker","french press","percolator",
-  "frying pan","cutting board","crock pot","soupspoon",
-  "laundry basket","laundry hamper","trash can","mop bucket","broom",
-  "bed","mattress","bookshelf","bookcase","curtains","doorknob","window","lamp","lampshade","clock","wrist watch",
-  "cabinet","drawer","coffee table","ottoman","couch","love seat","chaise longue","cushion","throw pillow","duvet","comforter",
-  "bath tub","hot tub","jacuzzi",
-  "lipstick","lip gloss","blush","makeup","nail polish","perfume bottle","deodorant","hair clip","hair tie",
-  "high heels","tights","pantyhose","cardigan","turtleneck","necklace","bracelet","wedding band","ring","pendant",
-  "pizza box","mini fridge","refrigerator","oven","freezer","closet","hardwood floor","carpet","rug","upholstery",
-  "remote control","computer monitor","ipad","tablet",
-  "wardrobe","drapery","portrait","trophy","moving boxes","linen napkin","room service tray","soap",
-  "keyboard","printer","xerox machine","photocopier","cash register",
-  "envelope","notebook","dictionary","paperback book",
-  "workbench","sawhorse","chisel","paint brush","spray paint","ink wash","canvas","plywood","ladder","toolbox","tape measure","scissors",
-  "drill press","table saw","bandsaw","vacuum cleaner","hot glue gun","dental pick","drill",
-  "office cubicle","lecture hall","waiting room","doctor's office","library","gallery","museum",
-  "ATM",
-  "seltzer","diner booth","martini","cocktail","wine glass",
-  "taqueria","dive bar","dance club","punk club","rave","comedy club","microphone","record store",
-  "playing cards","chess board","board game","video game","playstation",
-  "slot machine","grand piano","pipe organ","drum kit","synthesizer",
-  "bicycle","station wagon","hatchback","convertible","sports car","subaru forester",
-  "water slide","trailhead","switchback","mountain lodge","skis",
-  "baseball bat",
-  "harmonica","folded map","ticket stub",
-  "drinking glass","beer stein","high ball glass","ash tray","dust pan","chapstick",
-  "dining room table","end table","bedside table","night stand","foot rest","foot stool",
-  "step ladder","scaffolding",
-  "beer can","beer bottle","canned cocktail","mocktail","mojito","margarita","pilsner","lager","guinness","draft beer",
-  "rosé wine","glass of blush","hot toddy","green juice","celery juice","pomegranate juice","carrot juice","tomato juice",
-  "noodles","legal pad","note pad","eye drops","bluetooth speaker","SUV","mini-van","lawn mower","air conditioner",
-  "recycling bin","white glue","superglue","krazy glue","bouncy ball",
-  "bacon egg and cheese","bagel with cream cheese","peanut butter and jelly","hero sandwich","gyro",
-  "mission style burrito","enchiladas",
-  "t-shirt","tank top","scoop neck shirt","spaghetti strap tank top","undershirt","tube top",
-  "push-up bra","bralette","lace thong","lace underwear","lace bra","halter top",
-  "knit sweater","knitting needles","ball of yarn",
-  "cheeseburger","hamburger","big mac","fried chicken sandwich","grilled chicken sandwich",
-  "couscous","quinoa","grain bowl","paint bucket","side salad","caesar salad","greek salad","cucumber salad","seaweed salad","garlicky kale",
-  "rice bowl","mexican food","italian food","french food","japanese food","korean food",
-  "ham sandwich","ramen","bento box","japanese curry","chicken katsu","karaage","nashville hot fried chicken",
-  "pulled pork sandwich","pastrami on rye","egg salad","poached egg","hard boiled egg","soft boiled egg","fried rice",
-  "wicker basket","cross-body bag","denim skirt","handbag","shopping cart","purse",
-  "catchers mitt","baseball glove","fingerless gloves","driving gloves","steering wheel",
-  "gaming chair","rocking chair","vending machine",
-  "slate tile","granite counter tops","bulletin board","tie pin","name tag","sheriff's badge",
-  "bunk beds","futon","keg of beer","fur pelt","participation trophy",
-  "absinthe","fernet","aperol spritz","tequila shot","whisky sour","moo shu pork",
-  "propeller beanie","metal detector","geiger counter","nitrous oxide canister","baggie of ketamine","heroin spoon","bag of weed","mushroom chocolate","tab of acid",
-  "laser pointer","dvd player","hedge trimmer","weed whacker","dirt bike","chopper","pinwheel",
-  "solar panel","sprinter van","ford bronco","riding lawn mower",
-  "instruction manual","printed out pdf","roku tv","flip phone","trade paperback","dvd box set","blu-ray player","cd-rom",
-  "oled panel","circuit board","circuit breaker","portable fan",
-  "croquet mallet","croquette","sizzling fajita platter","bibimbap","wedge salad",
-  "director's chair","padded booth","straight jacket","hot dog cart","x-ray machine","samovar of coffee","electric kettle","air fryer",
-  "wine decanter","whoopie cushion","sound board","alarm bell","birdbath","birdcage","birdhouse","hourglass","sundial","pendulum","pocket watch",
-  "velvet rope","bank vault","water tower","traffic median","airport shuttle",
-  "dune buggy","dump truck","freight train","gondola",
-  "greenhouse","terrarium",
-  "record player","typewriter","ukulele","trombone","tambourine","saxophone","banjo","bagpipe",
-  "brownstone","townhouse","alleyway","dumpster","manhole cover","sewer",
-  "parking garage","parking lot","driveway",
-  "parachute","bungee cord","propeller","umbrella",
-  "cooler","cardboard box","tissue box","newspaper","tombstone","baby bottle","maxi pad",
-  "deck chair","neon sign","fidget spinner","pack of cigarettes","bow tie","christmas lights","shop vac","crushed cicodin","line of cocaine","hash pipe","opium tea","welding mask","latex mask","leather gloves","hairpiece","chunky heels","reading glasses","tap shoes","kitten heels","sensible pumps","strappy sandals","potted plant","succulent garden","old washing machine"
-]);
+/* description (object) */
+const DESC_OBJECT = vocabLines(`
+brittle
+woolen
+velvety
+ashen
+antique
+stately
+baggy
+bent
+brassy
+brilliant
+bumpy
+burnt
+buttery
+buzzing
+charming
+crumbly
+crunchy
+lightly crushed
+drafty
+dreamy
+dusty
+dimly lit
+feathery
+flashy
+flavorful
+fleshy
+foamy
+frosted
+fruity
+fried
+furry
+gentle
+ghostly
+gigantic
+greasy
+hard
+jealous
+joyful
+jazzy
+jiggly
+leisurely
+lively
+messy
+moldy
+mysterious
+nervous
+oily
+orderly
+ornamental
+painted
+pearly
+pillowy
+poetic
+poignant
+polished
+powdery
+ribbed
+rocky
+salty
+sandy
+scrambled
+sculpted
+sculptural
+slimy
+slippery
+smelly
+smoggy
+soft
+stormy
+strange
+strappy
+sweet
+thick
+thirsty
+windy
+worried
+wrapped
+sweaty
+sunset
+daybreak
+elevated
+elongated
+smooth
+curly
+twisted
+wiggly
+burnished
+reclusive
+exploratory
+introverted
+dingy
+patched
+repaired
+tarnished
+melted
+enlarged
+moist
+dewy
+plump
+buff
+extended
+compact
+oversized
+skimpy
+malaise
+ennui
+weary
+blasé
+detached
+indifferent
+futile
+languid
+listless
+vivacious
+zestful
+vigorous
+verve
+élan
+immersed
+flowing
+delighted
+radiant
+witty
+buoyant
+spontaneous
+lighthearted
+attentive
+subtle
+nuanced
+deft
+precise
+perceptive
+evocative
+suggestive
+sparkly
+glittery
+loud
+silent
+muffled
+wet
+damp
+dry
+cracked
+spilt
+spoiled
+rotten
+fresh
+growing
+withering
+elegant
+crude
+muscular
+lean
+long
+short
+tall
+slim
+chubby
+cute
+ugly
+beautiful
+contrasting
+hairy
+bald
+shaved
+stubbly
+rough
+matte
+glossy
+refined
+understated
+restrained
+poised
+tailored
+classical
+grand
+petite
+considered
+ritualistic
+witchy
+dried out
+lumpy
+mindful
+civilized
+unhurried
+guarded
+formal
+discreet
+reserved
+confident
+diaphanous
+opalescent
+iridescent
+mother-of-pearl
+inlaid
+sunken
+padded
+carpeted
+sullen
+supple
+undulating
+ubiquitous
+obsequious
+dulcet
+flickering
+fugitive
+insular
+smoky
+atonal
+hushed
+muted
+esoteric
+arcane
+hermetic
+cryptic
+wistful
+pensive
+yearning
+plaintive
+ethereal
+reflective
+nostalgic
+reminiscent
+unspoken
+unrequited
+accepting
+tempered
+subdued
+veiled
+balanced
+tasteful
+delicate
+poorly proportioned
+gracefully arranged
+lightly worn
+tenderly handled
+gently used
+herringbone
+stone
+quartz
+emerald
+ruby
+diamond encrusted
+granite
+marble
+soapstone
+soapy
+tie-died
+asymmetrical
+unbalanced
+effervescent
+despondent
+petulant
+hedonistic
+gluttonous
+malnourished
+overflowing
+puffy
+bloated
+maladjusted
+transparent
+translucent
+decaying
+plaintive
+rueful
+unctuous
+a sycophantic
+anti-fascist
+ossified
+vermicular
+serene
+freshly repaired
+compact
+pocket-sized
+distended
+muscular
+lithe
+`);
 
-/* Actions (ACT_COMMON + ACT_OBSCURE) */
-const ACTIONS = uniq([
-  "blowing in the wind","soaking wet","floating","stretched out","upside-down",
-  "broken","misaligned","rusted","folded neatly","left out overnight","cooling slightly","resting quietly","waiting in line",
-  "balanced on a ledge","caught in the rain","glowing softly","drying on a rack","spilling a little","sitting untouched",
-  "freshly unpacked","carefully stacked","sliding across a table","tucked into a drawer","leaning against a wall",
-  "half-finished","freshly cleaned","still warm","still damp","shaking slightly","humming faintly","flickering",
-  "dripping quietly","vibrating faintly","flickering softly","humming to itself","half submerged",
-  "zipping a suitcase slowly","resting against a window","opening the shutters",
-  "standing at the window while the city wakes","steaming",
-  "melting on a slice of warm toast","lighting a candle","blowing out a candle","gently dabbing perfume",
-  "people watching","caught in a summer rain","under dappled light",
-  "pressed into velvet","soaked in sweat","smudged at the edges","warped by heat",
-  "straining at the seams","taped up","staining the counter","ringing slightly","treading mud onto the carpet","a little damp","glistening","knocked over","getting a tattoo","shoplifting","crushing garlic","slicing onions",
-  "wandering aimlessly","jogging first thing in the morning","pulled a muscle","picking a scab","popping a pimple","vibrating",
-  "flossing aggressively","sunbathing","polishing boots","making a smoothie","gesturing wildly","fidgeting anxiously","impatiently waiting",
-  "soul-searching","looking within","filled with an overwhelming sense of dread","overcome with malaise","suffering silently","is dented on the corner",
-  "slightly angled","heavily distorted","with a skewed perspective","shopping","bored",
-  "is smoking a cigarette","sucking on a vape pen",
-  "blowing smoke rings","doing kegels","effortlessly arranged","nonchalantly tossed aside","with chipped paint","wrapped in plastic",
-  "mounted to the wall","cast in bronze","buried in the back yard","stuck in mud","splayed apart","cast aside","smoldering","glistening",
-  "growing taller","getting shorter","shrinking","singing softly","touching itself","throwing a frisbee","playing mini golf","getting a haircut","floating",
-  "drying out in the sun","resigned to its fate","crunching the numbers","driving a tractor","buried under rubble","rescued from danger","stuck in a rut",
-  "approaching middle age","on its last legs","kicking back","searching for meaning","losing weight","rocking back and forth","self-soothing",
-  "comparison shopping","filled with jealousy","stuck in traffic","is getting annoyed","rolling downhill","putting its feet up","tapping lightly",
-  "scratching itself","masturbating furiously","committing perjury","serving on a jury","performing surgery","studying German","flipping through a magazine",
-  "wearing cutoffs","wearing a bikini","strutting its stuff","freak dancing","doing the macarena","twisting and turning","spinning in circles","pogo dancing",
-  "bouncing up and down","buying crypto","lip-syncing","covered in vaseline","lubed up","toweled dry","resting","taking a load off",
-  "emitting a high pitched sound","howling","hooting","smiling","frowning","weeping","grinning to itself","standing alone",
-  "looking out the window","staring into the middle-distance","losing interest","bored","grumpy","cranky","clingy","getting the ick",
-  "sitting on a balcony","left out in the cold","getting moldy","licking its wounds","sick of arguing","with nothing to say","keeping its head down",
-  "sobbing softly","caught crying","holding back tears","jacking off",
-  "committing fraud","on the run","in hiding","tucked into bed","hiding under the covers","stuck in a tree","carving marble",
-  "falling down","toppled over","perfectly posed","out of reach","sipping from a hip flask","doing a keg stand","dehydrated","a little damp",
-  "stewing in its own juices","marinating overnight","sitting under a heat lamp","under scrutiny","rollerblading",
-  "getting a vitamin drip","squeezing lemons","dancing in the moonlight","dancing in the rain","feeling dried out","meditating",
-  "doomscrolling","checking instagram","logging off","with a cracked screen","with a thick accent","tightly wound",
-  "carved from a block of wood","getting reupholstered","leaning back","dancing","covered in paint","in a bath robe","in a nightgown",
-  "with a bouquet of flowers","under a pile of clothes","cast aside","at the bottom of a well","in despair","overcome with happiness",
-  "proud of itself","with incredible skin","blemish-free","dewy-faced","doe eyed","feeling betrayed","got dumped",
-  "caught in the rip current","pulled out to see","overeating","binge drinking","hedonistically indulging","sailing due east",
-  "riding a dirtbike","landing a kickflip","getting its nails done","getting its hair done","getting its eyebrows tweezed",
-  "feeling discouraged","lazily napping","faking an orgasm","practically melting","is ready for a change",
-  "is burning bridges","is mending fences","is pissed off","is being gently caressed","all scratched up",
-  "is getting wasted","feeling blue","is all tuckered out","is over it","is sitting on its side","is draped in silk",
-  "is getting encased in resin","is becoming oxidized","being ignored","getting chilly","working through something"
-]);
+/* description (person) */
+const DESC_PERSON = vocabLines(`
+retired
+blonde
+introverted
+kleptomaniac
+handsome
+shaved
+athletic
+hedonistic
+fastidious
+lithe
+chubby
+skeletal
+tattooed
+blue collar
+`);
 
-/* Locations (ALL merged; keep “in/at/on/by…” phrases) */
-const LOCATIONS = uniq([
-  "in the bedroom","in the kitchen","in the bathroom","in the attic","on the balcony","in the basement","in the backyard","in the driveway",
-  "in the apartment","in a spare bedroom","in a long-unused childhood bedroom","in a steamy bathroom","on a balcony chair",
-  "in the living room","in the dining room","in a home office","in a craft room","in a pantry","in a soaking tub",
-  "in the office","in a cubicle","in a shoemaker's workshop","in the studio","in the lecture hall","in the waiting room",
-  "in the doctor's office","in the library","in a tv studio","in a corner office","in an open-plan office",
-  "in a ceramics studio","in a construction site","in a movie studio","in a display case","by a printing press",
-  "at the beach","on the pier","in the swimming pool","on the sidewalk",
-  "Sitting in a diner booth","at a dive bar","at the club","at a rave","at an open mic night",
-  "by the fire pit","at the farm stand","at the hardware store",
-  "on the trail","on a dirt road","at the trailhead",
-  "in the amusement park","in the arcade","in an airport lounge","at a rooftop bar",
-  "at a bus stop at dusk","on an empty train platform","at a foggy ferry terminal",
-  "stuck to the floor of a movie theater","at an art house theater","at a record store","at a used book store","at a department store","in a food court",
-  "in a vacant motel","in a high-rise apartment building","at the top of the bleachers","buried in a shallow grave","in a cemetery",
-  "on a basketball court","on a tennis court","on a golf course","at a pumpkin patch","at a pet store","at a strip mall","at an outlet mall",
-  "while walking the runway show","in a cafeteria","in a city center","on the outskirts of town","at a beauty pageant",
-  "under the overpass","in the parking garage","in the parking lot","at the waterfront","by the water tower","in the alleyway",
-  "in a bog","at the catacombs","at the garbage dump",
-  "in an off-season seaside town","on an empty boardwalk","among folded deck chairs",
-  "outside a closed movie theater","in an empty museum gallery","in an obsolete shopping mall",
-  "in back stairwells","beneath a flickering neon sign",
-  "on stone steps","on cobblestone","by a courtyard fountain","under overgrown vines","in a vineyard",
-  "in a railroad dining car","in the back seat of a car","in the passenger seat of a car","in the driver's seat",
-  "in a walk-in freezer","in a breakfast nook","in a dressing room","in a wine bar","in a karaoke bar",
-  "in a bank vault","in a root cellar","in a wine cellar","in the trunk of a car","in an overhead bin",
-  "in an airplane","in an airport","in a theme park","in a haunted house","in a renovated tenement building",
-  "at an amphitheater","at the acropolis","on a suspension bridge","at a dude ranch","at a rodeo","in an automotive plant",
-  "in a med spa","in a day spa","in a steam room","at a casino floor","at a poker table","in a clown car","in a dune buggy",
-  "in a black box theater","in an improv class","in gym class","in english class",
-  "at a book club","in an italian restaurant","in the mall of america","at the world trade center",
-  "at the eiffel tower","at the great wall of china","in times square","in soho","in dimes square",
-  "in williamsburg","in greenpoint","in bushwick","in a dorm room","at the foot of the bed",
-  "at a strip club","at a gay bar","on the upper east side","in chicago","at madison square garden",
-  "on the waterfront in portugal","in the south of france","in rolling hills","in tall grasses","on a mowed lawn",
-  "in carnegie hall","hanging out","in a loft space","at a pawn shop","at the bottom of a lake",
-  "at a beachfront bonfire","on the last day of school","while riding on the back of a horse"
-]);
+/* object */
+const OBJECTS = vocabLines(`
+dish rack
+drying rack
+clothes line
+shower head
+kitchen sink
+vanity mirror
+hair brush
+toilet paper
+coffee mug
+tea pot
+tea bag
+coffee maker
+french press
+percolator
+frying pan
+cutting board
+crock pot
+soupspoon
+laundry basket
+laundry hamper
+trash can
+mop bucket
+broom
+bed
+mattress
+bookshelf
+bookcase
+curtains
+doorknob
+window
+lamp
+lampshade
+clock
+wrist watch
+cabinet
+drawer
+coffee table
+ottoman
+couch
+love seat
+chaise longue
+cushion
+throw pillow
+duvet
+comforter
+bath tub
+hot tub
+jacuzzi
+lipstick
+lip gloss
+blush
+makeup
+nail polish
+perfume bottle
+deodorant
+hair clip
+hair tie
+high heels
+tights
+pantyhose
+cardigan
+turtleneck
+necklace
+bracelet
+wedding band
+ring
+pendant
+pizza box
+mini fridge
+refrigerator
+oven
+freezer
+closet
+hardwood floor
+carpet
+rug
+upholstery
+remote control
+computer monitor
+ipad
+tablet
+wardrobe
+drapery
+portrait
+trophy
+moving boxes
+linen napkin
+room service tray
+soap
+keyboard
+printer
+xerox machine
+photocopier
+cash register
+envelope
+notebook
+dictionary
+paperback book
+workbench
+sawhorse
+chisel
+paint brush
+spray paint
+ink wash
+canvas
+plywood
+ladder
+toolbox
+tape measure
+scissors
+drill press
+table saw
+bandsaw
+vacuum cleaner
+hot glue gun
+dental pick
+drill
+office cubicle
+lecture hall
+waiting room
+doctor's office
+library
+gallery
+museum
+atm
+seltzer
+diner booth
+martini
+cocktail
+wine glass
+taqueria
+dive bar
+dance club
+punk club
+rave
+comedy club
+microphone
+record store
+playing cards
+chess board
+board game
+video game
+playstation
+slot machine
+grand piano
+pipe organ
+drum kit
+synthesizer
+bicycle
+station wagon
+hatchback
+convertible
+sports car
+subaru forester
+water slide
+trailhead
+switchback
+mountain lodge
+skis
+baseball bat
+harmonica
+folded map
+ticket stub
+drinking glass
+beer stein
+high ball glass
+ash tray
+dust pan
+chapstick
+dining room table
+end table
+bedside table
+night stand
+foot rest
+foot stool
+step ladder
+scaffolding
+beer can
+beer bottle
+canned cocktail
+mocktail
+mojito
+margarita
+pilsner
+lager
+guinness
+draft beer
+rosé wine
+glass of blush
+hot toddy
+green juice
+celery juice
+pomegranate juice
+carrot juice
+tomato juice
+noodles
+legal pad
+note pad
+eye drops
+bluetooth speaker
+suv
+mini-van
+lawn mower
+air conditioner
+recycling bin
+white glue
+superglue
+krazy glue
+bouncy ball
+bacon egg and cheese
+bagel with cream cheese
+peanut butter and jelly
+hero sandwich
+gyro
+mission style burrito
+enchiladas
+t-shirt
+tank top
+scoop neck shirt
+spaghetti strap tank top
+undershirt
+tube top
+push-up bra
+bralette
+lace thong
+lace underwear
+lace bra
+halter top
+knit sweater
+knitting needles
+ball of yarn
+cheeseburger
+hamburger
+big mac
+fried chicken sandwich
+grilled chicken sandwich
+couscous
+quinoa
+grain bowl
+paint bucket
+side salad
+caesar salad
+greek salad
+cucumber salad
+seaweed salad
+garlicky kale
+rice bowl
+mexican food
+italian food
+french food
+japanese food
+korean food
+ham sandwich
+ramen
+bento box
+japanese curry
+chicken katsu
+karaage
+nashville hot fried chicken
+pulled pork sandwich
+pastrami on rye
+egg salad
+poached egg
+hard boiled egg
+soft boiled egg
+fried rice
+wicker basket
+cross-body bag
+denim skirt
+handbag
+shopping cart
+purse
+catchers mitt
+baseball glove
+fingerless gloves
+driving gloves
+steering wheel
+gaming chair
+rocking chair
+vending machine
+slate tile
+granite counter tops
+bulletin board
+tie pin
+name tag
+sheriff's badge
+bunk beds
+futon
+keg of beer
+fur pelt
+participation trophy
+absinthe
+fernet
+aperol spritz
+tequila shot
+whisky sour
+moo shu pork
+propeller beanie
+metal detector
+geiger counter
+nitrous oxide canister
+baggie of ketamine
+heroin spoon
+bag of weed
+mushroom chocolate
+tab of acid
+laser pointer
+dvd player
+hedge trimmer
+weed whacker
+dirt bike
+chopper
+pinwheel
+solar panel
+sprinter van
+ford bronco
+riding lawn mower
+instruction manual
+printed out pdf
+roku tv
+flip phone
+trade paperback
+dvd box set
+blu-ray player
+cd-rom
+oled panel
+circuit board
+circuit breaker
+portable fan
+croquet mallet
+croquette
+sizzling fajita platter
+bibimbap
+wedge salad
+director's chair
+padded booth
+straight jacket
+hot dog cart
+x-ray machine
+samovar of coffee
+electric kettle
+air fryer
+wine decanter
+whoopie cushion
+sound board
+alarm bell
+birdbath
+birdcage
+birdhouse
+hourglass
+sundial
+pendulum
+pocket watch
+velvet rope
+bank vault
+water tower
+traffic median
+airport shuttle
+dune buggy
+dump truck
+freight train
+gondola
+greenhouse
+terrarium
+record player
+typewriter
+ukulele
+trombone
+tambourine
+saxophone
+banjo
+bagpipe
+brownstone
+townhouse
+alleyway
+dumpster
+manhole cover
+sewer
+parking garage
+parking lot
+driveway
+parachute
+bungee cord
+propeller
+umbrella
+cooler
+cardboard box
+tissue box
+newspaper
+tombstone
+baby bottle
+maxi pad
+deck chair
+neon sign
+fidget spinner
+pack of cigarettes
+bow tie
+christmas lights
+shop vac
+crushed cicodin
+line of cocaine
+hash pipe
+opium tea
+welding mask
+latex mask
+leather gloves
+hairpiece
+chunky heels
+reading glasses
+tap shoes
+kitten heels
+sensible pumps
+strappy sandals
+potted plant
+succulent garden
+old washing machine
+`);
+
+/* person */
+const PERSONS = vocabLines(`
+nun
+painter
+bathroom attendant
+substitute teacher
+step-dad
+`);
+
+/* action */
+const ACTIONS = vocabLines(`
+blowing in the wind
+soaking wet
+floating
+stretched out
+upside-down
+broken
+misaligned
+rusted
+folded neatly
+left out overnight
+cooling slightly
+resting quietly
+waiting in line
+balanced on a ledge
+caught in the rain
+glowing softly
+drying on a rack
+spilling a little
+sitting untouched
+freshly unpacked
+carefully stacked
+sliding across a table
+tucked into a drawer
+leaning against a wall
+half-finished
+freshly cleaned
+still warm
+still damp
+shaking slightly
+humming faintly
+flickering
+dripping quietly
+vibrating faintly
+flickering softly
+humming to itself
+half submerged
+zipping a suitcase slowly
+resting against a window
+opening the shutters
+standing at the window while the city wakes
+steaming
+melting on a slice of warm toast
+lighting a candle
+blowing out a candle
+gently dabbing perfume
+people watching
+caught in a summer rain
+under dappled light
+pressed into velvet
+soaked in sweat
+smudged at the edges
+warped by heat
+straining at the seams
+taped up
+staining the counter
+ringing slightly
+treading mud onto the carpet
+a little damp
+glistening
+knocked over
+getting a tattoo
+shoplifting
+crushing garlic
+slicing onions
+wandering aimlessly
+jogging first thing in the morning
+pulled a muscle
+picking a scab
+popping a pimple
+vibrating
+flossing aggressively
+sunbathing
+polishing boots
+making a smoothie
+gesturing wildly
+fidgeting anxiously
+impatiently waiting
+soul-searching
+looking within
+filled with an overwhelming sense of dread
+overcome with malaise
+suffering silently
+is dented on the corner
+slightly angled
+heavily distorted
+with a skewed perspective
+shopping
+bored
+is smoking a cigarette
+sucking on a vape pen
+blowing smoke rings
+doing kegels
+effortlessly arranged
+nonchalantly tossed aside
+with chipped paint
+wrapped in plastic
+mounted to the wall
+cast in bronze
+buried in the back yard
+stuck in mud
+splayed apart
+cast aside
+smoldering
+glistening
+growing taller
+getting shorter
+shrinking
+singing softly
+touching itself
+throwing a frisbee
+playing mini golf
+getting a haircut
+floating
+drying out in the sun
+resigned to its fate
+crunching the numbers
+driving a tractor
+buried under rubble
+rescued from danger
+stuck in a rut
+approaching middle age
+on its last legs
+kicking back
+searching for meaning
+losing weight
+rocking back and forth
+self-soothing
+comparison shopping
+filled with jealousy
+stuck in traffic
+is getting annoyed
+rolling downhill
+putting its feet up
+tapping lightly
+scratching itself
+masturbating furiously
+committing perjury
+serving on a jury
+performing surgery
+studying german
+flipping through a magazine
+wearing cutoffs
+wearing a bikini
+strutting its stuff
+freak dancing
+doing the macarena
+twisting and turning
+spinning in circles
+pogo dancing
+bouncing up and down
+buying crypto
+lip-syncing
+covered in vaseline
+lubed up
+toweled dry
+resting
+taking a load off
+emitting a high pitched sound
+howling
+hooting
+smiling
+frowning
+weeping
+grinning to itself
+standing alone
+looking out the window
+staring into the middle-distance
+losing interest
+bored
+grumpy
+cranky
+clingy
+getting the ick
+sitting on a balcony
+left out in the cold
+getting moldy
+licking its wounds
+sick of arguing
+with nothing to say
+keeping its head down
+sobbing softly
+caught crying
+holding back tears
+jacking off
+committing fraud
+on the run
+in hiding
+tucked into bed
+hiding under the covers
+stuck in a tree
+carving marble
+falling down
+toppled over
+perfectly posed
+out of reach
+sipping from a hip flask
+doing a keg stand
+dehydrated
+a little damp
+stewing in its own juices
+marinating overnight
+sitting under a heat lamp
+under scrutiny
+rollerblading
+getting a vitamin drip
+squeezing lemons
+dancing in the moonlight
+dancing in the rain
+feeling dried out
+meditating
+doomscrolling
+checking instagram
+logging off
+with a cracked screen
+with a thick accent
+tightly wound
+carved from a block of wood
+getting reupholstered
+leaning back
+dancing
+covered in paint
+in a bath robe
+in a nightgown
+with a bouquet of flowers
+under a pile of clothes
+cast aside
+at the bottom of a well
+in despair
+overcome with happiness
+proud of itself
+with incredible skin
+blemish-free
+dewy-faced
+doe eyed
+feeling betrayed
+got dumped
+caught in the rip current
+pulled out to see
+overeating
+binge drinking
+hedonistically indulging
+sailing due east
+riding a dirtbike
+landing a kickflip
+getting its nails done
+getting its hair done
+getting its eyebrows tweezed
+feeling discouraged
+lazily napping
+faking an orgasm
+practically melting
+is ready for a change
+is burning bridges
+is mending fences
+is pissed off
+is being gently caressed
+all scratched up
+is getting wasted
+feeling blue
+is all tuckered out
+is over it
+is sitting on its side
+is draped in silk
+is getting encased in resin
+is becoming oxidized
+being ignored
+getting chilly
+working through something
+`);
+
+/* location */
+const LOCATIONS = vocabLines(`
+in the bedroom
+in the kitchen
+in the bathroom
+in the attic
+on the balcony
+in the basement
+in the backyard
+in the driveway
+in the apartment
+in a spare bedroom
+in a long-unused childhood bedroom
+in a steamy bathroom
+on a balcony chair
+in the living room
+in the dining room
+in a home office
+in a craft room
+in a pantry
+in a soaking tub
+in the office
+in a cubicle
+in a shoemaker's workshop
+in the studio
+in the lecture hall
+in the waiting room
+in the doctor's office
+in the library
+in a tv studio
+in a corner office
+in an open-plan office
+in a ceramics studio
+in a construction site
+in a movie studio
+in a display case
+by a printing press
+at the beach
+on the pier
+in the swimming pool
+on the sidewalk
+sitting in a diner booth
+at a dive bar
+at the club
+at a rave
+at an open mic night
+by the fire pit
+at the farm stand
+at the hardware store
+on the trail
+on a dirt road
+at the trailhead
+in the amusement park
+in the arcade
+in an airport lounge
+at a rooftop bar
+at a bus stop at dusk
+on an empty train platform
+at a foggy ferry terminal
+stuck to the floor of a movie theater
+at an art house theater
+at a record store
+at a used book store
+at a department store
+in a food court
+in a vacant motel
+in a high-rise apartment building
+at the top of the bleachers
+buried in a shallow grave
+in a cemetery
+on a basketball court
+on a tennis court
+on a golf course
+at a pumpkin patch
+at a pet store
+at a strip mall
+at an outlet mall
+while walking the runway show
+in a cafeteria
+in a city center
+on the outskirts of town
+at a beauty pageant
+under the overpass
+in the parking garage
+in the parking lot
+at the waterfront
+by the water tower
+in the alleyway
+in a bog
+at the catacombs
+at the garbage dump
+in an off-season seaside town
+on an empty boardwalk
+among folded deck chairs
+outside a closed movie theater
+in an empty museum gallery
+in an obsolete shopping mall
+in back stairwells
+beneath a flickering neon sign
+on stone steps
+on cobblestone
+by a courtyard fountain
+under overgrown vines
+in a vineyard
+in a railroad dining car
+in the back seat of a car
+in the passenger seat of a car
+in the driver's seat
+in a walk-in freezer
+in a breakfast nook
+in a dressing room
+in a wine bar
+in a karaoke bar
+in a bank vault
+in a root cellar
+in a wine cellar
+in the trunk of a car
+in an overhead bin
+in an airplane
+in an airport
+in a theme park
+in a haunted house
+in a renovated tenement building
+at an amphitheater
+at the acropolis
+on a suspension bridge
+at a dude ranch
+at a rodeo
+in an automotive plant
+in a med spa
+in a day spa
+in a steam room
+at a casino floor
+at a poker table
+in a clown car
+in a dune buggy
+in a black box theater
+in an improv class
+in gym class
+in english class
+at a book club
+in an italian restaurant
+in the mall of america
+at the world trade center
+at the eiffel tower
+at the great wall of china
+in times square
+in soho
+in dimes square
+in williamsburg
+in greenpoint
+in bushwick
+in a dorm room
+at the foot of the bed
+at a strip club
+at a gay bar
+on the upper east side
+in chicago
+at madison square garden
+on the waterfront in portugal
+in the south of france
+in rolling hills
+in tall grasses
+on a mowed lawn
+in carnegie hall
+hanging out
+in a loft space
+at a pawn shop
+at the bottom of a lake
+at a beachfront bonfire
+on the last day of school
+while riding on the back of a horse
+`);
 
 /* ========================================================== */
 
-function pickDescriptor(){ return bagNext("desc", DESC); }
+function pickDescriptorObject(){ return bagNext("desc:object", DESC_OBJECT); }
+function pickDescriptorPerson(){ return bagNext("desc:person", DESC_PERSON); }
+function pickDescriptorMixed(){ return bagNext("desc:mixed", DESC_OBJECT.concat(DESC_PERSON)); }
+function pickDescriptor(useObj, usePerson){
+  if(usePerson) return pickDescriptorPerson();
+  if(useObj) return pickDescriptorObject();
+  return pickDescriptorMixed();
+}
 function pickObject(){ return bagNext("obj", OBJECTS); }
+function pickPerson(){ return bagNext("person", PERSONS); }
 function pickAction(){ return bagNext("act", ACTIONS); }
 function pickLocation(){ return bagNext("loc", LOCATIONS); }
 
 /* ================= Phrase build ================= */
 function safeStr(x){ return (x == null) ? "" : String(x).trim(); }
+function formatPhraseText(p){
+  if(clamp(Number(widthEl.value), 0, 100) === 0){
+    return p.split(/\s+/).join("<br>");
+  }
+  return p;
+}
+
+function swapItPronounsForPerson(actionStr){
+  const s = String(actionStr || "");
+  if(!s) return s;
+
+  const female = Math.random() < 0.5;
+  const map = female
+    ? { it: "her", its: "her", itself: "herself" }
+    : { it: "him", its: "his", itself: "himself" };
+
+  // Avoid matching inside contractions like "it's".
+  return s.replace(/\b(itself|its|it)\b(?!')/g, (m)=> map[m] || m);
+}
 
 function buildPhrase(partsSet){
   const useDesc = partsSet.has("description");
   const useObj  = partsSet.has("object");
+  const usePerson = partsSet.has("person") && !useObj;
   const useAct  = partsSet.has("action");
   const useLoc  = partsSet.has("location");
-  if(!useDesc && !useObj && !useAct && !useLoc) return "";
+  if(!useDesc && !useObj && !usePerson && !useAct && !useLoc) return "";
 
-  const desc = safeStr(pickDescriptor());
-  const obj  = safeStr(pickObject());
-  const act  = safeStr(pickAction());
+  const desc = useDesc ? safeStr(pickDescriptor(useObj, usePerson)) : "";
+  const obj  = useObj ? safeStr(pickObject()) : "";
+  const person = usePerson ? safeStr(pickPerson()) : "";
+  let act  = safeStr(pickAction());
+  if(usePerson && act) act = swapItPronounsForPerson(act);
   const loc  = safeStr(pickLocation());
 
   let out = "";
   if(useDesc && desc) out += desc + " ";
   if(useObj && obj) out += obj;
+  if(usePerson && person) out += person;
   if(useAct && act) out += (out ? " " : "") + act;
   if(useLoc && loc) out += (out ? " " : "") + loc;
 
@@ -1198,6 +2580,125 @@ const current = {
 const last = { phrase:"", bg:"", fg:"", bd:"" };
 let timerId = null;
 let isFirstFrame = true;
+let isPaused = false;
+let isLayoutLocked = false;
+
+/* ================= Playback history ================= */
+const HISTORY_MAX = 1000;
+const sceneHistory = [];
+let sceneIndex = -1;
+
+function snapshotScene(){
+  const palSnap = {};
+  for(const name of COLOR_OPTS){
+    palSnap[name] = palCycleIndex[name] ?? 0;
+  }
+  return {
+    phrase: current.phrase,
+    bgBase: current.bgBase,
+    fgBase: current.fgBase,
+    bdBase: current.bdBase,
+    palCycleIndex: palSnap
+  };
+}
+
+function syncHistoryButtons(){
+  if(prevPoemBtn) prevPoemBtn.disabled = sceneIndex <= 0;
+}
+
+function restoreSceneAt(index){
+  if(index < 0 || index >= sceneHistory.length) return;
+  const sc = sceneHistory[index];
+  sceneIndex = index;
+
+  current.phrase = String(sc.phrase || "");
+  current.bgBase = String(sc.bgBase || current.bgBase);
+  current.fgBase = String(sc.fgBase || current.fgBase);
+  current.bdBase = String(sc.bdBase || current.bdBase);
+
+  if(sc.palCycleIndex){
+    for(const name of COLOR_OPTS){
+      if(sc.palCycleIndex[name] != null) palCycleIndex[name] = sc.palCycleIndex[name];
+    }
+  }
+
+  phraseEl.innerHTML = formatPhraseText(current.phrase);
+  smartPhraseWidth();
+  applyColorsLive();
+  applyAccentColors();
+  syncHistoryButtons();
+}
+
+function commitGeneratedScene(){
+  const sc = snapshotScene();
+
+  if(sceneIndex >= 0 && sceneIndex < sceneHistory.length - 1){
+    sceneHistory.splice(sceneIndex + 1);
+  }
+
+  sceneHistory.push(sc);
+  sceneIndex = sceneHistory.length - 1;
+
+  if(sceneHistory.length > HISTORY_MAX){
+    const drop = sceneHistory.length - HISTORY_MAX;
+    sceneHistory.splice(0, drop);
+    sceneIndex = Math.max(0, sceneIndex - drop);
+  }
+
+  syncHistoryButtons();
+}
+
+function syncPauseBtn(){
+  if(!pausePoemBtn) return;
+  pausePoemBtn.classList.toggle("paused", isPaused);
+  pausePoemBtn.setAttribute("aria-pressed", isPaused ? "true" : "false");
+  pausePoemBtn.setAttribute("aria-label", isPaused ? "Play (Space)" : "Pause (Space)");
+  pausePoemBtn.dataset.tip = isPaused ? "play" : "pause";
+}
+
+function setPaused(paused){
+  const next = !!paused;
+  if(isPaused === next) return;
+  isPaused = next;
+  syncPauseBtn();
+  if(isPaused){
+    if(timerId) clearTimeout(timerId);
+    timerId = null;
+    return;
+  }
+  scheduleTick();
+}
+
+function togglePaused(){
+  setPaused(!isPaused);
+}
+
+function syncLayoutLockBtn(){
+  if(!lockLayoutBtn) return;
+  lockLayoutBtn.classList.toggle("locked", isLayoutLocked);
+  lockLayoutBtn.classList.toggle("on", isLayoutLocked);
+  lockLayoutBtn.setAttribute("aria-pressed", isLayoutLocked ? "true" : "false");
+}
+function toggleLayoutLock(){
+  isLayoutLocked = !isLayoutLocked;
+  syncLayoutLockBtn();
+}
+
+function goPrevPoem(){
+  if(sceneIndex <= 0) return;
+  setPaused(true);
+  restoreSceneAt(sceneIndex - 1);
+}
+
+function goNextPoem(){
+  setPaused(true);
+  if(sceneIndex < sceneHistory.length - 1){
+    restoreSceneAt(sceneIndex + 1);
+    return;
+  }
+  // At the end: generate a new one (manual step-forward).
+  nextFrame();
+}
 
 function setCalmStart(){
   const palName = COLOR_OPTS[Math.floor(Math.random() * COLOR_OPTS.length)];
@@ -1216,7 +2717,9 @@ function renderSentenceButtons(){
   const partToPal = {
     description: "earthy",
     object: "circus",
-    action: "beachy",
+    // Person shares the "slot" with object; keep it in the same palette unless you want it distinct.
+    person: "circus",
+    action: "future",
     location: "retro"
   };
 
@@ -1227,13 +2730,21 @@ function renderSentenceButtons(){
     b.textContent = opt;
 
     const palName = partToPal[opt];
-    const bg = paletteColor(palName, 0);
+    const bg = paletteColorAvoid(palName, 0, getBgLiveHex());
     b.style.setProperty("--ssPal", palName);
     b.style.setProperty("--ssBg", bg);
 
     if(sel.parts.has(opt)) b.classList.add("on");
 
     b.addEventListener("click", ()=>{
+      const isObjOrPerson = (opt === "object" || opt === "person");
+      const enabling = !sel.parts.has(opt);
+      if(isObjOrPerson && enabling){
+        // Mutually exclusive: you can enable either object or person, but never both.
+        if(opt === "object") sel.parts.delete("person");
+        if(opt === "person") sel.parts.delete("object");
+      }
+
       if(sel.parts.has(opt)) sel.parts.delete(opt); else sel.parts.add(opt);
       if(sel.parts.size === 0) sel.parts.add(opt);
 
@@ -1248,23 +2759,34 @@ function renderSentenceButtons(){
 }
 
 function refreshSentenceButtonColors(){
+  const bgAvoid = getBgLiveHex();
   document.querySelectorAll("#partsRow .ssBtn").forEach(btn=>{
     const pal = btn.style.getPropertyValue("--ssPal").trim() || "earthy";
-    btn.style.setProperty("--ssBg", paletteColor(pal, 0));
+    btn.style.setProperty("--ssBg", paletteColorAvoid(pal, 0, bgAvoid));
   });
 }
 
 function palettePair(name, offset=0){
   const pal = PAL[name] || [];
   if(!pal.length) return { fill: "#999999", ring: "#cccccc" };
-  const fill = paletteColor(name, offset);
-  const ring = paletteColor(name, offset + 2);
+  const bgAvoid = getBgLiveHex();
+  const fill = paletteColorAvoid(name, offset, bgAvoid);
+  const ring = paletteColorAvoid(name, offset + 2, bgAvoid);
   return { fill, ring };
 }
 
 function renderSwatchRow(rowEl, hoverEl, setRef, rowKey){
   rowEl.innerHTML = "";
   if(rowKey) rowEl.dataset.row = rowKey;
+  let stickyLabel = "";
+
+  function setHoverText(t){
+    if(t){
+      hoverEl.textContent = String(t).toLowerCase();
+    }else{
+      hoverEl.innerHTML = "&nbsp;";
+    }
+  }
 
   for(const name of COLOR_OPTS){
     const offset = swatchRowOffset[rowKey] || 0;
@@ -1283,6 +2805,10 @@ function renderSwatchRow(rowEl, hoverEl, setRef, rowKey){
       Array.from(rowEl.querySelectorAll(".swatch")).forEach(btn=>{
         btn.classList.toggle("on", setRef.has(btn.dataset.name));
       });
+
+      const nowOn = setRef.has(name);
+      stickyLabel = `${name} ${nowOn ? "on" : "off"}`;
+      setHoverText(stickyLabel);
     });
 
     rowEl.appendChild(sw);
@@ -1291,22 +2817,64 @@ function renderSwatchRow(rowEl, hoverEl, setRef, rowKey){
   rowEl.addEventListener("mouseover", (e)=>{
     const sw = e.target.closest(".swatch");
     if(!sw) return;
-    hoverEl.textContent = (sw.dataset.name || "").toLowerCase();
+    setHoverText(sw.dataset.name || "");
   });
   rowEl.addEventListener("mouseleave", ()=>{
-    hoverEl.innerHTML = "&nbsp;";
+    setHoverText(stickyLabel);
   });
 }
 
-function refreshSwatchColors(){
-  document.querySelectorAll(".swatch").forEach(sw=>{
-    const name = sw.dataset.name;
-    const row = sw.closest(".swatchRow")?.dataset.row || "bg";
-    const offset = swatchRowOffset[row] || 0;
-    const {fill, ring} = palettePair(name, offset);
-    sw.style.setProperty("--fillCol", fill);
-    sw.style.setProperty("--ringCol", ring);
-  });
+function assignUiButtonColors(){
+  // Rule: never let two buttons share the exact same fill color at the same time.
+  // We allocate from the palette colors each time we apply accents (per poem / per refresh).
+  const used = new Set(); // normalized hex strings
+  const bgAvoid = getBgLiveHex();
+
+  // Swatches (18 total): 3 rows x 6 palettes.
+  const rowKeys = ["bg","fg","bd"];
+  for(const rowKey of rowKeys){
+    const rowEl = document.querySelector(`.swatchRow[data-row='${rowKey}']`);
+    if(!rowEl) continue;
+    const startOffset = swatchRowOffset[rowKey] || 0;
+    for(const palName of COLOR_OPTS){
+      const sw = rowEl.querySelector(`.swatch[data-name='${palName}']`);
+      if(!sw) continue;
+      const fill = pickUniquePaletteColor(palName, startOffset, used, bgAvoid);
+      const ring = pickRingColor(palName, startOffset + 2, bgAvoid, fill);
+      sw.style.setProperty("--fillCol", fill);
+      sw.style.setProperty("--ringCol", ring);
+    }
+  }
+
+  // Sentence structure buttons (5): keep them in their assigned palettes.
+  const partsRow = document.getElementById("partsRow");
+  if(partsRow){
+    Array.from(partsRow.children).forEach((btn, i)=>{
+      const pal = btn.style.getPropertyValue("--ssPal").trim() || "earthy";
+      const fill = pickUniquePaletteColor(pal, i, used, bgAvoid);
+      btn.style.setProperty("--ssBg", fill);
+    });
+  }
+
+  // Action buttons (Card / Full screen) + Title extras.
+  if(bdToggleBtn){
+    // Card used to share the circus palette; move it to beachy to keep all fills unique.
+    bdToggleBtn.style.setProperty("--btnBg", pickUniquePaletteColor("beachy", 0, used, bgAvoid));
+  }
+  if(fsBtn){
+    fsBtn.style.setProperty("--btnBg", pickUniquePaletteColor("fleshy", 0, used, bgAvoid));
+  }
+  if(screenshotBtn){
+    screenshotBtn.style.setProperty("--btnBg", pickUniquePaletteColor("retro", 0, used, bgAvoid));
+  }
+  if(lockLayoutBtn){
+    lockLayoutBtn.style.setProperty("--btnBg", pickUniquePaletteColor("earthy", 0, used, bgAvoid));
+  }
+
+  // Playback buttons: any remaining unused palette colors.
+  if(prevPoemBtn) prevPoemBtn.style.setProperty("--btnBg", pickUniqueAnyColor(used, bgAvoid));
+  if(pausePoemBtn) pausePoemBtn.style.setProperty("--btnBg", pickUniqueAnyColor(used, bgAvoid));
+  if(nextPoemBtn) nextPoemBtn.style.setProperty("--btnBg", pickUniqueAnyColor(used, bgAvoid));
 }
 
 function syncSwatchHeaderWidths(){
@@ -1334,126 +2902,374 @@ function applySliderThumbColors(){
   });
 }
 
-function applyButtonColors(){
-  const fsPal = "fleshy";
-  fsBtn.style.setProperty("--btnBg", paletteColor(fsPal, 1));
-  fsBtn.style.setProperty("--btnBd", paletteColor(fsPal, 3));
-
-  const bdPal = "circus";
-  bdToggleBtn.style.setProperty("--btnBg", paletteColor(bdPal, 0));
-  bdToggleBtn.style.setProperty("--btnBd", paletteColor(bdPal, 2));
-}
-
 function syncActionButtonWidths(){
   requestAnimationFrame(()=>{
-    const w = fsBtn.getBoundingClientRect().width;
+    const btnW1 = bdToggleBtn ? bdToggleBtn.getBoundingClientRect().width : 0;
+    const btnW2 = fsBtn ? fsBtn.getBoundingClientRect().width : 0;
+
+    const grp1 = bdToggleBtn ? bdToggleBtn.closest(".actionGroup") : null;
+    const grp2 = fsBtn ? fsBtn.closest(".actionGroup") : null;
+    const lbl1 = grp1 ? grp1.querySelector(".actionText") : null;
+    const lbl2 = grp2 ? grp2.querySelector(".actionText") : null;
+    const lblW1 = lbl1 ? Math.max(lbl1.scrollWidth || 0, lbl1.getBoundingClientRect().width || 0) : 0;
+    const lblW2 = lbl2 ? Math.max(lbl2.scrollWidth || 0, lbl2.getBoundingClientRect().width || 0) : 0;
+
+    const w = Math.ceil(Math.max(btnW1, btnW2, lblW1, lblW2) + 6); // small buffer to avoid clipping
     if(w > 0){
-      bdToggleBtn.style.width = `${w}px`;
-      fsBtn.style.width = `${w}px`;
+      if(bdToggleBtn) bdToggleBtn.style.width = `${w}px`;
+      if(fsBtn) fsBtn.style.width = `${w}px`;
+      if(grp1) grp1.style.width = `${w}px`;
+      if(grp2) grp2.style.width = `${w}px`;
     }
   });
 }
 
 function applyAccentColors(){
-  refreshSwatchColors();
-  refreshSentenceButtonColors();
   applySliderThumbColors();
-  applyButtonColors();
-  syncActionButtonWidths();
+  assignUiButtonColors();
 }
 
 /* ================= Type + layout ================= */
 function applyTypeAndLayout(){
-  const scale = clamp(Number(sizeEl.value), 0.6, 1.6);
+  const sizePct = clamp(Number(sizeEl.value), 0, 150);
+  let scale = 0.02;
+  if(sizePct > 0 && sizePct <= 100){
+    scale = 0.02 + (1.6 - 0.02) * (sizePct / 100);
+  }else if(sizePct > 100){
+    scale = 1.6 + (3.5 - 1.6) * ((sizePct - 100) / 50);
+  }
   document.documentElement.style.setProperty("--textScale", scale);
-  sizeVal.textContent = `${Math.round(scale*100)}%`;
+  sizeVal.textContent = `${Math.round(sizePct)}%`;
 
   const y = clamp(Number(yEl.value), 0, 100);
   document.documentElement.style.setProperty("--yPct", `${y}%`);
   yVal.textContent = `${Math.round(y)}%`;
 
-  const w = clamp(Number(widthEl.value), 40, 100);
-  document.documentElement.style.setProperty("--phraseW", `${w}vw`);
+  const w = clamp(Number(widthEl.value), 0, 100);
   widthVal.textContent = `${Math.round(w)}%`;
 
-  fitPhraseToBox();
+  smartPhraseWidth();
+}
+
+function phraseInkRects(){
+  try{
+    const r = document.createRange();
+    r.selectNodeContents(phraseEl);
+    return Array.from(r.getClientRects()).filter(x => x.width > 0 && x.height > 0);
+  }catch(e){
+    return [];
+  }
+}
+function phraseInkBounds(){
+  const rects = phraseInkRects();
+  if(!rects.length) return null;
+  let left = Infinity, right = -Infinity, top = Infinity, bottom = -Infinity;
+  for(const r of rects){
+    left = Math.min(left, r.left);
+    right = Math.max(right, r.right);
+    top = Math.min(top, r.top);
+    bottom = Math.max(bottom, r.bottom);
+  }
+  if(!Number.isFinite(left) || !Number.isFinite(right) || !Number.isFinite(top) || !Number.isFinite(bottom)) return null;
+  return { left, right, top, bottom, width: right - left, height: bottom - top };
 }
 
 function fitPhraseToBox(){
+  const sizePct = clamp(Number(sizeEl.value), 0, 150);
+  if(sizePct <= 0){
+    document.documentElement.style.setProperty("--fitScale", "1");
+    applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+    return;
+  }
+  if(sizePct >= 150){
+    document.documentElement.style.setProperty("--fitScale", "1");
+    applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+    return;
+  }
   const text = (phraseEl.textContent || "").trim();
   if(!text){
     document.documentElement.style.setProperty("--fitScale", "1");
+    applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
     return;
   }
 
   document.documentElement.style.setProperty("--fitScale", "1");
-
-  requestAnimationFrame(()=>{
-    const rect = phraseEl.getBoundingClientRect();
-    if(rect.width <= 0 || rect.height <= 0) return;
-
-    const { w: vw, h: vh } = getViewportSize();
-    const edgePad = getRootVarPx("--edgePad");
-    const widthPct = clamp(Number(widthEl.value), 40, 100) / 100;
-
-    const maxW = Math.min(vw * widthPct, vw - (edgePad * 2));
-    const maxH = vh - (edgePad * 2);
-
-    let scale = Math.min(maxW / rect.width, maxH / rect.height, 1);
-    if(!Number.isFinite(scale) || scale <= 0) scale = 1;
-    scale = clamp(scale, 0.6, 1);
-
-    document.documentElement.style.setProperty("--fitScale", scale.toFixed(3));
-  });
-}
-
-/* Border grows inward AND outward */
-function applyBorderStyle(colorHex){
-  const frame = borderEl;
-  const t = sel.borderEnabled ? clamp(sel.borderThickness, 0, 1) : 0;
-
-  if(!sel.borderEnabled || t <= 0){
-    frame.style.display = "none";
+  const rect = phraseInkBounds() || phraseEl.getBoundingClientRect();
+  if(rect.width <= 0 || rect.height <= 0){
+    document.documentElement.style.setProperty("--fitScale", "1");
+    applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
     return;
   }
-  frame.style.display = "block";
 
-  const { w, h } = getViewportSize();
-  const maxDim = Math.max(w, h);
+  const { w: vw, h: vh } = getViewportSize();
+  const edgePad = getRootVarPx("--edgePad");
+  const wVar = getRootVarVw("--phraseW");
+  const widthPct = (wVar ? wVar : clamp(Number(widthEl.value), 1, 100)) / 100;
+
+  const maxW = Math.min(vw * widthPct, vw - (edgePad * 2));
+  const maxH = vh - (edgePad * 2);
+
+  let scale = Math.min(maxW / rect.width, maxH / rect.height, 1);
+  if(!Number.isFinite(scale) || scale <= 0) scale = 1;
+  scale = clamp(scale, 0.01, 1);
+
+  document.documentElement.style.setProperty("--fitScale", scale.toFixed(3));
+  applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+}
+
+function widenPhraseToAvoidOverfullLines(){
+  // If a line is "overfull" (a word is wider than the box), browsers fall back to start-alignment
+  // and our card bounds can be wrong. Clamp the box to at least the scroll width to keep it centered.
+  const { w: vw } = getViewportSize();
+  if(vw <= 0) return;
+
+  // A couple passes handles cases where max-width / edge padding clamps the first widening attempt.
+  for(let i=0; i<2; i++){
+    const boxW = phraseEl.getBoundingClientRect().width;
+    if(boxW <= 0) return;
+
+    const scrollW = phraseEl.scrollWidth || 0;
+    if(scrollW <= boxW + 0.5) return;
+
+    const needVw = clamp(((scrollW + 2) / vw) * 100, 1, 100);
+    const curVw = getRootVarVw("--phraseW") ?? clamp(Number(widthEl.value), 1, 100);
+    const nextVw = clamp(Math.max(curVw, needVw), 1, 100);
+
+    document.documentElement.style.setProperty("--phraseW", `${nextVw.toFixed(2)}vw`);
+    if(nextVw >= 100){
+      document.documentElement.style.setProperty("--edgePad", "0px");
+      return;
+    }
+  }
+
+  // If we're still overfull, the edge padding is clamping max-width; drop it.
+  const boxW = phraseEl.getBoundingClientRect().width;
+  const scrollW = phraseEl.scrollWidth || 0;
+  if(scrollW > boxW + 0.5){
+    document.documentElement.style.setProperty("--edgePad", "0px");
+    document.documentElement.style.setProperty("--phraseW", "100vw");
+  }
+}
+
+function smartPhraseWidth(){
+  const base = clamp(Number(widthEl.value), 0, 100);
+  if(base === 0){
+    document.documentElement.style.setProperty("--phraseW", "100vw");
+    phraseEl.classList.add("oneWord");
+    document.documentElement.style.setProperty("--edgePad", "0px");
+    fitPhraseToBox();
+    return;
+  }
+  phraseEl.classList.remove("oneWord");
+  document.documentElement.style.setProperty("--phraseW", `${base}vw`);
+  document.documentElement.style.setProperty("--edgePad", base >= 100 ? "0px" : "50px");
+  document.documentElement.style.setProperty("--fitScale", "1");
+  widenPhraseToAvoidOverfullLines();
+
+  const text = (phraseEl.textContent || "").trim();
+  if(!text){
+    fitPhraseToBox();
+    return;
+  }
+
+  // Don't auto-widen very small widths (it causes jitter / flicker).
+  if(base < 25){
+    fitPhraseToBox();
+    return;
+  }
+
+  const rects = phraseInkRects();
+  if(!rects.length){
+    fitPhraseToBox();
+    return;
+  }
+  const last = rects[rects.length - 1];
+  const maxW = Math.max(1, ...rects.map(r=>r.width));
+  const ratio = last.width / maxW;
+  if(ratio >= 0.40 || rects.length < 2){
+    fitPhraseToBox();
+    return;
+  }
+
+  const maxExtra = 10;
+  let w = base;
+  for(let i=1; i<=maxExtra; i++){
+    w = Math.min(base + i, 100);
+    document.documentElement.style.setProperty("--phraseW", `${w}vw`);
+    const rectsNow = phraseInkRects();
+    if(!rectsNow.length) break;
+    const lastNow = rectsNow[rectsNow.length - 1];
+    const maxWNow = Math.max(1, ...rectsNow.map(r=>r.width));
+    const ratioNow = lastNow.width / maxWNow;
+    if(ratioNow >= 0.40) break;
+  }
+  fitPhraseToBox();
+}
+
+function groupClientRectsIntoLines(rects){
+  const out = [];
+  const sorted = rects.slice().sort((a,b)=> (a.top - b.top) || (a.left - b.left));
+  const EPS = 2.0;
+  for(const r of sorted){
+    let line = null;
+    for(const l of out){
+      if(Math.abs(l.top - r.top) <= EPS){
+        line = l;
+        break;
+      }
+    }
+    if(!line){
+      out.push({ top: r.top, bottom: r.bottom, left: r.left, right: r.right });
+    }else{
+      line.top = Math.min(line.top, r.top);
+      line.bottom = Math.max(line.bottom, r.bottom);
+      line.left = Math.min(line.left, r.left);
+      line.right = Math.max(line.right, r.right);
+    }
+  }
+  return out
+    .sort((a,b)=> a.top - b.top)
+    .map(l => ({
+      top: l.top,
+      bottom: l.bottom,
+      left: l.left,
+      width: l.right - l.left,
+      height: l.bottom - l.top
+    }));
+}
+
+function takeScreenshot(){
+  try{
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const dpr = Math.max(1, Math.round((window.devicePixelRatio || 1) * 100) / 100);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(vw * dpr));
+    canvas.height = Math.max(1, Math.round(vh * dpr));
+    const ctx = canvas.getContext("2d");
+    if(!ctx) return;
+    ctx.scale(dpr, dpr);
+
+    // Background
+    ctx.fillStyle = getComputedStyle(document.body).backgroundColor || "#ffffff";
+    ctx.fillRect(0, 0, vw, vh);
+
+    // Card (if enabled)
+    if(sel.borderEnabled && getComputedStyle(cardEl).display !== "none"){
+      const r = cardEl.getBoundingClientRect();
+      if(r.width > 0 && r.height > 0){
+        ctx.fillStyle = getComputedStyle(cardEl).backgroundColor || "transparent";
+        ctx.fillRect(r.left, r.top, r.width, r.height);
+      }
+    }
+
+    // Text
+    const text = (phraseEl.innerText || "").replace(/\r/g, "");
+    if(text.trim()){
+      const cs = getComputedStyle(phraseEl);
+      const fontSize = cs.fontSize || "48px";
+      const fontWeight = cs.fontWeight || "600";
+      const fontFamily = cs.fontFamily || "serif";
+      const lineHeightPx = parseFloat(cs.lineHeight) || (parseFloat(fontSize) * 1.12);
+      ctx.font = `${fontWeight} ${fontSize} ${fontFamily}`;
+      ctx.fillStyle = cs.color || "#000000";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+
+      const lines = text.split("\n");
+      const lineRects = groupClientRectsIntoLines(phraseInkRects());
+      const n = Math.min(lines.length, lineRects.length);
+
+      if(n > 0){
+        for(let i=0; i<n; i++){
+          const line = lines[i];
+          const r = lineRects[i];
+          ctx.fillText(line, r.left + (r.width / 2), r.top);
+        }
+        if(lines.length > n){
+          const last = lineRects[lineRects.length - 1];
+          const startY = (last ? last.bottom : (phraseEl.getBoundingClientRect().top));
+          for(let i=n; i<lines.length; i++){
+            ctx.fillText(lines[i], vw / 2, startY + ((i - n) * lineHeightPx));
+          }
+        }
+      }else{
+        const r = phraseEl.getBoundingClientRect();
+        for(let i=0; i<lines.length; i++){
+          ctx.fillText(lines[i], vw / 2, r.top + (i * lineHeightPx));
+        }
+      }
+    }
+
+    canvas.toBlob((blob)=>{
+      if(!blob) return;
+      const now = new Date();
+      const pad = (n)=> String(n).padStart(2, "0");
+      const stamp = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+      const a = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = `object-poem_${stamp}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=> URL.revokeObjectURL(url), 1500);
+    }, "image/png");
+  }catch(e){}
+}
+
+function flashButtonOnce(btn, ms=140){
+  if(!btn) return;
+  btn.classList.add("on");
+  window.setTimeout(()=> btn.classList.remove("on"), ms);
+}
+function snapScreenshot(){
+  flashButtonOnce(screenshotBtn, 160);
+  takeScreenshot();
+}
+
+/* Card behind phrase */
+function applyCardStyle(colorHex){
+  const t = sel.borderEnabled ? clamp(sel.borderThickness, 0, 1) : 0;
+  if(!sel.borderEnabled || t <= 0){
+    cardEl.style.display = "none";
+    return;
+  }
+  cardEl.style.display = "block";
+  cardEl.style.background = colorHex;
+
+  const rect = phraseInkBounds() || phraseEl.getBoundingClientRect();
+  if(rect.width <= 0 || rect.height <= 0){
+    cardEl.style.display = "none";
+    return;
+  }
+
+  const { w: vw, h: vh } = getViewportSize();
   const tAdj = Math.pow(t, 1.6);
-  const px = Math.max(1, Math.round(tAdj * (maxDim/2)));
 
-  const outside = Math.max(0, Math.round(px * 0.35));
+  // Add a small base padding so the card doesn't feel cramped when hugging the ink.
+  const fontPx = parseFloat(getComputedStyle(phraseEl).fontSize) || 0;
+  const basePadX = clamp(fontPx * 0.40, 14, 36);
+  const basePadY = clamp(fontPx * 0.26, 10, 28);
 
-  const topB = frame.querySelector(".top");
-  const rightB = frame.querySelector(".right");
-  const bottomB = frame.querySelector(".bottom");
-  const leftB = frame.querySelector(".left");
+  const maxPadL = Math.max(0, rect.left);
+  const maxPadR = Math.max(0, vw - rect.right);
+  const maxPadT = Math.max(0, rect.top);
+  const maxPadB = Math.max(0, vh - rect.bottom);
 
-  topB.style.background = colorHex;
-  rightB.style.background = colorHex;
-  bottomB.style.background = colorHex;
-  leftB.style.background = colorHex;
+  // Keep the phrase centered inside the card as it grows: symmetric padding on each axis.
+  const maxSymPadX = Math.min(maxPadL, maxPadR);
+  const maxSymPadY = Math.min(maxPadT, maxPadB);
 
-  topB.style.top = (-outside) + "px";
-  topB.style.height = px + "px";
-  topB.style.left = (-outside) + "px";
-  topB.style.right = (-outside) + "px";
+  const padX = Math.min(maxSymPadX, basePadX + (maxSymPadX * tAdj));
+  const padY = Math.min(maxSymPadY, basePadY + (maxSymPadY * tAdj));
 
-  bottomB.style.bottom = (-outside) + "px";
-  bottomB.style.height = px + "px";
-  bottomB.style.left = (-outside) + "px";
-  bottomB.style.right = (-outside) + "px";
-
-  leftB.style.left = (-outside) + "px";
-  leftB.style.width = px + "px";
-  leftB.style.top = (-outside) + "px";
-  leftB.style.bottom = (-outside) + "px";
-
-  rightB.style.right = (-outside) + "px";
-  rightB.style.width = px + "px";
-  rightB.style.top = (-outside) + "px";
-  rightB.style.bottom = (-outside) + "px";
+  cardEl.style.transform = "none";
+  cardEl.style.left = `${Math.round(rect.left - padX)}px`;
+  cardEl.style.top = `${Math.round(rect.top - padY)}px`;
+  cardEl.style.width = `${Math.ceil(rect.width + (padX * 2))}px`;
+  cardEl.style.height = `${Math.ceil(rect.height + (padY * 2))}px`;
 }
 
 function pctLabel(x){ return `${Math.round(clamp(Number(x),0,1)*100)}%`; }
@@ -1479,6 +3295,7 @@ function formatDuration(seconds){
 /* ================= Visual apply ================= */
 function applyColorsLive(){
   const bg = applyDimmer(current.bgBase, Number(bgBrightEl.value));
+  current.bgLive = bg;
   let fg  = applyDimmer(current.fgBase, Number(fgBrightEl.value));
   let bd  = applyDimmer(current.bdBase, Number(bdBrightEl.value));
 
@@ -1496,7 +3313,10 @@ function applyColorsLive(){
   document.body.style.background = bg;
   phraseEl.style.color = fg;
 
-  applyBorderStyle(bd);
+  applyCardStyle(bd);
+
+  // Keep button fills unique and distinct from the current background.
+  assignUiButtonColors();
 
   bgBrightVal.textContent = pctLabel(bgBrightEl.value);
   fgBrightVal.textContent = pctLabel(fgBrightEl.value);
@@ -1506,7 +3326,7 @@ function applyColorsLive(){
 
 /* ================= Border toggle button sync ================= */
 function setBorderBtn(){
-  bdToggleBtn.textContent = "Border";
+  bdToggleBtn.textContent = sel.borderEnabled ? "On" : "Off";
   bdToggleBtn.classList.toggle("on", sel.borderEnabled);
   bdToggleBtn.setAttribute("aria-pressed", sel.borderEnabled ? "true" : "false");
 }
@@ -1527,14 +3347,15 @@ function syncFullscreenBtn(){
   }
   fsBtn.classList.remove("disabled");
   fsBtn.removeAttribute("aria-disabled");
-  fsBtn.textContent = "Full screen";
   const on = isFullscreen();
+  fsBtn.textContent = on ? "On" : "Off";
   fsBtn.classList.toggle("on", on);
   fsBtn.setAttribute("aria-pressed", on ? "true" : "false");
 }
 
 /* ================= Tick loop ================= */
 function scheduleTick(){
+  if(isPaused) return;
   if(timerId) clearTimeout(timerId);
   const seconds = speedFromSlider(speedEl.value);
   speedVal.textContent = formatDuration(seconds);
@@ -1549,14 +3370,14 @@ function nextFrame(){
   let p = buildPhrase(sel.parts);
 
   current.phrase = p;
-  phraseEl.textContent = current.phrase;
+  phraseEl.innerHTML = formatPhraseText(current.phrase);
   last.phrase = current.phrase;
 
-  fitPhraseToBox();
+  smartPhraseWidth();
 
   if(isFirstFrame){
     isFirstFrame = false;
-  }else{
+  }else if(!isLayoutLocked){
     const bgBase = pickColorNonRepeating("bg", sel.bgColor, new Set());
     current.bgBase = bgBase || current.bgBase;
 
@@ -1572,8 +3393,11 @@ function nextFrame(){
   last.bd = current.bdBase;
 
   applyColorsLive();
-  advancePaletteCycle();
-  applyAccentColors();
+  if(!isLayoutLocked){
+    advancePaletteCycle();
+    applyAccentColors();
+  }
+  commitGeneratedScene();
 }
 
 /* ================= UI hide after inactivity (now hides title too) ================= */
@@ -1583,7 +3407,7 @@ function showUI(){
   if(hideTimer) clearTimeout(hideTimer);
   hideTimer = setTimeout(()=> uiWrapEl.classList.add("hidden"), 3000);
 }
-["mousemove","mousedown","touchstart","keydown","wheel"].forEach(evt=>{
+["mousemove","touchstart"].forEach(evt=>{
   window.addEventListener(evt, showUI, {passive:true});
 });
 
@@ -1600,8 +3424,16 @@ bdThickEl.addEventListener("input", ()=>{
 });
 
 sizeEl.addEventListener("input", ()=>{ applyTypeAndLayout(); showUI(); });
-yEl.addEventListener("input", ()=>{ applyTypeAndLayout(); showUI(); });
-widthEl.addEventListener("input", ()=>{ applyTypeAndLayout(); showUI(); });
+yEl.addEventListener("input", ()=>{ applyTypeAndLayout(); applyColorsLive(); showUI(); });
+widthEl.addEventListener("input", ()=>{
+  if(clamp(Number(widthEl.value), 0, 100) === 0){
+    phraseEl.innerHTML = formatPhraseText(current.phrase);
+  }else{
+    phraseEl.textContent = current.phrase;
+  }
+  applyTypeAndLayout();
+  showUI();
+});
 
 bdToggleBtn.addEventListener("click", ()=>{
   sel.borderEnabled = !sel.borderEnabled;
@@ -1623,6 +3455,66 @@ fsBtn.addEventListener("click", async ()=>{
 
 document.addEventListener("fullscreenchange", syncFullscreenBtn);
 document.addEventListener("webkitfullscreenchange", syncFullscreenBtn);
+
+if(prevPoemBtn) prevPoemBtn.addEventListener("click", ()=>{ goPrevPoem(); showUI(); });
+if(pausePoemBtn) pausePoemBtn.addEventListener("click", ()=>{ togglePaused(); showUI(); });
+if(nextPoemBtn) nextPoemBtn.addEventListener("click", ()=>{ goNextPoem(); showUI(); });
+if(screenshotBtn) screenshotBtn.addEventListener("click", ()=>{ snapScreenshot(); showUI(); });
+if(lockLayoutBtn) lockLayoutBtn.addEventListener("click", ()=>{ toggleLayoutLock(); showUI(); });
+
+window.addEventListener("keydown", (e)=>{
+  if(e.repeat) return;
+  const t = e.target;
+  const tag = (t && t.tagName) ? String(t.tagName).toLowerCase() : "";
+  const isTypingTarget =
+    tag === "input" || tag === "textarea" || tag === "select" || tag === "button" ||
+    (t && t.isContentEditable);
+  if(isTypingTarget) return;
+
+  if(e.code === "Space"){
+    e.preventDefault();
+    togglePaused();
+    showUI();
+    return;
+  }
+  if(e.code === "ArrowLeft"){
+    e.preventDefault();
+    goPrevPoem();
+    showUI();
+    return;
+  }
+  if(e.code === "ArrowRight"){
+    e.preventDefault();
+    goNextPoem();
+    showUI();
+    return;
+  }
+  if(e.code === "ArrowUp" || e.code === "ArrowDown"){
+    e.preventDefault();
+    const dir = (e.code === "ArrowUp") ? 1 : -1;
+    if(e.shiftKey){
+      const next = clamp(Number(widthEl.value) + dir, 0, 100);
+      widthEl.value = String(next);
+      if(clamp(Number(widthEl.value), 0, 100) === 0){
+        phraseEl.innerHTML = formatPhraseText(current.phrase);
+      }else{
+        phraseEl.textContent = current.phrase;
+      }
+    }else{
+      const next = clamp(Number(sizeEl.value) + dir, 0, 150);
+      sizeEl.value = String(next);
+    }
+    applyTypeAndLayout();
+    showUI();
+    return;
+  }
+  if(e.code === "KeyS"){
+    e.preventDefault();
+    snapScreenshot();
+    showUI();
+    return;
+  }
+});
 
 /* ================= Start ================= */
 (function init(){
@@ -1652,13 +3544,16 @@ document.addEventListener("webkitfullscreenchange", syncFullscreenBtn);
   bdBrightVal.textContent = pctLabel(bdBrightEl.value);
   bdThickVal.textContent = `${Math.round(clamp(sel.borderThickness,0,1)*100)}%`;
   speedVal.textContent = formatDuration(speedFromSlider(speedEl.value));
+  sizeVal.textContent = `${Math.round(clamp(Number(sizeEl.value),0,150))}%`;
 
   syncFullscreenBtn();
+  syncPauseBtn();
+  syncLayoutLockBtn();
   setCalmStart();
   const isCoarse = window.matchMedia("(pointer: coarse)").matches;
   if(isCoarse){
-    bdThickEl.value = "0.40";
-    sel.borderThickness = 0.40;
+    bdThickEl.value = "0.30";
+    sel.borderThickness = 0.30;
   }
   nextFrame();
   scheduleTick();
@@ -1670,7 +3565,7 @@ window.addEventListener("resize", ()=>{
   applyTypeAndLayout();
   applyColorsLive();
   syncSwatchHeaderWidths();
-  syncActionButtonWidths();
+  applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
 });
 </script>
 </body>
