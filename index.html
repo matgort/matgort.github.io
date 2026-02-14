@@ -617,6 +617,22 @@
       flex-wrap:nowrap;
       min-width:0;
     }
+
+    /* ===== Mobile pages (Layout / Language / Colors) ===== */
+    #mobileTabs{ display:none; }
+    .mobileTabsRow{ margin-bottom: 2px; }
+    .tabBtn{
+      height: var(--pillH);
+      padding: 0 12px;
+      font-size: var(--pillFont);
+      min-width: 0;
+    }
+    .uiPage{ display:block; }
+    body.isMobilePaged #mobileTabs{ display:flex; }
+    body.isMobilePaged .uiPage{ display:none; }
+    body.isMobilePaged[data-ui-page="layout"] .uiPage--layout{ display:block; }
+    body.isMobilePaged[data-ui-page="language"] .uiPage--language{ display:block; }
+    body.isMobilePaged[data-ui-page="colors"] .uiPage--colors{ display:block; }
     .ctrl{
       flex: 1 1 0;
       display:flex;
@@ -885,114 +901,130 @@
     <div id="bar">
       <div class="barInner">
 
-        <!-- SENTENCE STRUCTURE -->
-        <div class="row centerRow">
-          <div class="grp words">
-            <div class="labelRow">
-              <div class="label">Sentence Structure</div>
-              <div class="val hoverVal" id="partsHover">&nbsp;</div>
-            </div>
-            <div class="btnGroup centered" id="partsRow"></div>
+        <!-- MOBILE PAGES -->
+        <div class="row centerRow mobileTabsRow" id="mobileTabs" aria-label="Pages">
+          <div class="btnGroup centered" role="tablist" aria-label="Pages">
+            <button id="tabLayoutBtn" type="button" class="colorBtn tabBtn on" role="tab" aria-selected="true" aria-pressed="true">Layout</button>
+            <button id="tabLanguageBtn" type="button" class="colorBtn tabBtn" role="tab" aria-selected="false" aria-pressed="false">Language</button>
+            <button id="tabColorsBtn" type="button" class="colorBtn tabBtn" role="tab" aria-selected="false" aria-pressed="false">Colors</button>
           </div>
         </div>
 
-        <!-- SLIDERS -->
-        <div class="sliderRow">
-          <div class="ctrl">
-            <div class="labelRow"><div class="label">Background Brightness</div><div class="val" id="bgBrightVal">50%</div></div>
-            <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.50">
-          </div>
-
-          <div class="ctrl">
-            <div class="labelRow"><div class="label">Text Brightness</div><div class="val" id="fgBrightVal">0%</div></div>
-            <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
-          </div>
-
-          <div class="ctrl">
-            <div class="labelRow"><div class="label">Card Brightness</div><div class="val" id="bdBrightVal">100%</div></div>
-            <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
-          </div>
-
-          <div class="ctrl">
-            <div class="labelRow"><div class="label">Card Size</div><div class="val" id="bdThickVal">30%</div></div>
-            <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.30">
-          </div>
-
-          <div class="actionSlot">
-            <div class="actionGroup" aria-label="Card">
-              <div class="actionText">Card</div>
-              <button
-                id="bdToggleBtn"
-                type="button"
-                class="colorBtn actionBtn"
-                aria-pressed="true">
-                On
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="sliderRow">
-          <div class="ctrl">
-            <div class="labelRow"><div class="label">Speed</div><div class="val" id="speedVal">7.0s</div></div>
-            <input id="speedSlider" type="range" min="0" max="1" step="0.001" value="0.595">
-          </div>
-
-          <div class="ctrl">
-            <div class="labelRow"><div class="label">Text Size</div><div class="val" id="sizeVal">40%</div></div>
-            <input id="sizeSlider" type="range" min="0" max="150" step="0.1" value="40">
-          </div>
-
-          <div class="ctrl">
-            <div class="labelRow"><div class="label">Height</div><div class="val" id="yVal">50%</div></div>
-            <input id="ySlider" type="range" min="0" max="100" step="0.01" value="50">
-          </div>
-
-          <div class="ctrl">
-            <div class="labelRow"><div class="label">Width</div><div class="val" id="widthVal">40%</div></div>
-            <input id="widthSlider" type="range" min="0" max="100" step="0.01" value="40">
-          </div>
-
-          <div class="actionSlot">
-            <div class="actionGroup" aria-label="Full screen">
-              <div class="actionText">Full screen</div>
-              <button id="fsBtn" type="button" class="colorBtn actionBtn" aria-pressed="false">Off</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- COLORS -->
-        <div class="row colorsRow">
-          <div class="grp">
-            <div class="swatchWrap">
-              <div class="swatchHeader">
-                <div class="label">Background Colors</div>
-                <div class="val hoverVal" id="bgHover">&nbsp;</div>
+        <!-- LANGUAGE PAGE: sentence structure + speed -->
+        <section class="uiPage uiPage--language" aria-label="Language">
+          <div class="row centerRow">
+            <div class="grp words">
+              <div class="labelRow">
+                <div class="label">Sentence Structure</div>
+                <div class="val hoverVal" id="partsHover">&nbsp;</div>
               </div>
-              <div class="swatchRow" id="bgColorsRow"></div>
+              <div class="btnGroup centered" id="partsRow"></div>
+            </div>
+          </div>
+          <div class="sliderRow">
+            <div class="ctrl">
+              <div class="labelRow"><div class="label">Speed</div><div class="val" id="speedVal">7.0s</div></div>
+              <input id="speedSlider" type="range" min="0" max="1" step="0.001" value="0.595">
+            </div>
+          </div>
+        </section>
+
+        <!-- LAYOUT PAGE: everything except language+colors -->
+        <section class="uiPage uiPage--layout" aria-label="Layout">
+          <div class="sliderRow">
+            <div class="ctrl">
+              <div class="labelRow"><div class="label">Background Brightness</div><div class="val" id="bgBrightVal">50%</div></div>
+              <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.50">
+            </div>
+
+            <div class="ctrl">
+              <div class="labelRow"><div class="label">Text Brightness</div><div class="val" id="fgBrightVal">0%</div></div>
+              <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
+            </div>
+
+            <div class="ctrl">
+              <div class="labelRow"><div class="label">Card Brightness</div><div class="val" id="bdBrightVal">100%</div></div>
+              <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
+            </div>
+
+            <div class="ctrl">
+              <div class="labelRow"><div class="label">Card Size</div><div class="val" id="bdThickVal">30%</div></div>
+              <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.30">
+            </div>
+
+            <div class="actionSlot">
+              <div class="actionGroup" aria-label="Card">
+                <div class="actionText">Card</div>
+                <button
+                  id="bdToggleBtn"
+                  type="button"
+                  class="colorBtn actionBtn"
+                  aria-pressed="true">
+                  On
+                </button>
+              </div>
             </div>
           </div>
 
-          <div class="grp">
-            <div class="swatchWrap">
-              <div class="swatchHeader">
-                <div class="label">Text Colors</div>
-                <div class="val hoverVal" id="fgHover">&nbsp;</div>
-              </div>
-              <div class="swatchRow" id="fgColorsRow"></div>
+          <div class="sliderRow">
+            <div class="ctrl">
+              <div class="labelRow"><div class="label">Text Size</div><div class="val" id="sizeVal">40%</div></div>
+              <input id="sizeSlider" type="range" min="0" max="150" step="0.1" value="40">
             </div>
-          </div>
 
-          <div class="grp">
-            <div class="swatchWrap">
-              <div class="swatchHeader">
-                <div class="label">Card Colors</div>
-                <div class="val hoverVal" id="bdHover">&nbsp;</div>
+            <div class="ctrl">
+              <div class="labelRow"><div class="label">Height</div><div class="val" id="yVal">50%</div></div>
+              <input id="ySlider" type="range" min="0" max="100" step="0.01" value="50">
+            </div>
+
+            <div class="ctrl">
+              <div class="labelRow"><div class="label">Width</div><div class="val" id="widthVal">40%</div></div>
+              <input id="widthSlider" type="range" min="0" max="100" step="0.01" value="40">
+            </div>
+
+            <div class="actionSlot">
+              <div class="actionGroup" aria-label="Full screen">
+                <div class="actionText">Full screen</div>
+                <button id="fsBtn" type="button" class="colorBtn actionBtn" aria-pressed="false">Off</button>
               </div>
-              <div class="swatchRow" id="bdColorsRow"></div>
             </div>
           </div>
-        </div>
+        </section>
+
+        <!-- COLORS PAGE: swatches -->
+        <section class="uiPage uiPage--colors" aria-label="Colors">
+          <div class="row colorsRow">
+            <div class="grp">
+              <div class="swatchWrap">
+                <div class="swatchHeader">
+                  <div class="label">Background Colors</div>
+                  <div class="val hoverVal" id="bgHover">&nbsp;</div>
+                </div>
+                <div class="swatchRow" id="bgColorsRow"></div>
+              </div>
+            </div>
+
+            <div class="grp">
+              <div class="swatchWrap">
+                <div class="swatchHeader">
+                  <div class="label">Text Colors</div>
+                  <div class="val hoverVal" id="fgHover">&nbsp;</div>
+                </div>
+                <div class="swatchRow" id="fgColorsRow"></div>
+              </div>
+            </div>
+
+            <div class="grp">
+              <div class="swatchWrap">
+                <div class="swatchHeader">
+                  <div class="label">Card Colors</div>
+                  <div class="val hoverVal" id="bdHover">&nbsp;</div>
+                </div>
+                <div class="swatchRow" id="bdColorsRow"></div>
+              </div>
+            </div>
+          </div>
+        </section>
 
       </div>
     </div>
@@ -1336,6 +1368,9 @@ const pausePoemBtn = document.getElementById("pausePoemBtn");
 const nextPoemBtn = document.getElementById("nextPoemBtn");
 const screenshotBtn = document.getElementById("screenshotBtn");
 const lockCompositionBtn = document.getElementById("lockCompositionBtn");
+const tabLayoutBtn = document.getElementById("tabLayoutBtn");
+const tabLanguageBtn = document.getElementById("tabLanguageBtn");
+const tabColorsBtn = document.getElementById("tabColorsBtn");
 
 const speedVal = document.getElementById("speedVal");
 const bgBrightVal = document.getElementById("bgBrightVal");
@@ -1356,6 +1391,52 @@ const sliderEls = [
   speedEl, bgBrightEl, fgBrightEl, bdBrightEl,
   bdThickEl, sizeEl, yEl, widthEl
 ];
+
+/* ================= Mobile UI pages ================= */
+const UI_PAGES = ["layout","language","colors"];
+let uiPage = "layout";
+const mobilePagerMQ = window.matchMedia ? window.matchMedia("(max-width: 820px)") : null;
+
+function isMobilePaged(){
+  return !!(mobilePagerMQ && mobilePagerMQ.matches);
+}
+function syncMobilePagedClass(){
+  document.body.classList.toggle("isMobilePaged", isMobilePaged());
+}
+function setTabPressed(btn, on){
+  if(!btn) return;
+  btn.classList.toggle("on", on);
+  btn.setAttribute("aria-pressed", on ? "true" : "false");
+  btn.setAttribute("aria-selected", on ? "true" : "false");
+}
+function assignMobileTabColors(){
+  // Change colors on each page switch; avoid matching the live background.
+  const bgAvoid = getBgLiveHex();
+  const exclude = new Set([bgAvoid]);
+
+  const pool = new Set(COLOR_OPTS);
+  const b1 = pickColorNonRepeating("tabs", pool, exclude) || paletteColorAvoid("retro", 0, bgAvoid);
+  exclude.add(normHex(b1));
+  const b2 = pickColorNonRepeating("tabs", pool, exclude) || paletteColorAvoid("fleshy", 1, bgAvoid);
+  exclude.add(normHex(b2));
+  const b3 = pickColorNonRepeating("tabs", pool, exclude) || paletteColorAvoid("future", 2, bgAvoid);
+
+  if(tabLayoutBtn) tabLayoutBtn.style.setProperty("--btnBg", b1);
+  if(tabLanguageBtn) tabLanguageBtn.style.setProperty("--btnBg", b2);
+  if(tabColorsBtn) tabColorsBtn.style.setProperty("--btnBg", b3);
+}
+function setUiPage(next){
+  const page = UI_PAGES.includes(next) ? next : "layout";
+  uiPage = page;
+  document.body.dataset.uiPage = page;
+
+  setTabPressed(tabLayoutBtn, page === "layout");
+  setTabPressed(tabLanguageBtn, page === "language");
+  setTabPressed(tabColorsBtn, page === "colors");
+
+  // Only bother recoloring if the tabs are visible on this viewport.
+  if(isMobilePaged()) assignMobileTabColors();
+}
 
 /* ================= Selection state ================= */
 const sel = {
@@ -4565,6 +4646,9 @@ if(pausePoemBtn) pausePoemBtn.addEventListener("click", ()=>{ togglePaused(); sh
 if(nextPoemBtn) nextPoemBtn.addEventListener("click", ()=>{ goNextPoem(); showUI(); });
 if(screenshotBtn) screenshotBtn.addEventListener("click", ()=>{ snapScreenshot(); showUI(); });
 if(lockCompositionBtn) lockCompositionBtn.addEventListener("click", ()=>{ toggleCompositionLock(); showUI(); });
+if(tabLayoutBtn) tabLayoutBtn.addEventListener("click", ()=>{ setUiPage("layout"); showUI(); });
+if(tabLanguageBtn) tabLanguageBtn.addEventListener("click", ()=>{ setUiPage("language"); showUI(); });
+if(tabColorsBtn) tabColorsBtn.addEventListener("click", ()=>{ setUiPage("colors"); showUI(); });
 
 window.addEventListener("keydown", (e)=>{
   if(e.repeat) return;
@@ -4628,6 +4712,14 @@ window.addEventListener("keydown", (e)=>{
     window.visualViewport.addEventListener("scroll", setViewportVars, {passive:true});
   }
 
+  syncMobilePagedClass();
+  setUiPage(uiPage);
+  if(mobilePagerMQ){
+    const onChange = ()=>{ syncMobilePagedClass(); setUiPage(uiPage); };
+    if(mobilePagerMQ.addEventListener) mobilePagerMQ.addEventListener("change", onChange);
+    else if(mobilePagerMQ.addListener) mobilePagerMQ.addListener(onChange);
+  }
+
   loadRecentPhrases();
 
   initPaletteCycles();
@@ -4662,6 +4754,8 @@ window.addEventListener("keydown", (e)=>{
     sel.borderThickness = 0.30;
   }
   nextFrame();
+  // Now that background is set, color the page tabs (if visible).
+  if(isMobilePaged()) assignMobileTabColors();
   scheduleTick();
   showUI();
 })();
