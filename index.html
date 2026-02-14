@@ -620,7 +620,10 @@
 
     /* ===== Mobile pages (Layout / Language / Colors) ===== */
     #mobileTabs{ display:none; }
-    .mobileTabsRow{ margin-bottom: 2px; }
+    .mobileTabsRow{
+      margin-top: 20px; /* lower the tabs a bit on mobile */
+      margin-bottom: 2px;
+    }
     .tabBtn{
       height: var(--pillH);
       padding: 0 12px;
@@ -633,6 +636,21 @@
     body.isMobilePaged[data-ui-page="layout"] .uiPage--layout{ display:block; }
     body.isMobilePaged[data-ui-page="language"] .uiPage--language{ display:block; }
     body.isMobilePaged[data-ui-page="colors"] .uiPage--colors{ display:block; }
+    body.isMobilePaged{
+      /* Narrow the whole UI lane by +10px padding per side. */
+      --uiPadX: 30px;
+    }
+    body.isMobilePaged .colorsRow{
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 16px;
+    }
+    body.isMobilePaged .colorsRow .grp{
+      flex: 0 0 auto;
+      width: 100%;
+      align-items: center;
+    }
     .ctrl{
       flex: 1 1 0;
       display:flex;
@@ -1396,6 +1414,7 @@ const sliderEls = [
 const UI_PAGES = ["layout","language","colors"];
 let uiPage = "layout";
 const mobilePagerMQ = window.matchMedia ? window.matchMedia("(max-width: 820px)") : null;
+let hasMobileTabbedOnce = false;
 
 function isMobilePaged(){
   return !!(mobilePagerMQ && mobilePagerMQ.matches);
@@ -1430,9 +1449,17 @@ function setUiPage(next){
   uiPage = page;
   document.body.dataset.uiPage = page;
 
-  setTabPressed(tabLayoutBtn, page === "layout");
-  setTabPressed(tabLanguageBtn, page === "language");
-  setTabPressed(tabColorsBtn, page === "colors");
+  // On load, keep all three tabs visually "off" (hollow). Once the user taps a tab,
+  // we start showing the active tab as "on".
+  if(hasMobileTabbedOnce){
+    setTabPressed(tabLayoutBtn, page === "layout");
+    setTabPressed(tabLanguageBtn, page === "language");
+    setTabPressed(tabColorsBtn, page === "colors");
+  }else{
+    setTabPressed(tabLayoutBtn, false);
+    setTabPressed(tabLanguageBtn, false);
+    setTabPressed(tabColorsBtn, false);
+  }
 
   // Only bother recoloring if the tabs are visible on this viewport.
   if(isMobilePaged()) assignMobileTabColors();
@@ -4646,9 +4673,9 @@ if(pausePoemBtn) pausePoemBtn.addEventListener("click", ()=>{ togglePaused(); sh
 if(nextPoemBtn) nextPoemBtn.addEventListener("click", ()=>{ goNextPoem(); showUI(); });
 if(screenshotBtn) screenshotBtn.addEventListener("click", ()=>{ snapScreenshot(); showUI(); });
 if(lockCompositionBtn) lockCompositionBtn.addEventListener("click", ()=>{ toggleCompositionLock(); showUI(); });
-if(tabLayoutBtn) tabLayoutBtn.addEventListener("click", ()=>{ setUiPage("layout"); showUI(); });
-if(tabLanguageBtn) tabLanguageBtn.addEventListener("click", ()=>{ setUiPage("language"); showUI(); });
-if(tabColorsBtn) tabColorsBtn.addEventListener("click", ()=>{ setUiPage("colors"); showUI(); });
+if(tabLayoutBtn) tabLayoutBtn.addEventListener("click", ()=>{ hasMobileTabbedOnce = true; setUiPage("layout"); showUI(); });
+if(tabLanguageBtn) tabLanguageBtn.addEventListener("click", ()=>{ hasMobileTabbedOnce = true; setUiPage("language"); showUI(); });
+if(tabColorsBtn) tabColorsBtn.addEventListener("click", ()=>{ hasMobileTabbedOnce = true; setUiPage("colors"); showUI(); });
 
 window.addEventListener("keydown", (e)=>{
   if(e.repeat) return;
