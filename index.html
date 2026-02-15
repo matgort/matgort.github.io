@@ -45,7 +45,7 @@
       --swW: calc(var(--pillH) * 2);
 
       /* Global UI padding request */
-      --uiPadX: 20px;
+      --uiPadX: 30px; /* narrower UI: +10px padding each side */
 
       /* Narrow UI lane (your mockup’s big move) */
       --uiMaxW: 1120px;
@@ -128,9 +128,7 @@
       z-index: 10;
     }
 
-    /* ===== UI wrapper (title + bar) =====
-       Title is now part of this UI and fades with it.
-    */
+    /* ===== UI wrapper (title + bar) ===== */
     #uiWrap{
       position: fixed;
       left:0; right:0;
@@ -148,7 +146,7 @@
       pointer-events: none;
     }
 
-    /* ===== Title (inside uiWrap, NOT pointer-interactive) ===== */
+    /* ===== Title (inside uiWrap) ===== */
     #titleBlock{
       position: fixed;
       top: calc(env(safe-area-inset-top, 0px) + var(--titlePadTop));
@@ -185,30 +183,8 @@
       font-weight: 560;
       opacity: .88;
     }
-    #titleControls{
-      display:flex;
-      gap: 10px;
-      justify-content:center;
-      align-items:center;
-      pointer-events: auto;
-      margin-top: 26px; /* lowered ~20px +2px (closer to Screenshot row) */
-    }
-    #titleExtras{
-      display:flex;
-      flex-direction: column;
-      gap: 8px;
-      justify-content:center;
-      align-items:center;
-      pointer-events: auto;
-      margin-top: 8px; /* -2px so Screenshot stays put while playback row drops */
-    }
-    #screenshotBtn{
-      height: var(--pillH);
-      padding: 0 12px;
-      font-size: var(--pillFont);
-      min-width: 128px;
-    }
-    #lockCompositionBtn{ margin-top: 6px; }
+    /* Title is just the title/subtitle now; all controls live in the bottom dock. */
+    #titleControls, #titleExtras{ display:none; }
 
     .lockBtn{
       height: calc(var(--pillH) + 1px);
@@ -350,12 +326,39 @@
       }
     }
 
-    /* ===== UI bar ===== */
+    @media (hover: hover) and (pointer: fine){
+      /* Dock button hover text (below the button). */
+      .dockBtn[data-tip]{
+        position: relative;
+      }
+      .dockBtn[data-tip]::after{
+        content: attr(data-tip);
+        position: absolute;
+        left: 50%;
+        top: calc(100% + 8px);
+        transform: translate(-50%, -4px);
+        color: var(--ui);
+        font-size: 9px;
+        letter-spacing: .10em;
+        text-transform: uppercase;
+        line-height: 1;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .12s ease, transform .12s ease;
+      }
+      .dockBtn[data-tip]:hover::after{
+        opacity: .9;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    /* ===== Bottom Dock + Sliding Panel ===== */
     #bar{
       position: fixed;
       left:0; right:0;
-      bottom: calc(env(safe-area-inset-bottom, 0px) + var(--barOffset));
-      height: var(--barH);
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+      height: auto;
 
       padding-left: calc(env(safe-area-inset-left, 0px) + var(--uiPadX));
       padding-right: calc(env(safe-area-inset-right, 0px) + var(--uiPadX));
@@ -364,7 +367,7 @@
       pointer-events:auto; /* clickable */
       background: transparent;
 
-      max-height: calc(var(--vh, 1vh) * 100 - 8px);
+      max-height: calc(var(--vh, 1vh) * 100);
       overflow: visible;
     }
 
@@ -374,15 +377,74 @@
       margin-left: auto;
       margin-right: auto;
 
-      padding-top: 14px;
       display:flex;
       flex-direction:column;
-      gap:8px;
-      height:100%;
+      gap:0;
+      height:auto;
       overflow: visible;
 
       transform: scale(var(--uiScale));
       transform-origin: bottom center;
+    }
+
+    #panelWrap{
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: max-height .22s ease, opacity .18s ease, transform .22s ease;
+      pointer-events: none;
+      margin-bottom: 0;
+    }
+    body[data-ui-page]:not([data-ui-page="none"]) #panelWrap{
+      max-height: min(62vh, calc(var(--vh, 1vh) * 100 - 120px));
+      opacity: 1;
+      transform: translateY(-8px); /* pop-up a touch higher; dock stays put */
+      pointer-events: auto;
+      margin-bottom: 10px;
+    }
+    #panelInner{
+      max-height: inherit;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      padding-top: 6px;
+    }
+
+    #dock{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 8px;
+    }
+    #dockPlayback{
+      display:flex;
+      gap: 10px;
+      justify-content:center;
+      align-items:center;
+    }
+    #dockMenu{
+      display:flex;
+      gap: 10px;
+      justify-content:center;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    #dockBottom{
+      display:flex;
+      gap: 10px;
+      justify-content:center;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    .dockBtn{
+      height: var(--pillH);
+      padding: 0 12px;
+      font-size: var(--pillFont);
+      min-width: 0;
     }
 
     .row{
@@ -405,6 +467,7 @@
       gap: 28px;
       flex-wrap:nowrap;
     }
+    /* (removed) vertical swatch column; colors page uses the 3-up row again */
 
     .grp{
       display:flex;
@@ -618,38 +681,79 @@
       min-width:0;
     }
 
-    /* ===== Mobile pages (Layout / Language / Colors) ===== */
-    #mobileTabs{ display:none; }
-    .mobileTabsRow{
-      margin-top: 20px; /* lower the tabs a bit on mobile */
-      margin-bottom: 2px;
+    /* ===== Paged UI (Layout / Language / Colors / Speed) ===== */
+    .uiPage{ display:none; }
+    body[data-ui-page="layout"] .uiPage--layout{ display:block; }
+    body[data-ui-page="language"] .uiPage--language{ display:block; }
+    body[data-ui-page="colors"] .uiPage--colors{ display:block; }
+    body[data-ui-page="speed"] .uiPage--speed{ display:block; }
+
+    /* Layout panel: fixed 3-up grid like the reference screenshot (desktop),
+       and it collapses into a single column on smaller screens. */
+    .uiPage--layout{
+      --layoutColW: 240px;
+      --layoutGap: 70px;
+      max-width: calc((var(--layoutColW) * 3) + (var(--layoutGap) * 2));
+      margin-left: auto;
+      margin-right: auto;
     }
-    .tabBtn{
-      height: var(--pillH);
-      padding: 0 12px;
-      font-size: var(--pillFont);
-      min-width: 0;
+    .uiPage--layout .layoutGridRow{
+      display:grid;
+      grid-template-columns: repeat(3, var(--layoutColW));
+      gap: var(--layoutGap);
+      justify-content: center;
+      align-items: end;
     }
-    .uiPage{ display:block; }
-    body.isMobilePaged #mobileTabs{ display:flex; }
-    body.isMobilePaged .uiPage{ display:none; }
-    body.isMobilePaged[data-ui-page="layout"] .uiPage--layout{ display:block; }
-    body.isMobilePaged[data-ui-page="language"] .uiPage--language{ display:block; }
-    body.isMobilePaged[data-ui-page="colors"] .uiPage--colors{ display:block; }
-    body.isMobilePaged{
-      /* Narrow the whole UI lane by +10px padding per side. */
-      --uiPadX: 30px;
+    .uiPage--layout .layoutActionRow{
+      display:grid;
+      grid-template-columns: repeat(3, var(--layoutColW));
+      gap: var(--layoutGap);
+      justify-content: center;
+      align-items: end;
     }
-    body.isMobilePaged .colorsRow{
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 16px;
+    .uiPage--layout .layoutActionRow .actionGroup{
+      justify-self: center;
     }
-    body.isMobilePaged .colorsRow .grp{
-      flex: 0 0 auto;
-      width: 100%;
-      align-items: center;
+    /* Slightly tighter label typography so it doesn't collide. */
+    .uiPage--layout .label,
+    .uiPage--layout .val{
+      font-size: 8px;
+      letter-spacing: .07em;
+    }
+
+    @media(max-width: 860px){
+      .uiPage--layout{
+        max-width: min(520px, 100%);
+        --layoutGap: 12px;
+      }
+      .uiPage--layout .layoutGridRow{
+        grid-template-columns: 1fr;
+      }
+      .uiPage--layout .layoutActionRow{
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .uiPage--layout .layoutActionRow .layoutActionSpacer{ display:none; }
+    }
+
+    /* Speed is intentionally narrow and centered. */
+    .uiPage--speed .sliderRow{ justify-content: center; }
+    .uiPage--speed .ctrl{ flex: 0 1 260px; }
+
+    /* Dock buttons (below playback) start dim and brighten on hover/active. */
+    #dockMenu .dockBtn,
+    #dockBottom .dockBtn,
+    #dockBottom .lockBtn{
+      opacity: 0.58;
+      transition: opacity .12s ease;
+    }
+    #dockMenu .dockBtn:hover,
+    #dockBottom .dockBtn:hover,
+    #dockBottom .lockBtn:hover,
+    #dockMenu .dockBtn.on,
+    #dockBottom .dockBtn.on,
+    #dockBottom .lockBtn.on{
+      opacity: 1;
     }
     .ctrl{
       flex: 1 1 0;
@@ -845,12 +949,7 @@
         --uiScale: 0.96;
         --uiPadX: 14px;
       }
-      #bar{ overflow: hidden; }
-      .barInner{
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 16px;
-      }
+      /* Bottom dock/panel manages its own scrolling (panelInner). */
       #titleBlock{ gap: 4px; }
       #titleBlock .title{ letter-spacing: .18em; }
       #titleBlock .sub{ letter-spacing: .08em; }
@@ -858,7 +957,7 @@
   </style>
 </head>
 
-<body>
+<body data-ui-page="none">
   <div id="stage">
     <div id="card" aria-hidden="true"></div>
     <div id="phrase" role="status" aria-live="polite">
@@ -871,178 +970,165 @@
     <div id="titleBlock">
       <div class="title">Sculpture Poems</div>
       <div class="sub">written by Margot DeMarco, arranged by ChatGPT</div>
-      <div id="titleControls" aria-label="Playback controls">
-        <button id="prevPoemBtn" type="button" class="iconBtn" aria-label="Previous poem (Left arrow)" data-tip="back">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-        <button id="pausePoemBtn" type="button" class="iconBtn" aria-label="Pause (Space)" aria-pressed="false" data-tip="play/pause">
-          <svg class="pauseIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M7 6h3v12H7zM14 6h3v12h-3z" fill="currentColor"/>
-          </svg>
-          <svg class="playIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M9 7l10 5-10 5V7z" fill="currentColor"/>
-          </svg>
-        </button>
-        <button id="nextPoemBtn" type="button" class="iconBtn" aria-label="Next poem (Right arrow)" data-tip="forward">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </button>
-      </div>
-      <div id="titleExtras" aria-label="Extras">
-        <button id="screenshotBtn" type="button" class="colorBtn" aria-label="Screenshot (S)">Screenshot</button>
-        <button id="lockCompositionBtn" type="button" class="colorBtn lockBtn" aria-label="Lock colors" aria-pressed="false" data-tip="lock colors">
-          <span class="lockIcons" aria-hidden="true">
-            <!-- Open lock (default) -->
-            <svg class="lockSvg lockSvg--open" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-              <rect x="5" y="10" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-              <!-- Open shackle: pivots on the right + slightly raised -->
-              <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" transform="translate(34 -1) scale(-1 1)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <!-- Slot -->
-              <rect x="9" y="15" width="6" height="2" fill="currentColor"/>
-            </svg>
-            <!-- Closed lock (hover when unlocked, default when locked) -->
-            <svg class="lockSvg lockSvg--closed" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-              <rect x="5" y="10" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-              <!-- Slightly taller closed shackle -->
-              <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <!-- Keyhole -->
-              <rect x="11" y="14" width="2" height="5" fill="currentColor"/>
-            </svg>
-          </span>
-        </button>
-      </div>
     </div>
 
     <div id="bar">
       <div class="barInner">
 
         <!-- MOBILE PAGES -->
-        <div class="row centerRow mobileTabsRow" id="mobileTabs" aria-label="Pages">
-          <div class="btnGroup centered" role="tablist" aria-label="Pages">
-            <button id="tabLayoutBtn" type="button" class="colorBtn tabBtn on" role="tab" aria-selected="true" aria-pressed="true">Layout</button>
-            <button id="tabLanguageBtn" type="button" class="colorBtn tabBtn" role="tab" aria-selected="false" aria-pressed="false">Language</button>
-            <button id="tabColorsBtn" type="button" class="colorBtn tabBtn" role="tab" aria-selected="false" aria-pressed="false">Colors</button>
+        <div id="panelWrap" aria-label="Submenu panel">
+          <div id="panelInner">
+            <section class="uiPage uiPage--language" aria-label="Language">
+              <div class="row centerRow">
+                <div class="grp words">
+                  <div class="labelRow">
+                    <div class="label">Sentence Structure</div>
+                    <div class="val hoverVal" id="partsHover">&nbsp;</div>
+                  </div>
+                  <div class="btnGroup centered" id="partsRow"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="uiPage uiPage--speed" aria-label="Speed">
+              <div class="sliderRow">
+                <div class="ctrl">
+                  <div class="labelRow"><div class="label">Speed</div><div class="val" id="speedVal">7.0s</div></div>
+                  <input id="speedSlider" type="range" min="0" max="1" step="0.001" value="0.595">
+                </div>
+              </div>
+            </section>
+
+            <section class="uiPage uiPage--layout" aria-label="Layout">
+              <div class="sliderRow layoutGridRow">
+                <div class="ctrl">
+                  <div class="labelRow"><div class="label">Background Brightness</div><div class="val" id="bgBrightVal">50%</div></div>
+                  <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.50">
+                </div>
+                <div class="ctrl">
+                  <div class="labelRow"><div class="label">Text Brightness</div><div class="val" id="fgBrightVal">0%</div></div>
+                  <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
+                </div>
+                <div class="ctrl">
+                  <div class="labelRow"><div class="label">Card Brightness</div><div class="val" id="bdBrightVal">100%</div></div>
+                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
+                </div>
+              </div>
+
+              <div class="sliderRow layoutGridRow">
+                <div class="ctrl">
+                  <div class="labelRow"><div class="label">Text Size</div><div class="val" id="sizeVal">40%</div></div>
+                  <input id="sizeSlider" type="range" min="0" max="150" step="0.1" value="40">
+                </div>
+                <div class="ctrl">
+                  <div class="labelRow"><div class="label">Height</div><div class="val" id="yVal">50%</div></div>
+                  <input id="ySlider" type="range" min="0" max="100" step="0.01" value="50">
+                </div>
+                <div class="ctrl">
+                  <div class="labelRow"><div class="label">Width</div><div class="val" id="widthVal">40%</div></div>
+                  <input id="widthSlider" type="range" min="0" max="100" step="0.01" value="40">
+                </div>
+              </div>
+
+              <div class="ctrl" style="display:none;">
+                <div class="labelRow"><div class="label">Card Size</div><div class="val" id="bdThickVal">30%</div></div>
+                <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.30">
+              </div>
+
+              <div class="layoutActionRow">
+                <div class="layoutActionSpacer" aria-hidden="true"></div>
+                <div class="actionGroup" aria-label="Card">
+                  <div class="actionText">Card</div>
+                  <button id="bdToggleBtn" type="button" class="colorBtn actionBtn" aria-pressed="true">On</button>
+                </div>
+                <div class="actionGroup" aria-label="Full screen">
+                  <div class="actionText">Full screen</div>
+                  <button id="fsBtn" type="button" class="colorBtn actionBtn" aria-pressed="false">Off</button>
+                </div>
+              </div>
+            </section>
+
+            <section class="uiPage uiPage--colors" aria-label="Colors">
+              <div class="row colorsRow">
+                <div class="grp">
+                  <div class="swatchWrap">
+                    <div class="swatchHeader">
+                      <div class="label">Background Colors</div>
+                      <div class="val hoverVal" id="bgHover">&nbsp;</div>
+                    </div>
+                    <div class="swatchRow" id="bgColorsRow"></div>
+                  </div>
+                </div>
+                <div class="grp">
+                  <div class="swatchWrap">
+                    <div class="swatchHeader">
+                      <div class="label">Text Colors</div>
+                      <div class="val hoverVal" id="fgHover">&nbsp;</div>
+                    </div>
+                    <div class="swatchRow" id="fgColorsRow"></div>
+                  </div>
+                </div>
+                <div class="grp">
+                  <div class="swatchWrap">
+                    <div class="swatchHeader">
+                      <div class="label">Card Colors</div>
+                      <div class="val hoverVal" id="bdHover">&nbsp;</div>
+                    </div>
+                    <div class="swatchRow" id="bdColorsRow"></div>
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
         </div>
 
-        <!-- LANGUAGE PAGE: sentence structure + speed -->
-        <section class="uiPage uiPage--language" aria-label="Language">
-          <div class="row centerRow">
-            <div class="grp words">
-              <div class="labelRow">
-                <div class="label">Sentence Structure</div>
-                <div class="val hoverVal" id="partsHover">&nbsp;</div>
-              </div>
-              <div class="btnGroup centered" id="partsRow"></div>
-            </div>
-          </div>
-          <div class="sliderRow">
-            <div class="ctrl">
-              <div class="labelRow"><div class="label">Speed</div><div class="val" id="speedVal">7.0s</div></div>
-              <input id="speedSlider" type="range" min="0" max="1" step="0.001" value="0.595">
-            </div>
-          </div>
-        </section>
-
-        <!-- LAYOUT PAGE: everything except language+colors -->
-        <section class="uiPage uiPage--layout" aria-label="Layout">
-          <div class="sliderRow">
-            <div class="ctrl">
-              <div class="labelRow"><div class="label">Background Brightness</div><div class="val" id="bgBrightVal">50%</div></div>
-              <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.50">
-            </div>
-
-            <div class="ctrl">
-              <div class="labelRow"><div class="label">Text Brightness</div><div class="val" id="fgBrightVal">0%</div></div>
-              <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
-            </div>
-
-            <div class="ctrl">
-              <div class="labelRow"><div class="label">Card Brightness</div><div class="val" id="bdBrightVal">100%</div></div>
-              <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
-            </div>
-
-            <div class="ctrl">
-              <div class="labelRow"><div class="label">Card Size</div><div class="val" id="bdThickVal">30%</div></div>
-              <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.30">
-            </div>
-
-            <div class="actionSlot">
-              <div class="actionGroup" aria-label="Card">
-                <div class="actionText">Card</div>
-                <button
-                  id="bdToggleBtn"
-                  type="button"
-                  class="colorBtn actionBtn"
-                  aria-pressed="true">
-                  On
-                </button>
-              </div>
-            </div>
+        <div id="dock" aria-label="Buttons">
+          <div id="dockPlayback" aria-label="Playback controls">
+            <button id="prevPoemBtn" type="button" class="iconBtn" aria-label="Previous poem (Left arrow)" data-tip="back">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button id="pausePoemBtn" type="button" class="iconBtn" aria-label="Pause (Space)" aria-pressed="false" data-tip="play/pause">
+              <svg class="pauseIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M7 6h3v12H7zM14 6h3v12h-3z" fill="currentColor"/>
+              </svg>
+              <svg class="playIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M9 7l10 5-10 5V7z" fill="currentColor"/>
+              </svg>
+            </button>
+            <button id="nextPoemBtn" type="button" class="iconBtn" aria-label="Next poem (Right arrow)" data-tip="forward">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
           </div>
 
-          <div class="sliderRow">
-            <div class="ctrl">
-              <div class="labelRow"><div class="label">Text Size</div><div class="val" id="sizeVal">40%</div></div>
-              <input id="sizeSlider" type="range" min="0" max="150" step="0.1" value="40">
-            </div>
-
-            <div class="ctrl">
-              <div class="labelRow"><div class="label">Height</div><div class="val" id="yVal">50%</div></div>
-              <input id="ySlider" type="range" min="0" max="100" step="0.01" value="50">
-            </div>
-
-            <div class="ctrl">
-              <div class="labelRow"><div class="label">Width</div><div class="val" id="widthVal">40%</div></div>
-              <input id="widthSlider" type="range" min="0" max="100" step="0.01" value="40">
-            </div>
-
-            <div class="actionSlot">
-              <div class="actionGroup" aria-label="Full screen">
-                <div class="actionText">Full screen</div>
-                <button id="fsBtn" type="button" class="colorBtn actionBtn" aria-pressed="false">Off</button>
-              </div>
-            </div>
+          <div id="dockMenu" aria-label="Menus">
+            <button id="tabLayoutBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Layout</button>
+            <button id="tabLanguageBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Language</button>
+            <button id="tabColorsBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Colors</button>
+            <button id="tabSpeedBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Speed</button>
           </div>
-        </section>
 
-        <!-- COLORS PAGE: swatches -->
-        <section class="uiPage uiPage--colors" aria-label="Colors">
-          <div class="row colorsRow">
-            <div class="grp">
-              <div class="swatchWrap">
-                <div class="swatchHeader">
-                  <div class="label">Background Colors</div>
-                  <div class="val hoverVal" id="bgHover">&nbsp;</div>
-                </div>
-                <div class="swatchRow" id="bgColorsRow"></div>
-              </div>
-            </div>
-
-            <div class="grp">
-              <div class="swatchWrap">
-                <div class="swatchHeader">
-                  <div class="label">Text Colors</div>
-                  <div class="val hoverVal" id="fgHover">&nbsp;</div>
-                </div>
-                <div class="swatchRow" id="fgColorsRow"></div>
-              </div>
-            </div>
-
-            <div class="grp">
-              <div class="swatchWrap">
-                <div class="swatchHeader">
-                  <div class="label">Card Colors</div>
-                  <div class="val hoverVal" id="bdHover">&nbsp;</div>
-                </div>
-                <div class="swatchRow" id="bdColorsRow"></div>
-              </div>
-            </div>
+          <div id="dockBottom" aria-label="Utilities">
+            <button id="screenshotBtn" type="button" class="colorBtn dockBtn" aria-label="Screenshot (S)" data-tip="take pic">Screenshot</button>
+            <button id="lockCompositionBtn" type="button" class="colorBtn lockBtn" aria-label="Lock composition" aria-pressed="false" data-tip="lock composition">
+              <span class="lockIcons" aria-hidden="true">
+                <svg class="lockSvg lockSvg--open" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <rect x="5" y="10" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" transform="translate(34 -1) scale(-1 1)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="9" y="15" width="6" height="2" fill="currentColor"/>
+                </svg>
+                <svg class="lockSvg lockSvg--closed" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                  <rect x="5" y="10" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="11" y="14" width="2" height="5" fill="currentColor"/>
+                </svg>
+              </span>
+            </button>
           </div>
-        </section>
+        </div>
 
       </div>
     </div>
@@ -1389,6 +1475,7 @@ const lockCompositionBtn = document.getElementById("lockCompositionBtn");
 const tabLayoutBtn = document.getElementById("tabLayoutBtn");
 const tabLanguageBtn = document.getElementById("tabLanguageBtn");
 const tabColorsBtn = document.getElementById("tabColorsBtn");
+const tabSpeedBtn = document.getElementById("tabSpeedBtn");
 
 const speedVal = document.getElementById("speedVal");
 const bgBrightVal = document.getElementById("bgBrightVal");
@@ -1411,10 +1498,9 @@ const sliderEls = [
 ];
 
 /* ================= Mobile UI pages ================= */
-const UI_PAGES = ["layout","language","colors"];
-let uiPage = "layout";
+const UI_PAGES = ["none","layout","language","colors","speed"];
+let uiPage = "none";
 const mobilePagerMQ = window.matchMedia ? window.matchMedia("(max-width: 820px)") : null;
-let hasMobileTabbedOnce = false;
 
 function isMobilePaged(){
   return !!(mobilePagerMQ && mobilePagerMQ.matches);
@@ -1439,30 +1525,33 @@ function assignMobileTabColors(){
   const b2 = pickColorNonRepeating("tabs", pool, exclude) || paletteColorAvoid("fleshy", 1, bgAvoid);
   exclude.add(normHex(b2));
   const b3 = pickColorNonRepeating("tabs", pool, exclude) || paletteColorAvoid("future", 2, bgAvoid);
+  exclude.add(normHex(b3));
+  const b4 = pickColorNonRepeating("tabs", pool, exclude) || paletteColorAvoid("circus", 3, bgAvoid);
+  exclude.add(normHex(b4));
+  const b5 = pickColorNonRepeating("tabs", pool, exclude) || paletteColorAvoid("earthy", 4, bgAvoid);
+  exclude.add(normHex(b5));
+  const b6 = pickColorNonRepeating("tabs", pool, exclude) || paletteColorAvoid("beachy", 0, bgAvoid);
 
   if(tabLayoutBtn) tabLayoutBtn.style.setProperty("--btnBg", b1);
   if(tabLanguageBtn) tabLanguageBtn.style.setProperty("--btnBg", b2);
   if(tabColorsBtn) tabColorsBtn.style.setProperty("--btnBg", b3);
+  if(tabSpeedBtn) tabSpeedBtn.style.setProperty("--btnBg", b4);
+  if(screenshotBtn) screenshotBtn.style.setProperty("--btnBg", b5);
+  if(lockCompositionBtn) lockCompositionBtn.style.setProperty("--btnBg", b6);
 }
 function setUiPage(next){
-  const page = UI_PAGES.includes(next) ? next : "layout";
-  uiPage = page;
-  document.body.dataset.uiPage = page;
+  const page = UI_PAGES.includes(next) ? next : "none";
+  // Tap the active tab again to collapse back to "tabs only".
+  const finalPage = (uiPage === page && page !== "none") ? "none" : page;
+  uiPage = finalPage;
+  document.body.dataset.uiPage = finalPage;
+  setTabPressed(tabLayoutBtn, finalPage === "layout");
+  setTabPressed(tabLanguageBtn, finalPage === "language");
+  setTabPressed(tabColorsBtn, finalPage === "colors");
+  setTabPressed(tabSpeedBtn, finalPage === "speed");
 
-  // On load, keep all three tabs visually "off" (hollow). Once the user taps a tab,
-  // we start showing the active tab as "on".
-  if(hasMobileTabbedOnce){
-    setTabPressed(tabLayoutBtn, page === "layout");
-    setTabPressed(tabLanguageBtn, page === "language");
-    setTabPressed(tabColorsBtn, page === "colors");
-  }else{
-    setTabPressed(tabLayoutBtn, false);
-    setTabPressed(tabLanguageBtn, false);
-    setTabPressed(tabColorsBtn, false);
-  }
-
-  // Only bother recoloring if the tabs are visible on this viewport.
-  if(isMobilePaged()) assignMobileTabColors();
+  // Recolor on every page switch.
+  assignMobileTabColors();
 }
 
 /* ================= Selection state ================= */
@@ -3794,8 +3883,8 @@ function syncCompositionLockBtn(){
   lockCompositionBtn.classList.toggle("locked", isCompositionLocked);
   lockCompositionBtn.classList.toggle("on", isCompositionLocked);
   lockCompositionBtn.setAttribute("aria-pressed", isCompositionLocked ? "true" : "false");
-  lockCompositionBtn.setAttribute("aria-label", isCompositionLocked ? "Unlock colors" : "Lock colors");
-  lockCompositionBtn.dataset.tip = isCompositionLocked ? "unlock colors" : "lock colors";
+  lockCompositionBtn.setAttribute("aria-label", isCompositionLocked ? "Unlock composition" : "Lock composition");
+  lockCompositionBtn.dataset.tip = isCompositionLocked ? "unlock composition" : "lock composition";
 }
 function toggleCompositionLock(){
   isCompositionLocked = !isCompositionLocked;
@@ -3984,10 +4073,6 @@ function applyButtonColors(){
   // Card + fullscreen buttons
   if(bdToggleBtn) bdToggleBtn.style.setProperty("--btnBg", paletteColorAvoid("circus", 0, bgAvoid));
   if(fsBtn) fsBtn.style.setProperty("--btnBg", paletteColorAvoid("fleshy", 1, bgAvoid));
-
-  // Title extras
-  if(screenshotBtn) screenshotBtn.style.setProperty("--btnBg", paletteColorAvoid("retro", 1, bgAvoid));
-  if(lockCompositionBtn) lockCompositionBtn.style.setProperty("--btnBg", paletteColorAvoid("earthy", 1, bgAvoid));
 
   // Playback buttons (3 different palettes chosen on init)
   if(prevPoemBtn) prevPoemBtn.style.setProperty("--btnBg", paletteColorAvoid(titleCtrlTheme.prev, 0, bgAvoid));
@@ -4594,16 +4679,12 @@ function nextFrame(){
   commitGeneratedScene();
 }
 
-/* ================= UI hide after inactivity (now hides title too) ================= */
-let hideTimer = null;
+/* ================= UI visibility =================
+   New model: the dock buttons are always available; submenus open/close via the tabs.
+*/
 function showUI(){
   uiWrapEl.classList.remove("hidden");
-  if(hideTimer) clearTimeout(hideTimer);
-  hideTimer = setTimeout(()=> uiWrapEl.classList.add("hidden"), 3000);
 }
-["mousemove","touchstart"].forEach(evt=>{
-  window.addEventListener(evt, showUI, {passive:true});
-});
 
 /* ================= Events ================= */
 // Safari sometimes fails to re-apply :hover styles immediately after a click when classes toggle.
@@ -4673,9 +4754,10 @@ if(pausePoemBtn) pausePoemBtn.addEventListener("click", ()=>{ togglePaused(); sh
 if(nextPoemBtn) nextPoemBtn.addEventListener("click", ()=>{ goNextPoem(); showUI(); });
 if(screenshotBtn) screenshotBtn.addEventListener("click", ()=>{ snapScreenshot(); showUI(); });
 if(lockCompositionBtn) lockCompositionBtn.addEventListener("click", ()=>{ toggleCompositionLock(); showUI(); });
-if(tabLayoutBtn) tabLayoutBtn.addEventListener("click", ()=>{ hasMobileTabbedOnce = true; setUiPage("layout"); showUI(); });
-if(tabLanguageBtn) tabLanguageBtn.addEventListener("click", ()=>{ hasMobileTabbedOnce = true; setUiPage("language"); showUI(); });
-if(tabColorsBtn) tabColorsBtn.addEventListener("click", ()=>{ hasMobileTabbedOnce = true; setUiPage("colors"); showUI(); });
+if(tabLayoutBtn) tabLayoutBtn.addEventListener("click", ()=>{ setUiPage("layout"); showUI(); });
+if(tabLanguageBtn) tabLanguageBtn.addEventListener("click", ()=>{ setUiPage("language"); showUI(); });
+if(tabColorsBtn) tabColorsBtn.addEventListener("click", ()=>{ setUiPage("colors"); showUI(); });
+if(tabSpeedBtn) tabSpeedBtn.addEventListener("click", ()=>{ setUiPage("speed"); showUI(); });
 
 window.addEventListener("keydown", (e)=>{
   if(e.repeat) return;
@@ -4740,7 +4822,8 @@ window.addEventListener("keydown", (e)=>{
   }
 
   syncMobilePagedClass();
-  setUiPage(uiPage);
+  // Start collapsed: show only the three page buttons.
+  setUiPage("none");
   if(mobilePagerMQ){
     const onChange = ()=>{ syncMobilePagedClass(); setUiPage(uiPage); };
     if(mobilePagerMQ.addEventListener) mobilePagerMQ.addEventListener("change", onChange);
@@ -4781,8 +4864,8 @@ window.addEventListener("keydown", (e)=>{
     sel.borderThickness = 0.30;
   }
   nextFrame();
-  // Now that background is set, color the page tabs (if visible).
-  if(isMobilePaged()) assignMobileTabColors();
+  // Now that background is set, color the page tabs.
+  assignMobileTabColors();
   scheduleTick();
   showUI();
 })();
