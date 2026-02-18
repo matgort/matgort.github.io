@@ -419,7 +419,9 @@
       flex-direction:column;
       align-items:center;
       gap: 8px;
+      margin-top: 0;
     }
+    #titleBlock #dock{ margin-top: 22px; }
     #dockPlayback{
       display:flex;
       gap: 10px;
@@ -691,8 +693,8 @@
     /* Layout panel: fixed 3-up grid like the reference screenshot (desktop),
        and it collapses into a single column on smaller screens. */
     .uiPage--layout{
-      --layoutColW: 240px;
-      --layoutGap: 70px;
+      --layoutColW: 250px;
+      --layoutGap: 120px;
       max-width: calc((var(--layoutColW) * 3) + (var(--layoutGap) * 2));
       margin-left: auto;
       margin-right: auto;
@@ -703,6 +705,7 @@
       gap: var(--layoutGap);
       justify-content: center;
       align-items: end;
+      margin-bottom: 12px;
     }
     .uiPage--layout .layoutActionRow{
       display:grid;
@@ -710,6 +713,7 @@
       gap: var(--layoutGap);
       justify-content: center;
       align-items: end;
+      margin-top: 2px;
     }
     .uiPage--layout .layoutActionRow .actionGroup{
       justify-self: center;
@@ -970,6 +974,57 @@
     <div id="titleBlock">
       <div class="title">Sculpture Poems</div>
       <div class="sub">written by Margot DeMarco, arranged by ChatGPT</div>
+
+      <!-- TOP BUTTONS (always visible on load; fade with UI) -->
+      <div id="dockTopHost" aria-label="Buttons (top host)">
+        <div id="dock" aria-label="Buttons">
+        <div id="dockPlayback" aria-label="Playback controls">
+          <button id="prevPoemBtn" type="button" class="iconBtn" aria-label="Previous poem (Left arrow)" data-tip="back">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button id="pausePoemBtn" type="button" class="iconBtn" aria-label="Pause (Space)" aria-pressed="false" data-tip="play/pause">
+            <svg class="pauseIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M7 6h3v12H7zM14 6h3v12h-3z" fill="currentColor"/>
+            </svg>
+            <svg class="playIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M9 7l10 5-10 5V7z" fill="currentColor"/>
+            </svg>
+          </button>
+          <button id="nextPoemBtn" type="button" class="iconBtn" aria-label="Next poem (Right arrow)" data-tip="forward">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+
+        <div id="dockMenu" aria-label="Menus">
+          <button id="tabLayoutBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Layout</button>
+          <button id="tabLanguageBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Language</button>
+          <button id="tabColorsBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Colors</button>
+          <button id="tabSpeedBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Speed</button>
+        </div>
+
+        <div id="dockBottom" aria-label="Utilities">
+          <button id="screenshotBtn" type="button" class="colorBtn dockBtn" aria-label="Screenshot (S)" data-tip="take pic">Screenshot</button>
+          <button id="lockCompositionBtn" type="button" class="colorBtn lockBtn" aria-label="Lock composition" aria-pressed="false" data-tip="lock composition">
+            <span class="lockIcons" aria-hidden="true">
+              <svg class="lockSvg lockSvg--open" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <rect x="5" y="10" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" transform="translate(34 -1) scale(-1 1)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="9" y="15" width="6" height="2" fill="currentColor"/>
+              </svg>
+              <svg class="lockSvg lockSvg--closed" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <rect x="5" y="10" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="11" y="14" width="2" height="5" fill="currentColor"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </div>
+      </div>
     </div>
 
     <div id="bar">
@@ -1082,53 +1137,7 @@
           </div>
         </div>
 
-        <div id="dock" aria-label="Buttons">
-          <div id="dockPlayback" aria-label="Playback controls">
-            <button id="prevPoemBtn" type="button" class="iconBtn" aria-label="Previous poem (Left arrow)" data-tip="back">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <button id="pausePoemBtn" type="button" class="iconBtn" aria-label="Pause (Space)" aria-pressed="false" data-tip="play/pause">
-              <svg class="pauseIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M7 6h3v12H7zM14 6h3v12h-3z" fill="currentColor"/>
-              </svg>
-              <svg class="playIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M9 7l10 5-10 5V7z" fill="currentColor"/>
-              </svg>
-            </button>
-            <button id="nextPoemBtn" type="button" class="iconBtn" aria-label="Next poem (Right arrow)" data-tip="forward">
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-          </div>
-
-          <div id="dockMenu" aria-label="Menus">
-            <button id="tabLayoutBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Layout</button>
-            <button id="tabLanguageBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Language</button>
-            <button id="tabColorsBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Colors</button>
-            <button id="tabSpeedBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Speed</button>
-          </div>
-
-          <div id="dockBottom" aria-label="Utilities">
-            <button id="screenshotBtn" type="button" class="colorBtn dockBtn" aria-label="Screenshot (S)" data-tip="take pic">Screenshot</button>
-            <button id="lockCompositionBtn" type="button" class="colorBtn lockBtn" aria-label="Lock composition" aria-pressed="false" data-tip="lock composition">
-              <span class="lockIcons" aria-hidden="true">
-                <svg class="lockSvg lockSvg--open" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                  <rect x="5" y="10" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                  <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" transform="translate(34 -1) scale(-1 1)" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <rect x="9" y="15" width="6" height="2" fill="currentColor"/>
-                </svg>
-                <svg class="lockSvg lockSvg--closed" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-                  <rect x="5" y="10" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
-                  <path d="M7 10V7 Q7 2 12 2 Q17 2 17 7 V10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <rect x="11" y="14" width="2" height="5" fill="currentColor"/>
-                </svg>
-              </span>
-            </button>
-          </div>
-        </div>
+        <div id="dockBottomHost" aria-label="Buttons (bottom host)"></div>
 
       </div>
     </div>
@@ -1476,6 +1485,9 @@ const tabLayoutBtn = document.getElementById("tabLayoutBtn");
 const tabLanguageBtn = document.getElementById("tabLanguageBtn");
 const tabColorsBtn = document.getElementById("tabColorsBtn");
 const tabSpeedBtn = document.getElementById("tabSpeedBtn");
+const dockEl = document.getElementById("dock");
+const dockTopHostEl = document.getElementById("dockTopHost");
+const dockBottomHostEl = document.getElementById("dockBottomHost");
 
 const speedVal = document.getElementById("speedVal");
 const bgBrightVal = document.getElementById("bgBrightVal");
@@ -1496,6 +1508,24 @@ const sliderEls = [
   speedEl, bgBrightEl, fgBrightEl, bdBrightEl,
   bdThickEl, sizeEl, yEl, widthEl
 ];
+
+/* ================= Dock Placement (Phone Top, Desktop Bottom) ================= */
+const dockTopMQ = window.matchMedia ? window.matchMedia("(max-width: 640px)") : null;
+function shouldDockBeOnTop(){
+  return !!(dockTopMQ && dockTopMQ.matches);
+}
+function placeDockForViewport(){
+  if(!dockEl || !dockTopHostEl || !dockBottomHostEl) return;
+  const top = shouldDockBeOnTop();
+  const target = top ? dockTopHostEl : dockBottomHostEl;
+  const other = top ? dockBottomHostEl : dockTopHostEl;
+  if(dockEl.parentElement !== target){
+    target.appendChild(dockEl);
+  }
+  // Prevent empty hosts from affecting layout (titleBlock gap, etc).
+  target.style.display = "";
+  other.style.display = "none";
+}
 
 /* ================= Mobile UI pages ================= */
 const UI_PAGES = ["none","layout","language","colors","speed"];
@@ -4679,12 +4709,20 @@ function nextFrame(){
   commitGeneratedScene();
 }
 
-/* ================= UI visibility =================
-   New model: the dock buttons are always available; submenus open/close via the tabs.
-*/
+/* ================= UI fade/auto-hide ================= */
+let hideTimer = null;
+const UI_HIDE_MS = 3000;
+function scheduleHideUI(){
+  if(hideTimer) clearTimeout(hideTimer);
+  hideTimer = setTimeout(()=> uiWrapEl.classList.add("hidden"), UI_HIDE_MS);
+}
 function showUI(){
   uiWrapEl.classList.remove("hidden");
+  scheduleHideUI();
 }
+["mousemove","mousedown","touchstart","wheel"].forEach((evt)=>{
+  window.addEventListener(evt, showUI, {passive:true});
+});
 
 /* ================= Events ================= */
 // Safari sometimes fails to re-apply :hover styles immediately after a click when classes toggle.
@@ -4821,6 +4859,16 @@ window.addEventListener("keydown", (e)=>{
     window.visualViewport.addEventListener("scroll", setViewportVars, {passive:true});
   }
 
+  placeDockForViewport();
+  if(dockTopMQ){
+    const onDockChange = ()=>{
+      placeDockForViewport();
+      syncSwatchHeaderWidths();
+    };
+    if(dockTopMQ.addEventListener) dockTopMQ.addEventListener("change", onDockChange);
+    else if(dockTopMQ.addListener) dockTopMQ.addListener(onDockChange);
+  }
+
   syncMobilePagedClass();
   // Start collapsed: show only the three page buttons.
   setUiPage("none");
@@ -4872,6 +4920,7 @@ window.addEventListener("keydown", (e)=>{
 
 window.addEventListener("resize", ()=>{
   setViewportVars();
+  placeDockForViewport();
   applyTypeAndLayout();
   applyColorsLive();
   syncSwatchHeaderWidths();
