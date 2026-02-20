@@ -740,6 +740,33 @@
       .uiPage--layout .layoutActionRow .layoutActionSpacer{ display:none; }
     }
 
+    /* ===== Mobile Landscape =====
+       Keep the top buttons compact and show a clean 3-up layout row (text size / height / width),
+       matching the provided landscape reference. */
+    @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px){
+      /* Reduce top clutter so the dock never covers the phrase/card. */
+      #dockBottom{ display:none; }
+      #titleBlock{ gap: 4px; }
+      #titleBlock #dock{
+        margin-top: 14px;
+        gap: 10px;
+      }
+
+      /* Layout: hide the brightness row to keep the panel short in landscape. */
+      .uiPage--layout .layoutGridRow--brightness{ display:none; }
+
+      /* Force 3-up rows again (overrides the <=860px single-column collapse). */
+      .uiPage--layout{
+        max-width: min(920px, 94vw);
+        --layoutGap: clamp(18px, 5vw, 70px);
+      }
+      .uiPage--layout .layoutGridRow,
+      .uiPage--layout .layoutActionRow{
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--layoutGap);
+      }
+    }
+
     /* Speed is intentionally narrow and centered. */
     .uiPage--speed .sliderRow{ justify-content: center; }
     .uiPage--speed .ctrl{ flex: 0 1 260px; }
@@ -973,7 +1000,7 @@
   <div id="uiWrap">
     <div id="titleBlock">
       <div class="title">Sculpture Poems</div>
-      <div class="sub">written by Margot DeMarco</div>
+      <div class="sub">written by Margot DeMarco, arranged by ChatGPT</div>
 
       <!-- TOP BUTTONS (always visible on load; fade with UI) -->
       <div id="dockTopHost" aria-label="Buttons (top host)">
@@ -1055,7 +1082,7 @@
             </section>
 
             <section class="uiPage uiPage--layout" aria-label="Layout">
-              <div class="sliderRow layoutGridRow">
+              <div class="sliderRow layoutGridRow layoutGridRow--brightness">
                 <div class="ctrl">
                   <div class="labelRow"><div class="label">Background Brightness</div><div class="val" id="bgBrightVal">50%</div></div>
                   <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.50">
@@ -1070,7 +1097,7 @@
                 </div>
               </div>
 
-              <div class="sliderRow layoutGridRow">
+              <div class="sliderRow layoutGridRow layoutGridRow--core">
                 <div class="ctrl">
                   <div class="labelRow"><div class="label">Text Size</div><div class="val" id="sizeVal">40%</div></div>
                   <input id="sizeSlider" type="range" min="0" max="150" step="0.1" value="40">
@@ -1510,7 +1537,10 @@ const sliderEls = [
 ];
 
 /* ================= Dock Placement (Phone Top, Desktop Bottom) ================= */
-const dockTopMQ = window.matchMedia ? window.matchMedia("(max-width: 640px)") : null;
+// Keep the dock "up top" on phones (including landscape, where width grows but height shrinks).
+const dockTopMQ = window.matchMedia
+  ? window.matchMedia("(max-width: 640px), (pointer: coarse) and (orientation: landscape) and (max-height: 520px)")
+  : null;
 function shouldDockBeOnTop(){
   return !!(dockTopMQ && dockTopMQ.matches);
 }
