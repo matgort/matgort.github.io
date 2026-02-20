@@ -388,6 +388,7 @@
     }
 
     #panelWrap{
+      --panelMaxH: 62vh; /* JS may override this to keep UI out of the phrase/card safe zone */
       overflow: hidden;
       max-height: 0;
       opacity: 0;
@@ -397,7 +398,7 @@
       margin-bottom: 0;
     }
     body[data-ui-page]:not([data-ui-page="none"]) #panelWrap{
-      max-height: min(62vh, calc(var(--vh, 1vh) * 100 - 120px));
+      max-height: min(var(--panelMaxH, 62vh), calc(var(--vh, 1vh) * 100 - 120px));
       opacity: 1;
       transform: translateY(-8px); /* pop-up a touch higher; dock stays put */
       pointer-events: auto;
@@ -1510,6 +1511,7 @@ function advancePaletteCycle(){
 const phraseEl = document.getElementById("phraseText");
 const uiWrapEl = document.getElementById("uiWrap");
 const barEl = document.getElementById("bar");
+const panelWrapEl = document.getElementById("panelWrap");
 const cardEl = document.getElementById("card");
 
 const speedEl = document.getElementById("speedSlider");
@@ -1576,6 +1578,7 @@ function placeDockForViewport(){
   // Prevent empty hosts from affecting layout (titleBlock gap, etc).
   target.style.display = "";
   other.style.display = "none";
+  scheduleUiSafeUpdate();
 }
 
 /* ================= Mobile UI pages ================= */
@@ -1633,6 +1636,68 @@ function setUiPage(next){
 
   // Recolor on every page switch.
   assignMobileTabColors();
+
+  // Keep the sliding panel out of the phrase/card region (especially on mobile landscape).
+  scheduleUiSafeUpdate();
+}
+
+/* ================= UI Safe Zone (Never Overlap Phrase/Card) ================= */
+// The "safe zone" is the card (if enabled) or the phrase ink bounds (if card is off).
+// We clamp the sliding panel max-height so it cannot rise into that zone.
+const UI_SAFE_GAP_PX = 10;
+let uiSafeRaf = 0;
+
+function getSceneSafeRect(){
+  const { w: vw, h: vh } = getViewportSize();
+  if(vw <= 0 || vh <= 0) return null;
+
+  const cardVisible = !!cardEl && (getComputedStyle(cardEl).display !== "none");
+
+  let r = null;
+  if(cardVisible){
+    r = cardEl.getBoundingClientRect();
+  }else{
+    const ink = phraseInkBounds();
+    if(ink) r = ink;
+    else r = phraseEl.getBoundingClientRect();
+  }
+  if(!r || !Number.isFinite(r.top) || !Number.isFinite(r.bottom)) return null;
+
+  const left = clamp(r.left, 0, vw);
+  const right = clamp(r.right, 0, vw);
+  const top = clamp(r.top, 0, vh);
+  const bottom = clamp(r.bottom, 0, vh);
+  return { left, right, top, bottom };
+}
+
+function updatePanelSafeMaxHeight(){
+  if(!panelWrapEl || !barEl) return;
+
+  const safe = getSceneSafeRect();
+  if(!safe){
+    panelWrapEl.style.setProperty("--panelMaxH", "62vh");
+    return;
+  }
+
+  const barRect = barEl.getBoundingClientRect();
+  const panelRect = panelWrapEl.getBoundingClientRect();
+  const panelMB = parseFloat(getComputedStyle(panelWrapEl).marginBottom) || 0;
+  const panelContribution = panelRect.height + panelMB; // flex item margin counts in parent height
+  const baseBarH = Math.max(0, barRect.height - panelContribution);
+
+  // Available height between the safe zone bottom and the bar's bottom edge.
+  // Include a small gap so the UI never touches the card/phrase region.
+  const maxPanelH = Math.max(0, (barRect.bottom - (safe.bottom + UI_SAFE_GAP_PX)) - baseBarH);
+
+  panelWrapEl.style.setProperty("--panelMaxH", `${Math.floor(maxPanelH)}px`);
+}
+
+function scheduleUiSafeUpdate(){
+  if(uiSafeRaf) return;
+  uiSafeRaf = requestAnimationFrame(()=>{
+    uiSafeRaf = 0;
+    updatePanelSafeMaxHeight();
+  });
 }
 
 /* ================= Selection state ================= */
@@ -4601,6 +4666,7 @@ function applyCardStyle(colorHex){
   const t = sel.borderEnabled ? clamp(sel.borderThickness, 0, 1) : 0;
   if(!sel.borderEnabled || t <= 0){
     cardEl.style.display = "none";
+    scheduleUiSafeUpdate();
     return;
   }
   cardEl.style.display = "block";
@@ -4609,6 +4675,7 @@ function applyCardStyle(colorHex){
   const rect = phraseInkBounds() || phraseEl.getBoundingClientRect();
   if(rect.width <= 0 || rect.height <= 0){
     cardEl.style.display = "none";
+    scheduleUiSafeUpdate();
     return;
   }
 
@@ -4637,6 +4704,7 @@ function applyCardStyle(colorHex){
   cardEl.style.top = `${Math.round(rect.top - padY)}px`;
   cardEl.style.width = `${Math.ceil(rect.width + (padX * 2))}px`;
   cardEl.style.height = `${Math.ceil(rect.height + (padY * 2))}px`;
+  scheduleUiSafeUpdate();
 }
 
 function pctLabel(x){ return `${Math.round(clamp(Number(x),0,1)*100)}%`; }
