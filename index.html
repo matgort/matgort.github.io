@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <title>Sculpture Poems</title>
+  <title>Poem Scenes</title>
 
   <style>
     :root{
@@ -690,32 +690,25 @@
     body[data-ui-page="colors"] .uiPage--colors{ display:block; }
     body[data-ui-page="speed"] .uiPage--speed{ display:block; }
 
-    /* Layout panel: fixed 3-up grid like the reference screenshot (desktop),
+    /* Layout panel: 3 sliders + Card/Full screen on the same row (desktop),
        and it collapses into a single column on smaller screens. */
     .uiPage--layout{
-      --layoutColW: 250px;
-      --layoutGap: 120px;
-      max-width: calc((var(--layoutColW) * 3) + (var(--layoutGap) * 2));
+      --layoutSliderW: 210px;
+      --layoutGap: clamp(18px, 4vw, 60px);
+      /* The last two columns are max-content, so this is an approximate cap. */
+      max-width: calc((var(--layoutSliderW) * 3) + (var(--layoutGap) * 4) + 260px);
       margin-left: auto;
       margin-right: auto;
     }
-    .uiPage--layout .layoutGridRow{
+    .uiPage--layout .layoutGridRow--core{
       display:grid;
-      grid-template-columns: repeat(3, var(--layoutColW));
+      grid-template-columns: repeat(3, var(--layoutSliderW)) max-content max-content;
       gap: var(--layoutGap);
       justify-content: center;
       align-items: end;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
-    .uiPage--layout .layoutActionRow{
-      display:grid;
-      grid-template-columns: repeat(3, var(--layoutColW));
-      gap: var(--layoutGap);
-      justify-content: center;
-      align-items: end;
-      margin-top: 2px;
-    }
-    .uiPage--layout .layoutActionRow .actionGroup{
+    .uiPage--layout .layoutGridRow--core .actionGroup{
       justify-self: center;
     }
     /* Slightly tighter label typography so it doesn't collide. */
@@ -730,14 +723,42 @@
         max-width: min(520px, 100%);
         --layoutGap: 12px;
       }
-      .uiPage--layout .layoutGridRow{
+      .uiPage--layout .layoutGridRow--core{
         grid-template-columns: 1fr;
       }
-      .uiPage--layout .layoutActionRow{
-        grid-template-columns: 1fr;
-        gap: 10px;
+    }
+
+    /* Colors panel: make labels slightly tighter so sliders + swatches stay clean. */
+    .uiPage--colors{
+      --colorsColW: 250px;
+      --colorsGap: 120px;
+      max-width: calc((var(--colorsColW) * 3) + (var(--colorsGap) * 2));
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .uiPage--colors .colorsRow{
+      display: grid;
+      grid-template-columns: repeat(3, var(--colorsColW));
+      gap: var(--colorsGap);
+      justify-content: center;
+      align-items: end;
+    }
+    .uiPage--colors .label,
+    .uiPage--colors .val{
+      font-size: 8px;
+      letter-spacing: .07em;
+    }
+    .uiPage--colors .swatchWrap{ gap: 7px; }
+    .uiPage--colors .brightCtrl{ margin-bottom: 2px; }
+
+    @media(max-width: 860px){
+      .uiPage--colors{
+        max-width: min(520px, 100%);
+        --colorsGap: 12px;
       }
-      .uiPage--layout .layoutActionRow .layoutActionSpacer{ display:none; }
+      .uiPage--colors .colorsRow{
+        grid-template-columns: 1fr;
+      }
     }
 
     /* ===== Mobile Landscape =====
@@ -752,18 +773,25 @@
         gap: 10px;
       }
 
-      /* Layout: hide the brightness row to keep the panel short in landscape. */
-      .uiPage--layout .layoutGridRow--brightness{ display:none; }
-
       /* Force 3-up rows again (overrides the <=860px single-column collapse). */
       .uiPage--layout{
         max-width: min(920px, 94vw);
         --layoutGap: clamp(18px, 5vw, 70px);
       }
-      .uiPage--layout .layoutGridRow,
-      .uiPage--layout .layoutActionRow{
+      .uiPage--layout .layoutGridRow--core{
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: var(--layoutGap);
+      }
+      .uiPage--layout .layoutGridRow--core .actionGroup--card{ grid-column: 2; }
+      .uiPage--layout .layoutGridRow--core .actionGroup--fs{ grid-column: 3; }
+
+      /* Colors: keep 3-up in landscape too (otherwise it becomes too tall). */
+      .uiPage--colors{
+        max-width: min(920px, 94vw);
+        --colorsGap: clamp(18px, 5vw, 70px);
+      }
+      .uiPage--colors .colorsRow{
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
     }
 
@@ -999,8 +1027,8 @@
   <!-- UI WRAP: title + bar (fades together) -->
   <div id="uiWrap">
     <div id="titleBlock">
-      <div class="title">Sculpture Poems</div>
-      <div class="sub">written by Margot DeMarco, arranged by ChatGPT</div>
+      <div class="title">Poem Scenes</div>
+      <div class="sub">written by Margot DeMarco</div>
 
       <!-- TOP BUTTONS (always visible on load; fade with UI) -->
       <div id="dockTopHost" aria-label="Buttons (top host)">
@@ -1082,21 +1110,6 @@
             </section>
 
             <section class="uiPage uiPage--layout" aria-label="Layout">
-              <div class="sliderRow layoutGridRow layoutGridRow--brightness">
-                <div class="ctrl">
-                  <div class="labelRow"><div class="label">Background Brightness</div><div class="val" id="bgBrightVal">50%</div></div>
-                  <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.50">
-                </div>
-                <div class="ctrl">
-                  <div class="labelRow"><div class="label">Text Brightness</div><div class="val" id="fgBrightVal">0%</div></div>
-                  <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
-                </div>
-                <div class="ctrl">
-                  <div class="labelRow"><div class="label">Card Brightness</div><div class="val" id="bdBrightVal">100%</div></div>
-                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
-                </div>
-              </div>
-
               <div class="sliderRow layoutGridRow layoutGridRow--core">
                 <div class="ctrl">
                   <div class="labelRow"><div class="label">Text Size</div><div class="val" id="sizeVal">40%</div></div>
@@ -1110,23 +1123,19 @@
                   <div class="labelRow"><div class="label">Width</div><div class="val" id="widthVal">40%</div></div>
                   <input id="widthSlider" type="range" min="0" max="100" step="0.01" value="40">
                 </div>
+                <div class="actionGroup actionGroup--card" aria-label="Card">
+                  <div class="actionText">Card</div>
+                  <button id="bdToggleBtn" type="button" class="colorBtn actionBtn" aria-pressed="true">On</button>
+                </div>
+                <div class="actionGroup actionGroup--fs" aria-label="Full screen">
+                  <div class="actionText">Full screen</div>
+                  <button id="fsBtn" type="button" class="colorBtn actionBtn" aria-pressed="false">Off</button>
+                </div>
               </div>
 
               <div class="ctrl" style="display:none;">
                 <div class="labelRow"><div class="label">Card Size</div><div class="val" id="bdThickVal">30%</div></div>
                 <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.30">
-              </div>
-
-              <div class="layoutActionRow">
-                <div class="layoutActionSpacer" aria-hidden="true"></div>
-                <div class="actionGroup" aria-label="Card">
-                  <div class="actionText">Card</div>
-                  <button id="bdToggleBtn" type="button" class="colorBtn actionBtn" aria-pressed="true">On</button>
-                </div>
-                <div class="actionGroup" aria-label="Full screen">
-                  <div class="actionText">Full screen</div>
-                  <button id="fsBtn" type="button" class="colorBtn actionBtn" aria-pressed="false">Off</button>
-                </div>
               </div>
             </section>
 
@@ -1134,6 +1143,10 @@
               <div class="row colorsRow">
                 <div class="grp">
                   <div class="swatchWrap">
+                    <div class="ctrl brightCtrl">
+                      <div class="labelRow"><div class="label">Background Brightness</div><div class="val" id="bgBrightVal">50%</div></div>
+                      <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.50">
+                    </div>
                     <div class="swatchHeader">
                       <div class="label">Background Colors</div>
                       <div class="val hoverVal" id="bgHover">&nbsp;</div>
@@ -1143,6 +1156,10 @@
                 </div>
                 <div class="grp">
                   <div class="swatchWrap">
+                    <div class="ctrl brightCtrl">
+                      <div class="labelRow"><div class="label">Text Brightness</div><div class="val" id="fgBrightVal">0%</div></div>
+                      <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
+                    </div>
                     <div class="swatchHeader">
                       <div class="label">Text Colors</div>
                       <div class="val hoverVal" id="fgHover">&nbsp;</div>
@@ -1152,6 +1169,10 @@
                 </div>
                 <div class="grp">
                   <div class="swatchWrap">
+                    <div class="ctrl brightCtrl">
+                      <div class="labelRow"><div class="label">Card Brightness</div><div class="val" id="bdBrightVal">100%</div></div>
+                      <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
+                    </div>
                     <div class="swatchHeader">
                       <div class="label">Card Colors</div>
                       <div class="val hoverVal" id="bdHover">&nbsp;</div>
@@ -4143,7 +4164,9 @@ function applyButtonColors(){
 function syncSwatchHeaderWidths(){
   requestAnimationFrame(()=>{
     document.querySelectorAll(".swatchRow").forEach(row=>{
-      const header = row.parentElement.querySelector(".swatchHeader");
+      const wrap = row.parentElement;
+      const header = wrap ? wrap.querySelector(".swatchHeader") : null;
+      const bright = wrap ? wrap.querySelector(".brightCtrl") : null;
       if(!header) return;
       const w = row.getBoundingClientRect().width;
       header.style.width = w > 0 ? `${w}px` : "auto";
@@ -4151,6 +4174,12 @@ function syncSwatchHeaderWidths(){
       header.style.marginRight = "auto";
       row.style.marginLeft = "auto";
       row.style.marginRight = "auto";
+
+      if(bright){
+        bright.style.width = w > 0 ? `${w}px` : "auto";
+        bright.style.marginLeft = "auto";
+        bright.style.marginRight = "auto";
+      }
     });
   });
 }
