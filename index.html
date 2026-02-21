@@ -460,6 +460,17 @@
       pointer-events: none;
       margin-bottom: 0;
     }
+    #panelWrap.panel-tiles{
+      left: 0 !important;
+      top: 0 !important;
+      width: 0 !important;
+      height: 0 !important;
+      max-width: none !important;
+      max-height: none !important;
+      overflow: visible !important;
+      pointer-events: none !important;
+      margin: 0 !important;
+    }
     body[data-ui-page]:not([data-ui-page="none"]) #panelWrap{
       max-height: var(--panelMaxH, 62vh);
       opacity: 1;
@@ -476,11 +487,31 @@
       gap: 8px;
       padding-top: 4px;
     }
+    #panelWrap.panel-tiles #panelInner{
+      max-height: none !important;
+      overflow: visible !important;
+      display: block !important;
+      padding: 0 !important;
+      gap: 0 !important;
+      pointer-events: none !important;
+    }
     #panelInner .uiPage{
       background: var(--cardUiBg, transparent);
       width: fit-content;
       max-width: min(var(--uiW), 94vw);
       padding: 6px 8px;
+    }
+    #panelWrap.panel-tiles #panelInner .uiPage{
+      background: transparent !important;
+      width: auto !important;
+      max-width: none !important;
+      padding: 0 !important;
+    }
+    #panelInner .panelTileFloat{
+      position: fixed !important;
+      margin: 0 !important;
+      z-index: 58;
+      pointer-events: auto !important;
     }
 
     #dock{
@@ -2034,6 +2065,7 @@ const phraseEl = document.getElementById("phraseText");
 const uiWrapEl = document.getElementById("uiWrap");
 const barEl = document.getElementById("bar");
 const panelWrapEl = document.getElementById("panelWrap");
+const panelInnerEl = document.getElementById("panelInner");
 const cardEl = document.getElementById("card");
 
 const speedEl = document.getElementById("speedSlider");
@@ -2243,6 +2275,149 @@ function buildPanelCandidates(maxRing){
   return out;
 }
 
+function shouldUsePanelTileLayout(vw, vh){
+  const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  return !!(coarse || vw <= 930 || vh <= 620);
+}
+
+function getActivePanelTileEls(page){
+  if(!panelInnerEl) return [];
+  const safePage = String(page || "none");
+  if(safePage === "language"){
+    return Array.from(panelInnerEl.querySelectorAll(".uiPage--language .languageTile--parts"));
+  }
+  if(safePage === "contrast"){
+    return Array.from(panelInnerEl.querySelectorAll(".uiPage--contrast .ctrl"));
+  }
+  if(safePage === "colors"){
+    return [
+      panelInnerEl.querySelector(".uiPage--colors .colorsScopeCol"),
+      panelInnerEl.querySelector(".uiPage--colors .colorsGridCol"),
+      panelInnerEl.querySelector(".uiPage--colors .colorsBulkCol")
+    ].filter(Boolean);
+  }
+  if(safePage === "speed"){
+    return Array.from(panelInnerEl.querySelectorAll(".uiPage--speed .ctrl"));
+  }
+  if(safePage === "layout"){
+    return [
+      ...Array.from(panelInnerEl.querySelectorAll(".uiPage--layout .ctrl")),
+      ...Array.from(panelInnerEl.querySelectorAll(".uiPage--layout .actionGroup"))
+    ];
+  }
+  return [];
+}
+
+function clearPanelFloatingTiles(){
+  if(!panelWrapEl || !panelInnerEl) return;
+  panelWrapEl.classList.remove("panel-tiles");
+  panelWrapEl.style.left = "";
+  panelWrapEl.style.top = "";
+  panelWrapEl.style.bottom = "";
+  panelWrapEl.style.transform = "";
+  panelWrapEl.style.width = "";
+  panelWrapEl.style.height = "";
+  panelInnerEl.querySelectorAll(".panelTileFloat").forEach((el)=>{
+    el.classList.remove("panelTileFloat");
+    el.style.left = "";
+    el.style.top = "";
+    el.style.width = "";
+    el.style.height = "";
+    el.style.opacity = "";
+    el.style.pointerEvents = "";
+  });
+}
+
+function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed){
+  if(!panelWrapEl || !panelInnerEl) return false;
+  const page = String(document.body.dataset.uiPage || "none");
+  const tiles = getActivePanelTileEls(page);
+  if(!tiles.length) return false;
+
+  panelWrapEl.classList.add("panel-tiles");
+  panelWrapEl.style.left = "0px";
+  panelWrapEl.style.top = "0px";
+  panelWrapEl.style.bottom = "auto";
+  panelWrapEl.style.transform = "none";
+
+  const measured = [];
+  tiles.forEach((el, idx)=>{
+    if(!el) return;
+    const r = el.getBoundingClientRect();
+    const w = Math.max(44, Math.ceil(r.width || 0));
+    const h = Math.max(28, Math.ceil(r.height || 0));
+    if(w <= 0 || h <= 0) return;
+    measured.push({
+      el,
+      idx,
+      measure: { w, h, tipTop: 0 }
+    });
+  });
+  if(!measured.length) return false;
+
+  measured.forEach((item)=>{
+    item.el.classList.add("panelTileFloat");
+    item.el.style.width = `${item.measure.w}px`;
+    item.el.style.height = `${item.measure.h}px`;
+    item.el.style.opacity = "1";
+    item.el.style.pointerEvents = "auto";
+  });
+
+  const ordered = measured.slice().sort((a, b)=>{
+    const areaA = a.measure.w * a.measure.h;
+    const areaB = b.measure.w * b.measure.h;
+    if(areaA !== areaB) return areaB - areaA;
+    return a.idx - b.idx;
+  });
+
+  const baseY = Math.round(anchorY - 12);
+  for(const item of ordered){
+    let spot = findDockSpot(
+      `__panel_tile_${item.idx}`,
+      item.measure,
+      anchorX,
+      baseY,
+      vw,
+      vh,
+      obstacles,
+      placed,
+      {
+        stepX: Math.max(10, Math.floor(DOCK_GRID_MIN_STEP_X * 0.9)),
+        stepY: Math.max(8, Math.floor(DOCK_GRID_MIN_STEP_Y * 0.9)),
+        maxRing: DOCK_PANEL_MAX_RING
+      }
+    );
+
+    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, obstacles, placed)){
+      spot = null;
+      const fallbackCandidates = buildPanelCandidates(DOCK_PANEL_MAX_RING + 28);
+      for(const c of fallbackCandidates){
+        const cx = anchorX + (c.col * DOCK_GRID_MIN_STEP_X);
+        const cy = baseY + (c.row * DOCK_GRID_MIN_STEP_Y);
+        const x = Math.round(cx - (item.measure.w * 0.5));
+        const y = Math.round(cy - (item.measure.h * 0.5));
+        const rect = makeDockRect(x, y, item.measure.w, item.measure.h, 0);
+        if(!fitsDockRect(rect, vw, vh, obstacles, placed)) continue;
+        spot = { x, y, rect };
+        break;
+      }
+    }
+
+    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, obstacles, placed)){
+      // Keep strict no-overlap behavior on cramped screens.
+      item.el.style.opacity = "0";
+      item.el.style.pointerEvents = "none";
+      continue;
+    }
+
+    item.el.style.left = `${Math.round(spot.x)}px`;
+    item.el.style.top = `${Math.round(spot.y)}px`;
+    obstacles.push(spot.rect);
+    placed.push(spot.rect);
+  }
+  return true;
+}
+
 function findDockSpot(btnId, measure, anchorX, anchorY, vw, vh, obstacles, placed, layoutCfg){
   const localAnchorY = anchorY + (DOCK_SUBMENU_IDS.has(btnId) ? DOCK_SUBMENU_Y_SHIFT : 0);
   const stepX = Math.max(DOCK_GRID_MIN_STEP_X, Math.round(layoutCfg?.stepX || DOCK_GRID_MIN_STEP_X));
@@ -2260,6 +2435,33 @@ function findDockSpot(btnId, measure, anchorX, anchorY, vw, vh, obstacles, place
     const rect = makeDockRect(x, y, measure.w, measure.h, measure.tipTop);
     if(fitsDockRect(rect, vw, vh, obstacles, placed)){
       return { x, y, rect };
+    }
+  }
+
+  // Exhaustive near-anchor scan before hard fallback.
+  const minX = DOCK_LAYOUT_MARGIN;
+  const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - measure.w);
+  const minY = DOCK_LAYOUT_MARGIN + measure.tipTop;
+  const maxY = Math.max(minY, vh - DOCK_LAYOUT_MARGIN - measure.h);
+  const scanStepX = Math.max(6, Math.floor(stepX * 0.9));
+  const scanStepY = Math.max(6, Math.floor(stepY * 0.9));
+  const centerX = clamp(Math.round(anchorX - (measure.w * 0.5)), minX, maxX);
+
+  for(let y = maxY; y >= minY; y -= scanStepY){
+    const tried = new Set();
+    const xs = [centerX];
+    for(let d = scanStepX; d <= (vw + stepX); d += scanStepX){
+      xs.push(centerX - d, centerX + d);
+      if((centerX - d) <= minX && (centerX + d) >= maxX) break;
+    }
+    for(const xRaw of xs){
+      const x = clamp(Math.round(xRaw), minX, maxX);
+      if(tried.has(x)) continue;
+      tried.add(x);
+      const rect = makeDockRect(x, y, measure.w, measure.h, measure.tipTop);
+      if(fitsDockRect(rect, vw, vh, obstacles, placed)){
+        return { x, y, rect };
+      }
     }
   }
 
@@ -2533,6 +2735,11 @@ function placeOpenDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measu
   const p1 = placeRow(row1, row1CenterY);
   if(!p1.ok) return { placedIds, panelPlaced: false };
 
+  if(shouldUsePanelTileLayout(vw, vh)){
+    const panelPlaced = placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed);
+    return { placedIds, panelPlaced };
+  }
+
   if(!panelWrapEl || !panelMeasure || panelMeasure.w <= 0 || panelMeasure.h <= 0){
     return { placedIds, panelPlaced: false };
   }
@@ -2592,6 +2799,7 @@ function layoutDockObjects(){
   if(!dockControlBtns.length) return;
   const { w: vw, h: vh } = getViewportSize();
   if(vw <= 0 || vh <= 0) return;
+  clearPanelFloatingTiles();
 
   const menuRect = menuToggleBtn ? menuToggleBtn.getBoundingClientRect() : null;
   const anchorX = menuRect ? (menuRect.left + (menuRect.width * 0.5)) : (vw * 0.5);
@@ -2602,7 +2810,6 @@ function layoutDockObjects(){
   const measuresById = new Map();
   const order = getDockLayoutOrder();
   const panelOpen = !!(document.body.dataset.uiPage && document.body.dataset.uiPage !== "none");
-  const panelInnerEl = document.getElementById("panelInner");
   const panelRectMeasure = panelInnerEl ? panelInnerEl.getBoundingClientRect() : (panelWrapEl ? panelWrapEl.getBoundingClientRect() : null);
   const panelMeasure = panelWrapEl ? {
     w: Math.max(42, Math.ceil((panelRectMeasure && panelRectMeasure.width) || panelWrapEl.scrollWidth || 0)),
@@ -2836,7 +3043,6 @@ function rectsOverlap(a, b, gap=0){
 
 function updatePanelSafeMaxHeight(){
   if(!panelWrapEl) return;
-  const panelInnerEl = document.getElementById("panelInner");
   const open = document.body.dataset.uiPage && document.body.dataset.uiPage !== "none";
   if(!open){
     panelWrapEl.style.setProperty("--panelMaxH", "0px");
@@ -2844,8 +3050,14 @@ function updatePanelSafeMaxHeight(){
     return;
   }
 
+  const { w: vw, h: vh } = getViewportSize();
+  if(shouldUsePanelTileLayout(vw, vh)){
+    panelWrapEl.style.setProperty("--panelMaxH", "0px");
+    scheduleDockLayout();
+    return;
+  }
+
   const desiredPanelH = Math.ceil((panelInnerEl ? panelInnerEl.scrollHeight : panelWrapEl.scrollHeight) + 2);
-  const { h: vh } = getViewportSize();
   const maxH = clamp(Math.max(0, desiredPanelH), 0, Math.max(0, Math.floor(vh - (DOCK_LAYOUT_MARGIN * 2))));
   panelWrapEl.style.setProperty("--panelMaxH", `${maxH}px`);
   scheduleDockLayout();
