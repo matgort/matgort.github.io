@@ -6161,6 +6161,82 @@ function widenPhraseToAvoidOverfullLines(){
   }
 }
 
+function phraseHasOverfullLine(){
+  const boxW = phraseEl.getBoundingClientRect().width;
+  if(boxW <= 0) return false;
+  const scrollW = phraseEl.scrollWidth || 0;
+  return scrollW > (boxW + 0.5);
+}
+
+function buildWidthSearchOrder(center, minW, maxW, step=1){
+  const out = [];
+  const seen = new Set();
+  const push = (v)=>{
+    const n = Math.round((v / step)) * step;
+    const c = clamp(n, minW, maxW);
+    const key = c.toFixed(3);
+    if(seen.has(key)) return;
+    seen.add(key);
+    out.push(c);
+  };
+  push(center);
+  for(let d = step; d <= (maxW - minW + step); d += step){
+    push(center - d);
+    push(center + d);
+  }
+  return out;
+}
+
+function getPhraseLineStats(){
+  const lineRects = groupClientRectsIntoLines(phraseInkRects());
+  if(!lineRects.length) return null;
+
+  const widths = lineRects.map((r)=>Math.max(1, r.width));
+  const maxW = Math.max(...widths);
+  const minW = Math.min(...widths);
+  const lastW = widths[widths.length - 1];
+  const lastRatio = lastW / Math.max(1, maxW);
+
+  const mean = widths.reduce((a,b)=>a+b, 0) / widths.length;
+  const variance = widths.reduce((acc, w)=> acc + Math.pow(w - mean, 2), 0) / widths.length;
+  const relStdDev = Math.sqrt(variance) / Math.max(1, mean);
+
+  const renderedLines = getRenderedLinesForScreenshot();
+  const lastLineText = renderedLines.length ? String(renderedLines[renderedLines.length - 1]).trim() : "";
+  const lastWords = lastLineText ? lastLineText.split(/\s+/).filter(Boolean).length : 0;
+
+  return {
+    lineCount: widths.length,
+    widths,
+    maxW,
+    minW,
+    lastW,
+    lastRatio,
+    relStdDev,
+    lastWords
+  };
+}
+
+function scorePhraseLineBalance(stats){
+  if(!stats) return Infinity;
+  if(stats.lineCount <= 1) return 0;
+
+  let score = 0;
+  // Penalize very short final lines and true widows.
+  score += Math.max(0, 0.66 - stats.lastRatio) * 5.5;
+  if(stats.lastWords === 1) score += 2.6;
+  else if(stats.lastWords === 2) score += 0.8;
+
+  // Penalize uneven line distribution.
+  score += stats.relStdDev * 2.0;
+
+  // For two-line phrases, require stronger balance.
+  if(stats.lineCount === 2 && stats.lastRatio < 0.78){
+    score += (0.78 - stats.lastRatio) * 4.2;
+  }
+  return score;
+}
+
 function smartPhraseWidth(){
   const base = clamp(Number(widthEl.value), 0, 100);
   if(base === 0){
@@ -6182,37 +6258,40 @@ function smartPhraseWidth(){
     return;
   }
 
-  // Don't auto-widen very small widths (it causes jitter / flicker).
-  if(base < 25){
+  const currentW = getRootVarVw("--phraseW") ?? base;
+  const currentStats = getPhraseLineStats();
+  if(!currentStats){
     fitPhraseToBox();
     return;
   }
 
-  const rects = phraseInkRects();
-  if(!rects.length){
-    fitPhraseToBox();
-    return;
-  }
-  const last = rects[rects.length - 1];
-  const maxW = Math.max(1, ...rects.map(r=>r.width));
-  const ratio = last.width / maxW;
-  if(ratio >= 0.40 || rects.length < 2){
-    fitPhraseToBox();
-    return;
+  let bestW = currentW;
+  let bestScore = scorePhraseLineBalance(currentStats);
+
+  // Explore both narrower and wider widths to avoid one-word ragged last lines.
+  const minSearchW = clamp(currentW - 14, 1, 100);
+  const maxSearchW = clamp(Math.min(100, currentW + 14), 1, 100);
+  const candidates = buildWidthSearchOrder(currentW, minSearchW, maxSearchW, 1);
+
+  for(const candidateW of candidates){
+    document.documentElement.style.setProperty("--phraseW", `${candidateW.toFixed(2)}vw`);
+    if(phraseHasOverfullLine()) continue;
+
+    const stats = getPhraseLineStats();
+    if(!stats) continue;
+    const score = scorePhraseLineBalance(stats);
+
+    const strongWin = score < (bestScore - 0.08);
+    const tieWin =
+      Math.abs(score - bestScore) <= 0.08 &&
+      Math.abs(candidateW - base) < Math.abs(bestW - base);
+    if(strongWin || tieWin){
+      bestScore = score;
+      bestW = candidateW;
+    }
   }
 
-  const maxExtra = 10;
-  let w = base;
-  for(let i=1; i<=maxExtra; i++){
-    w = Math.min(base + i, 100);
-    document.documentElement.style.setProperty("--phraseW", `${w}vw`);
-    const rectsNow = phraseInkRects();
-    if(!rectsNow.length) break;
-    const lastNow = rectsNow[rectsNow.length - 1];
-    const maxWNow = Math.max(1, ...rectsNow.map(r=>r.width));
-    const ratioNow = lastNow.width / maxWNow;
-    if(ratioNow >= 0.40) break;
-  }
+  document.documentElement.style.setProperty("--phraseW", `${bestW.toFixed(2)}vw`);
   fitPhraseToBox();
 }
 
