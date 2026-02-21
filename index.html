@@ -6130,6 +6130,15 @@ function renderSentenceButtons(){
     b.dataset.part = opt;
 
     b.addEventListener("click", ()=>{
+      if(opt === "object" && !sel.parts.has("object")){
+        // Object poems shortcut: selecting object snaps to object + location.
+        sel.parts = new Set(["object", "location"]);
+        syncSentenceStructureUI();
+        updatePhraseLive();
+        showUI();
+        return;
+      }
+
       const isObjOrPerson = (opt === "object" || opt === "person");
       const enabling = !sel.parts.has(opt);
       if(isObjOrPerson && enabling){
