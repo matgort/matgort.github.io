@@ -27,6 +27,7 @@
       /* Phrase layout */
       --textScale: 1;
       --fitScale: 1;
+      --sceneZoom: 1;
       --yPct: 50%;
       --phraseW: 75vw;
       --edgePad: 50px;
@@ -83,7 +84,8 @@
       top:0; left:0;
       width:100vw;
       height: calc(var(--vh, 1vh) * 100);
-      pointer-events:none;
+      pointer-events:auto;
+      touch-action: none;
       z-index: 20;
     }
 
@@ -105,11 +107,11 @@
       margin-left: auto;
       margin-right: auto;
       font-weight: 650;
-      font-size: calc(clamp(32px, 5vw, 92px) * var(--textScale) * var(--fitScale));
+      font-size: calc(clamp(32px, 5vw, 92px) * var(--textScale) * var(--fitScale) * var(--sceneZoom));
       line-height:1.12;
       letter-spacing:.2px;
-      width: var(--phraseW);
-      max-width: calc(100vw - (var(--edgePad) * 2));
+      width: calc(var(--phraseW) * var(--sceneZoom));
+      max-width: calc((100vw - (var(--edgePad) * 2)) * var(--sceneZoom));
       text-align:center;
       white-space: normal;
       overflow-wrap: normal;
@@ -993,7 +995,7 @@
         --uiMaxW: 620px;
         --titlePadTop: 16px;
       }
-      #phraseText{ font-size: calc(clamp(28px, 7vw, 70px) * var(--textScale) * var(--fitScale)); }
+      #phraseText{ font-size: calc(clamp(28px, 7vw, 70px) * var(--textScale) * var(--fitScale) * var(--sceneZoom)); }
       #titleBlock .title{ font-size: 14px; }
       #titleBlock .sub{ font-size: 10px; }
       button{ font-size: 6.8px; padding: 3.4px 5.3px; }
@@ -1698,6 +1700,113 @@ function scheduleUiSafeUpdate(){
     uiSafeRaf = 0;
     updatePanelSafeMaxHeight();
   });
+}
+
+/* ================= Scene Gestures (Drag / Pinch Scale) ================= */
+const SCENE_ZOOM_MIN = 0.5;
+const SCENE_ZOOM_MAX = 3.0;
+let sceneZoom = 1;
+const sceneGesture = {
+  active: false,
+  mode: "none",
+  pointers: new Map(),
+  startZoom: 1,
+  startY: 0,
+  startDist: 1
+};
+
+function setSceneZoom(next){
+  const z = clamp(Number(next), SCENE_ZOOM_MIN, SCENE_ZOOM_MAX);
+  if(!Number.isFinite(z)) return;
+  if(Math.abs(z - sceneZoom) < 0.0005) return;
+  sceneZoom = z;
+  document.documentElement.style.setProperty("--sceneZoom", sceneZoom.toFixed(3));
+  applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+}
+
+function pointInRect(x, y, r){
+  return !!r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+}
+
+function getSceneGestureRect(){
+  const cardShown = !!cardEl && getComputedStyle(cardEl).display !== "none";
+  if(cardShown){
+    return cardEl.getBoundingClientRect();
+  }
+  return phraseInkBounds() || phraseEl.getBoundingClientRect();
+}
+
+function isUiTarget(target){
+  if(!target || !target.closest) return false;
+  return !!target.closest("#titleBlock, #bar");
+}
+
+function refreshSceneGestureMode(){
+  const points = Array.from(sceneGesture.pointers.values());
+  if(points.length >= 2){
+    const [a, b] = points;
+    sceneGesture.mode = "pinch";
+    sceneGesture.startDist = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+    sceneGesture.startZoom = sceneZoom;
+    return;
+  }
+  if(points.length === 1){
+    sceneGesture.mode = "drag";
+    sceneGesture.startY = points[0].y;
+    sceneGesture.startZoom = sceneZoom;
+    return;
+  }
+  sceneGesture.mode = "none";
+  sceneGesture.active = false;
+}
+
+function onScenePointerDown(e){
+  if(e.pointerType === "mouse" && e.button !== 0) return;
+  if(isUiTarget(e.target)) return;
+
+  const inScene = pointInRect(e.clientX, e.clientY, getSceneGestureRect());
+  const allowSecondTouch = sceneGesture.active && sceneGesture.pointers.size === 1 && e.pointerType !== "mouse";
+  if(!inScene && !allowSecondTouch) return;
+
+  sceneGesture.active = true;
+  sceneGesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  refreshSceneGestureMode();
+  if(e.target && typeof e.target.setPointerCapture === "function"){
+    try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
+  }
+  showUI();
+  e.preventDefault();
+}
+
+function onScenePointerMove(e){
+  if(!sceneGesture.pointers.has(e.pointerId)) return;
+  sceneGesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if(sceneGesture.mode === "drag" && sceneGesture.pointers.size === 1){
+    const p = sceneGesture.pointers.get(e.pointerId);
+    const dy = p.y - sceneGesture.startY;
+    const next = sceneGesture.startZoom * Math.exp(-dy / 220);
+    setSceneZoom(next);
+    e.preventDefault();
+    return;
+  }
+
+  if(sceneGesture.pointers.size >= 2){
+    const points = Array.from(sceneGesture.pointers.values());
+    const dist = Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y));
+    const next = sceneGesture.startZoom * (dist / sceneGesture.startDist);
+    setSceneZoom(next);
+    e.preventDefault();
+  }
+}
+
+function onScenePointerEnd(e){
+  if(!sceneGesture.pointers.has(e.pointerId)) return;
+  sceneGesture.pointers.delete(e.pointerId);
+  if(e.target && typeof e.target.releasePointerCapture === "function"){
+    try{ e.target.releasePointerCapture(e.pointerId); }catch(_){}
+  }
+  refreshSceneGestureMode();
 }
 
 /* ================= Selection state ================= */
@@ -4334,6 +4443,12 @@ function phraseInkBounds(){
 }
 
 function fitPhraseToBox(){
+  if(Math.abs(sceneZoom - 1) > 0.001){
+    // Keep manual drag/pinch zoom authoritative.
+    applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+    return;
+  }
+
   const sizePct = clamp(Number(sizeEl.value), 0, 150);
   if(sizePct <= 0){
     document.documentElement.style.setProperty("--fitScale", "1");
@@ -4870,6 +4985,11 @@ function showUI(){
   }, true);
 })();
 
+window.addEventListener("pointerdown", onScenePointerDown, {passive:false});
+window.addEventListener("pointermove", onScenePointerMove, {passive:false});
+window.addEventListener("pointerup", onScenePointerEnd, {passive:false});
+window.addEventListener("pointercancel", onScenePointerEnd, {passive:false});
+
 speedEl.addEventListener("input", ()=>{ scheduleTick(); showUI(); });
 bgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); showUI(); });
 fgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); showUI(); });
@@ -4981,6 +5101,7 @@ window.addEventListener("keydown", (e)=>{
 /* ================= Start ================= */
 (function init(){
   setViewportVars();
+  document.documentElement.style.setProperty("--sceneZoom", "1");
   if(window.visualViewport){
     window.visualViewport.addEventListener("resize", setViewportVars, {passive:true});
     window.visualViewport.addEventListener("scroll", setViewportVars, {passive:true});
