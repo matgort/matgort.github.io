@@ -2024,6 +2024,15 @@ const DOCK_SUBMENU_IDS = new Set([
   "fsBtn"
 ]);
 
+function shouldUseBandedMobileLayout(vw, vh){
+  const w = Number.isFinite(vw) ? vw : (window.innerWidth || 0);
+  const h = Number.isFinite(vh) ? vh : (window.innerHeight || 0);
+  const coarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+  const touch = (navigator.maxTouchPoints || 0) > 0;
+  const maxSide = Math.max(w, h);
+  return (coarse || touch) && maxSide <= 1400;
+}
+
 function inflateRect(r, pad){
   return {
     left: r.left - pad,
@@ -2196,7 +2205,16 @@ function clearPanelFloatingTiles(){
 }
 
 function getPanelTopBounds(vh, blockH, panelTopLimit){
+  const { w: vw } = getViewportSize();
   const safe = getSceneSafeRect();
+  if(shouldUseBandedMobileLayout(vw, vh) && safe){
+    const minTopBand = DOCK_LAYOUT_MARGIN;
+    const topZoneBottom = Math.max(minTopBand, Math.round(safe.top - UI_SAFE_GAP_PX - 6));
+    const maxTopBand = Math.max(minTopBand, topZoneBottom - blockH);
+    if(maxTopBand >= minTopBand){
+      return { minTop: minTopBand, maxTop: maxTopBand };
+    }
+  }
   const safeBottom = safe ? safe.bottom : Math.round(vh * 0.40);
   const minTop = Math.max(
     DOCK_LAYOUT_MARGIN,
@@ -2797,6 +2815,132 @@ function placePresetDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, mea
   return placedIds;
 }
 
+function placeBandedDockRows(vw, vh, obstacles, placed, measuresById){
+  const placedIds = new Set();
+  const getM = (id)=> measuresById.get(id) || measureDockControl(dockControlById.get(id));
+  const menuRect = menuToggleBtn ? menuToggleBtn.getBoundingClientRect() : null;
+  const menuW = Math.max(40, Math.ceil(menuRect ? menuRect.width : 68));
+  const menuH = Math.max(24, Math.ceil(menuRect ? menuRect.height : 32));
+  const gapX = DOCK_LAYOUT_GAP;
+  const safe = getSceneSafeRect();
+  const minTop = safe
+    ? Math.max(DOCK_LAYOUT_MARGIN, Math.round(safe.bottom + UI_SAFE_GAP_PX + 6))
+    : Math.round(vh * 0.58);
+
+  function buildRow(items){
+    const present = items
+      .map((item)=>{
+        if(!item || !item.id){
+          return {
+            id: "",
+            w: Math.max(0, Math.ceil(item && item.w ? item.w : 0)),
+            h: Math.max(0, Math.ceil(item && item.h ? item.h : 0)),
+            tipTop: 0
+          };
+        }
+        const btn = dockControlById.get(item.id);
+        if(!btn) return null;
+        const m = getM(item.id);
+        if(!m) return null;
+        return { id: item.id, w: m.w, h: m.h, tipTop: m.tipTop || 0 };
+      })
+      .filter(Boolean);
+    const rowW = present.reduce((sum, item)=> sum + item.w, 0) + (Math.max(0, present.length - 1) * gapX);
+    const maxHalfH = present.reduce((max, item)=> Math.max(max, item.h * 0.5), 0);
+    const hasTips = present.some((item)=> item.tipTop > 0);
+    const up = maxHalfH + (hasTips ? 8 : 0);
+    const down = maxHalfH;
+    return { items: present, rowW, up, down, h: up + down };
+  }
+
+  const row1 = buildRow([
+    { id: "tabLanguageBtn" },
+    { id: "tabColorsBtn" },
+    { id: "tabInfoBtn" }
+  ]);
+  const row2 = buildRow([
+    { id: "lockCompositionBtn" },
+    { id: "tabSpeedBtn" },
+    { id: "dockPlayback" },
+    { id: "tabContrastBtn" }
+  ]);
+  const row3 = buildRow([
+    { id: "fsBtn" },
+    { id: "", w: menuW + DOCK_MENU_SPACER_EXTRA, h: menuH },
+    { id: "screenshotBtn" }
+  ]);
+
+  const rows = [row1, row2, row3];
+  const rowGapOptions = [4, 3, 2];
+  const xShiftOptions = [0, -10, 10, -20, 20, -30, 30];
+
+  function tryRows(rowGap, shiftX = 0){
+    const localRects = [];
+    const localPos = [];
+    const anchorX = clamp(Math.round((menuRect ? (menuRect.left + (menuRect.width * 0.5)) : (vw * 0.5)) + shiftX), DOCK_LAYOUT_MARGIN, vw - DOCK_LAYOUT_MARGIN);
+
+    const row3TargetCenter = menuRect
+      ? Math.round(menuRect.top - 6 - row3.down)
+      : Math.round(vh - DOCK_LAYOUT_MARGIN - row3.down - 36);
+    const row3MinCenter = Math.round(minTop + row1.h + rowGap + row2.h + rowGap + row3.up);
+    const row3MaxCenter = Math.round(vh - DOCK_LAYOUT_MARGIN - row3.down);
+    if(row3MinCenter > row3MaxCenter) return null;
+
+    const row3Center = clamp(row3TargetCenter, row3MinCenter, row3MaxCenter);
+    const row2Center = row3Center - (row2.down + rowGap + row3.up);
+    const row1Center = row2Center - (row1.down + rowGap + row2.up);
+    const centers = [row1Center, row2Center, row3Center];
+
+    for(let r = 0; r < rows.length; r++){
+      const row = rows[r];
+      const centerY = centers[r];
+      const minX = DOCK_LAYOUT_MARGIN;
+      const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - row.rowW);
+      const startX = clamp(Math.round(anchorX - (row.rowW * 0.5)), minX, maxX);
+      let x = startX;
+
+      for(const item of row.items){
+        if(!item.id){
+          x += item.w + gapX;
+          continue;
+        }
+        const y = Math.round(centerY - (item.h * 0.5));
+        const rect = makeDockRect(Math.round(x), y, item.w, item.h, 0);
+        if(!fitsDockRect(rect, vw, vh, obstacles, placed.concat(localRects))){
+          return null;
+        }
+        localRects.push(rect);
+        localPos.push({ id: item.id, x: Math.round(x), y });
+        x += item.w + gapX;
+      }
+    }
+    return { localRects, localPos };
+  }
+
+  let found = null;
+  for(const gap of rowGapOptions){
+    for(const sx of xShiftOptions){
+      found = tryRows(gap, sx);
+      if(found) break;
+    }
+    if(found) break;
+  }
+  if(!found) return placedIds;
+
+  for(const pos of found.localPos){
+    const btn = dockControlById.get(pos.id);
+    if(!btn) continue;
+    btn.classList.add("dockObject");
+    btn.style.left = `${pos.x}px`;
+    btn.style.top = `${pos.y}px`;
+    placedIds.add(pos.id);
+  }
+  for(const rect of found.localRects){
+    placed.push(rect);
+  }
+  return placedIds;
+}
+
 function placeOpenDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measuresById, panelMeasure){
   const placedIds = new Set();
   const activePage = String(document.body.dataset.uiPage || "none");
@@ -2979,7 +3123,8 @@ function layoutDockObjects(){
   const placed = [];
   const measuresById = new Map();
   const order = getDockLayoutOrder();
-  const panelOpen = !!(document.body.dataset.uiPage && document.body.dataset.uiPage !== "none");
+  const activePage = String(document.body.dataset.uiPage || "none");
+  const panelOpen = activePage !== "none";
   const panelRectMeasure = panelInnerEl ? panelInnerEl.getBoundingClientRect() : (panelWrapEl ? panelWrapEl.getBoundingClientRect() : null);
   const panelMeasure = panelWrapEl ? {
     w: Math.max(42, Math.ceil((panelRectMeasure && panelRectMeasure.width) || panelWrapEl.scrollWidth || 0)),
@@ -2992,6 +3137,36 @@ function layoutDockObjects(){
     const m = measureDockControl(btn);
     measuresById.set(id, m);
   }
+
+  if(shouldUseBandedMobileLayout(vw, vh)){
+    const placedIds = placeBandedDockRows(vw, vh, obstacles, placed, measuresById);
+    if(panelOpen){
+      const safe = getSceneSafeRect();
+      placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, {
+        centerX: vw * 0.5,
+        panelTopLimit: safe ? Math.round(safe.top - 6) : Math.round(vh * 0.46)
+      });
+    }
+
+    const layoutCfg = {
+      stepX: DOCK_GRID_MIN_STEP_X,
+      stepY: DOCK_GRID_MIN_STEP_Y,
+      maxRing: DOCK_GRID_MAX_RING
+    };
+    for(const id of order){
+      const btn = dockControlById.get(id);
+      if(!btn) continue;
+      if(placedIds.has(id)) continue;
+      btn.classList.add("dockObject");
+      const measure = measuresById.get(id) || measureDockControl(btn);
+      const spot = findDockSpot(id, measure, anchorX, anchorY, vw, vh, obstacles, placed, layoutCfg);
+      btn.style.left = `${Math.round(spot.x)}px`;
+      btn.style.top = `${Math.round(spot.y)}px`;
+      placed.push(spot.rect);
+    }
+    return;
+  }
+
   const layoutCfg = {
     stepX: DOCK_GRID_MIN_STEP_X,
     stepY: DOCK_GRID_MIN_STEP_Y,
