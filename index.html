@@ -941,16 +941,20 @@
       letter-spacing: .02em;
       font-size: calc(var(--menuTextSize) * 1.2) !important;
       line-height: 1;
+      transform-origin: center center;
+      transition: transform .12s ease;
     }
     .uiPage--language #partsRow .ssBtn:not(.on){
       opacity: 1;
       filter: none;
       box-shadow: none;
+      transform: scale(0.5);
     }
     .uiPage--language #partsRow .ssBtn.on{
       opacity: 1;
       filter: none;
       box-shadow: none;
+      transform: scale(1);
     }
     .uiPage--language #partsRow .ssBtn:hover,
     .uiPage--language #partsRow .ssBtn:focus-visible,
@@ -958,6 +962,12 @@
       background: var(--cardUiBg, transparent);
       color: var(--cardUiFg, var(--ui));
       border: none;
+    }
+    .uiPage--language #partsRow .ssBtn:not(.on):active{
+      transform: scale(0.5) translateY(1px);
+    }
+    .uiPage--language #partsRow .ssBtn.on:active{
+      transform: scale(1) translateY(1px);
     }
 
     .uiPage--info{
@@ -1243,10 +1253,10 @@
     .uiPage--speed .ctrl{
       background: var(--cardUiBg, transparent);
       color: var(--cardUiFg, var(--ui));
-      padding: 12px 14px;
+      padding: 9px 12px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 7px;
       min-width: 0;
     }
     .uiPage--contrast .labelRow,
@@ -1265,7 +1275,7 @@
     }
     .uiPage--contrast input[type=range],
     .uiPage--speed input[type=range]{
-      height: 24px;
+      height: 20px;
     }
     .uiPage--contrast input[type=range]::-webkit-slider-runnable-track,
     .uiPage--speed input[type=range]::-webkit-slider-runnable-track{
@@ -1277,14 +1287,14 @@
     }
     .uiPage--contrast input[type=range]::-webkit-slider-thumb,
     .uiPage--speed input[type=range]::-webkit-slider-thumb{
-      width: 13px;
-      height: 13px;
-      margin-top: -5px;
+      width: 12px;
+      height: 12px;
+      margin-top: -4.5px;
     }
     .uiPage--contrast input[type=range]::-moz-range-thumb,
     .uiPage--speed input[type=range]::-moz-range-thumb{
-      width: 13px;
-      height: 13px;
+      width: 12px;
+      height: 12px;
     }
 
     /* Dock buttons stay fully visible in the unified card-color style. */
@@ -1434,13 +1444,13 @@
   button{ font-size: 7.4px; padding: 5px 8px; }
   .iconBtn{ width: 42px; height: var(--pillH); padding: 0; }
   .iconBtn svg{ width: 18px; height: 18px; }
-  input[type=range]{ height: 22px; }
+  input[type=range]{ height: 20px; }
       input[type=range]::-webkit-slider-thumb{
-        width:14px; height:14px;
-        margin-top:-6px;
+        width:13px; height:13px;
+        margin-top:-5.5px;
       }
       input[type=range]::-moz-range-thumb{
-        width:14px; height:14px;
+        width:13px; height:13px;
       }
     }
 
@@ -1564,7 +1574,7 @@
               <div class="infoTile">
                 <div class="infoTitle">Sculpture Poems</div>
                 <div class="infoByline">Margot DeMarco</div>
-                <p>These poems are randomly generated scenes. Each phrase is made from a person or an object, a description, an action, and a location. All language is drawn from a large bank of words written by the artist and continuously reshuffled. They have scale, color, duration, and placement, and are encountered in space and time. Each poem creates an evocative sculptural scene without further context. The viewer is left to imagine the larger world in which the phrase exists and the conditions under which that circumstance came to be.</p>
+                <p>These poems are randomly generated scenes. Each phrase is made from a person or an object, a description, an action, and a location. All language is drawn from a large bank of words written by the artist and continuously reshuffled. Each poem creates an evocative sculptural scene without further context.</p>
               </div>
             </section>
 
@@ -2261,6 +2271,25 @@ function tryPlaceColorsPanelCluster(measured, vw, vh, obstacles, placed, opts = 
 
   if(!grid || leftBtns.length !== 3 || rightBtns.length !== 2) return false;
 
+  function commitIfFits(placements){
+    const local = [];
+    for(const p of placements){
+      const rect = makeDockRect(p.x, p.y, p.item.measure.w, p.item.measure.h, 0);
+      if(!fitsDockRect(rect, vw, vh, obstacles, placed.concat(local))){
+        return false;
+      }
+      local.push(rect);
+      p.rect = rect;
+    }
+    for(const p of placements){
+      p.item.el.style.left = `${Math.round(p.x)}px`;
+      p.item.el.style.top = `${Math.round(p.y)}px`;
+      obstacles.push(p.rect);
+      placed.push(p.rect);
+    }
+    return true;
+  }
+
   const rowGap = Math.max(6, DOCK_LAYOUT_GAP);
   const colGap = 12;
 
@@ -2270,88 +2299,105 @@ function tryPlaceColorsPanelCluster(measured, vw, vh, obstacles, placed, opts = 
   const rightH = rightBtns.reduce((sum, item)=>sum + item.measure.h, 0) + (rowGap * (rightBtns.length - 1));
   const gridW = grid.measure.w;
   const gridH = grid.measure.h;
-
-  const blockW = leftW + colGap + gridW + colGap + rightW;
-  const blockH = Math.max(leftH, gridH, rightH);
-
   const maxAvailW = vw - (DOCK_LAYOUT_MARGIN * 2);
-  if(blockW > maxAvailW){
-    return false;
-  }
 
   const centerX = Number.isFinite(opts.centerX) ? opts.centerX : (vw * 0.5);
-  const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
-  const minX = DOCK_LAYOUT_MARGIN;
-  const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
-  const desiredTop = clamp(
-    Math.round(minTop + ((maxTop - minTop) * 0.42)),
-    minTop,
-    maxTop
-  );
-  const yCandidates = Array.from(new Set([
-    desiredTop,
-    minTop,
-    maxTop,
-    clamp(desiredTop - 8, minTop, maxTop),
-    clamp(desiredTop + 8, minTop, maxTop)
-  ]));
-
   const xShifts = [0, -16, 16, -32, 32, -48, 48];
 
-  for(const topBase of yCandidates){
-    for(const sx of xShifts){
-      const leftX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
-      const topY = clamp(Math.round(topBase), minTop, maxTop);
-      const gridX = leftX + leftW + colGap;
-      const rightX = gridX + gridW + colGap;
-      const leftStartY = Math.round(topY + ((blockH - leftH) * 0.5));
-      const gridY = Math.round(topY + ((blockH - gridH) * 0.5));
-      const rightStartY = Math.round(topY + ((blockH - rightH) * 0.5));
-
-      const local = [];
-      const placements = [];
-
-      const gridRect = makeDockRect(gridX, gridY, gridW, gridH, 0);
-      if(!fitsDockRect(gridRect, vw, vh, obstacles, placed.concat(local))) continue;
-      local.push(gridRect);
-      placements.push({ item: grid, x: gridX, y: gridY, rect: gridRect });
-
-      let yL = leftStartY;
-      let ok = true;
-      for(const item of leftBtns){
-        const x = leftX + Math.round((leftW - item.measure.w) * 0.5);
-        const rect = makeDockRect(x, yL, item.measure.w, item.measure.h, 0);
-        if(!fitsDockRect(rect, vw, vh, obstacles, placed.concat(local))){
-          ok = false;
-          break;
+  // layout A: classic left stack + swatch grid + right stack (all shift together).
+  {
+    const blockW = leftW + colGap + gridW + colGap + rightW;
+    const blockH = Math.max(leftH, gridH, rightH);
+    if(blockW <= maxAvailW){
+      const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
+      const minX = DOCK_LAYOUT_MARGIN;
+      const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
+      const desiredTop = clamp(
+        Math.round(minTop + ((maxTop - minTop) * 0.42)),
+        minTop,
+        maxTop
+      );
+      const yCandidates = Array.from(new Set([
+        desiredTop,
+        minTop,
+        maxTop,
+        clamp(desiredTop - 8, minTop, maxTop),
+        clamp(desiredTop + 8, minTop, maxTop)
+      ]));
+      for(const topBase of yCandidates){
+        for(const sx of xShifts){
+          const leftX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
+          const topY = clamp(Math.round(topBase), minTop, maxTop);
+          const gridX = leftX + leftW + colGap;
+          const rightX = gridX + gridW + colGap;
+          const leftStartY = Math.round(topY + ((blockH - leftH) * 0.5));
+          const gridY = Math.round(topY + ((blockH - gridH) * 0.5));
+          const rightStartY = Math.round(topY + ((blockH - rightH) * 0.5));
+          const placements = [{ item: grid, x: gridX, y: gridY }];
+          let yL = leftStartY;
+          for(const item of leftBtns){
+            const x = leftX + Math.round((leftW - item.measure.w) * 0.5);
+            placements.push({ item, x, y: yL });
+            yL += item.measure.h + rowGap;
+          }
+          let yR = rightStartY;
+          for(const item of rightBtns){
+            const x = rightX + Math.round((rightW - item.measure.w) * 0.5);
+            placements.push({ item, x, y: yR });
+            yR += item.measure.h + rowGap;
+          }
+          if(commitIfFits(placements)) return true;
         }
-        local.push(rect);
-        placements.push({ item, x, y: yL, rect });
-        yL += item.measure.h + rowGap;
       }
-      if(!ok) continue;
+    }
+  }
 
-      let yR = rightStartY;
-      for(const item of rightBtns){
-        const x = rightX + Math.round((rightW - item.measure.w) * 0.5);
-        const rect = makeDockRect(x, yR, item.measure.w, item.measure.h, 0);
-        if(!fitsDockRect(rect, vw, vh, obstacles, placed.concat(local))){
-          ok = false;
-          break;
+  // layout B: narrow fallback, still grouped tightly and moving as one bundle.
+  {
+    const leftRowW = leftBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (rowGap * (leftBtns.length - 1));
+    const rightRowW = rightBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (rowGap * (rightBtns.length - 1));
+    const leftRowH = Math.max(...leftBtns.map((item)=>item.measure.h));
+    const rightRowH = Math.max(...rightBtns.map((item)=>item.measure.h));
+    const blockW = Math.max(gridW, leftRowW, rightRowW);
+    const blockH = gridH + rowGap + leftRowH + rowGap + rightRowH;
+    if(blockW <= maxAvailW){
+      const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
+      const minX = DOCK_LAYOUT_MARGIN;
+      const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
+      const desiredTop = clamp(
+        Math.round(minTop + ((maxTop - minTop) * 0.38)),
+        minTop,
+        maxTop
+      );
+      const yCandidates = Array.from(new Set([
+        desiredTop,
+        minTop,
+        clamp(minTop + 12, minTop, maxTop),
+        maxTop
+      ]));
+      for(const topBase of yCandidates){
+        for(const sx of xShifts){
+          const blockX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
+          const topY = clamp(Math.round(topBase), minTop, maxTop);
+          const gridX = blockX + Math.round((blockW - gridW) * 0.5);
+          const leftY = topY + gridH + rowGap;
+          const rightY = leftY + leftRowH + rowGap;
+          const leftStartX = blockX + Math.round((blockW - leftRowW) * 0.5);
+          const rightStartX = blockX + Math.round((blockW - rightRowW) * 0.5);
+          const placements = [{ item: grid, x: gridX, y: topY }];
+          let xL = leftStartX;
+          for(const item of leftBtns){
+            placements.push({ item, x: xL, y: leftY + Math.round((leftRowH - item.measure.h) * 0.5) });
+            xL += item.measure.w + rowGap;
+          }
+          let xR = rightStartX;
+          for(const item of rightBtns){
+            placements.push({ item, x: xR, y: rightY + Math.round((rightRowH - item.measure.h) * 0.5) });
+            xR += item.measure.w + rowGap;
+          }
+          if(commitIfFits(placements)) return true;
         }
-        local.push(rect);
-        placements.push({ item, x, y: yR, rect });
-        yR += item.measure.h + rowGap;
       }
-      if(!ok) continue;
-
-      for(const p of placements){
-        p.item.el.style.left = `${Math.round(p.x)}px`;
-        p.item.el.style.top = `${Math.round(p.y)}px`;
-        obstacles.push(p.rect);
-        placed.push(p.rect);
-      }
-      return true;
     }
   }
 
