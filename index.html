@@ -1780,6 +1780,66 @@ function bagNext(key, pool){
   return out;
 }
 
+const WORD_RECENCY = new Map();
+function normToken(v){
+  return String(v || "").trim().replace(/\s+/g, " ").toLowerCase();
+}
+function getWordRecencyBucket(key, maxKeep){
+  const k = String(key || "");
+  const keep = Math.max(0, Math.floor(maxKeep || 0));
+  let bucket = WORD_RECENCY.get(k);
+  if(!bucket){
+    bucket = { max: keep, queue: [], seen: new Set() };
+    WORD_RECENCY.set(k, bucket);
+  }else if(bucket.max !== keep){
+    bucket.max = keep;
+    while(bucket.queue.length > bucket.max){
+      const old = bucket.queue.shift();
+      if(!bucket.queue.includes(old)) bucket.seen.delete(old);
+    }
+  }
+  return bucket;
+}
+function rememberWordRecent(key, token, maxKeep){
+  const t = normToken(token);
+  if(!t) return;
+  const bucket = getWordRecencyBucket(key, maxKeep);
+  if(bucket.max <= 0) return;
+  bucket.queue.push(t);
+  bucket.seen.add(t);
+  while(bucket.queue.length > bucket.max){
+    const old = bucket.queue.shift();
+    if(!bucket.queue.includes(old)) bucket.seen.delete(old);
+  }
+}
+function bagNextWithCooldown(key, pool, maxRecent){
+  const cleanPool = uniq(pool);
+  if(!cleanPool.length) return null;
+  const effectiveRecent = clamp(Math.floor(maxRecent || 0), 0, Math.max(0, cleanPool.length - 1));
+  if(effectiveRecent <= 0){
+    return bagNext(key, cleanPool);
+  }
+
+  const bucket = getWordRecencyBucket(key, effectiveRecent);
+  const maxTries = Math.max(cleanPool.length + 8, effectiveRecent + 8);
+  let fallback = null;
+  for(let i=0; i<maxTries; i++){
+    const candidate = bagNext(key, cleanPool);
+    if(candidate == null) continue;
+    fallback = candidate;
+    const cn = normToken(candidate);
+    if(!bucket.seen.has(cn)){
+      rememberWordRecent(key, candidate, effectiveRecent);
+      return candidate;
+    }
+  }
+  if(fallback != null){
+    rememberWordRecent(key, fallback, effectiveRecent);
+    return fallback;
+  }
+  return bagNext(key, cleanPool);
+}
+
 /* ================= Palettes ================= */
 const PAL = {
   circus: ["#FF6AD5","#FF8A00","#FF4D1A","#C85AE0","#FF007A"],
@@ -5540,18 +5600,27 @@ while trapped in an elevator
 
 /* ========================================================== */
 
-function pickDescriptorObject(){ return bagNext("desc:object", DESC_OBJECT); }
-function pickDescriptorPerson(){ return bagNext("desc:person", DESC_PERSON); }
-function pickDescriptorMixed(){ return bagNext("desc:mixed", DESC_OBJECT.concat(DESC_PERSON)); }
+const WORD_REPEAT_COOLDOWN = {
+  "desc:object": 180,
+  "desc:person": 180,
+  "desc:mixed": 220,
+  "obj": 260,
+  "person": 220,
+  "act": 320,
+  "loc": 260
+};
+function pickDescriptorObject(){ return bagNextWithCooldown("desc:object", DESC_OBJECT, WORD_REPEAT_COOLDOWN["desc:object"]); }
+function pickDescriptorPerson(){ return bagNextWithCooldown("desc:person", DESC_PERSON, WORD_REPEAT_COOLDOWN["desc:person"]); }
+function pickDescriptorMixed(){ return bagNextWithCooldown("desc:mixed", DESC_OBJECT.concat(DESC_PERSON), WORD_REPEAT_COOLDOWN["desc:mixed"]); }
 function pickDescriptor(useObj, usePerson){
   if(usePerson) return pickDescriptorPerson();
   if(useObj) return pickDescriptorObject();
   return pickDescriptorMixed();
 }
-function pickObject(){ return bagNext("obj", OBJECTS); }
-function pickPerson(){ return bagNext("person", PERSONS); }
-function pickAction(){ return bagNext("act", ACTIONS); }
-function pickLocation(){ return bagNext("loc", LOCATIONS); }
+function pickObject(){ return bagNextWithCooldown("obj", OBJECTS, WORD_REPEAT_COOLDOWN["obj"]); }
+function pickPerson(){ return bagNextWithCooldown("person", PERSONS, WORD_REPEAT_COOLDOWN["person"]); }
+function pickAction(){ return bagNextWithCooldown("act", ACTIONS, WORD_REPEAT_COOLDOWN["act"]); }
+function pickLocation(){ return bagNextWithCooldown("loc", LOCATIONS, WORD_REPEAT_COOLDOWN["loc"]); }
 
 /* ================= Phrase build ================= */
 function safeStr(x){ return (x == null) ? "" : String(x).trim(); }
@@ -5598,6 +5667,7 @@ const RECENT_PHRASES_MAX = 6000;
 const RECENT_PHRASES_KEY = "sculpture_poems_recent_phrases_v1";
 let recentPhraseQueue = [];
 let recentPhraseSet = new Set();
+let recentPhraseCount = new Map();
 let recentPhraseSaveTimer = null;
 
 function loadRecentPhrases(){
@@ -5609,6 +5679,10 @@ function loadRecentPhrases(){
     const clean = arr.map(x => String(x || "").trim()).filter(Boolean);
     recentPhraseQueue = clean.slice(-RECENT_PHRASES_MAX);
     recentPhraseSet = new Set(recentPhraseQueue);
+    recentPhraseCount = new Map();
+    for(const k of recentPhraseQueue){
+      recentPhraseCount.set(k, (recentPhraseCount.get(k) || 0) + 1);
+    }
   }catch(e){}
 }
 
@@ -5630,11 +5704,104 @@ function rememberRecentPhrase(p){
   if(!s) return;
   recentPhraseQueue.push(s);
   recentPhraseSet.add(s);
+  recentPhraseCount.set(s, (recentPhraseCount.get(s) || 0) + 1);
   while(recentPhraseQueue.length > RECENT_PHRASES_MAX){
     const old = recentPhraseQueue.shift();
-    recentPhraseSet.delete(old);
+    const nextCount = (recentPhraseCount.get(old) || 0) - 1;
+    if(nextCount <= 0){
+      recentPhraseCount.delete(old);
+      recentPhraseSet.delete(old);
+    }else{
+      recentPhraseCount.set(old, nextCount);
+    }
   }
   scheduleSaveRecentPhrases();
+}
+
+const RECENT_COLOR_COMBOS_MAX = 2800;
+const RECENT_COLOR_COMBOS_KEY = "sculpture_poems_recent_color_combos_v1";
+let recentColorComboQueue = [];
+let recentColorComboSet = new Set();
+let recentColorComboCount = new Map();
+let recentColorComboSaveTimer = null;
+
+function colorComboKey(bgHex, fgHex, bdHex){
+  return `${normHex(bgHex)}|${normHex(fgHex)}|${normHex(bdHex)}`;
+}
+
+function loadRecentColorCombos(){
+  try{
+    const raw = localStorage.getItem(RECENT_COLOR_COMBOS_KEY);
+    if(!raw) return;
+    const arr = JSON.parse(raw);
+    if(!Array.isArray(arr)) return;
+    const clean = arr.map(x => String(x || "").trim()).filter(Boolean);
+    recentColorComboQueue = clean.slice(-RECENT_COLOR_COMBOS_MAX);
+    recentColorComboSet = new Set(recentColorComboQueue);
+    recentColorComboCount = new Map();
+    for(const k of recentColorComboQueue){
+      recentColorComboCount.set(k, (recentColorComboCount.get(k) || 0) + 1);
+    }
+  }catch(e){}
+}
+
+function scheduleSaveRecentColorCombos(){
+  if(recentColorComboSaveTimer) return;
+  recentColorComboSaveTimer = window.setTimeout(()=>{
+    recentColorComboSaveTimer = null;
+    try{
+      localStorage.setItem(
+        RECENT_COLOR_COMBOS_KEY,
+        JSON.stringify(recentColorComboQueue.slice(-RECENT_COLOR_COMBOS_MAX))
+      );
+    }catch(e){}
+  }, 1200);
+}
+
+function rememberRecentColorCombo(bgHex, fgHex, bdHex){
+  const key = colorComboKey(bgHex, fgHex, bdHex);
+  if(!key) return;
+  recentColorComboQueue.push(key);
+  recentColorComboSet.add(key);
+  recentColorComboCount.set(key, (recentColorComboCount.get(key) || 0) + 1);
+  while(recentColorComboQueue.length > RECENT_COLOR_COMBOS_MAX){
+    const old = recentColorComboQueue.shift();
+    const nextCount = (recentColorComboCount.get(old) || 0) - 1;
+    if(nextCount <= 0){
+      recentColorComboCount.delete(old);
+      recentColorComboSet.delete(old);
+    }else{
+      recentColorComboCount.set(old, nextCount);
+    }
+  }
+  scheduleSaveRecentColorCombos();
+}
+
+function pickNextColorCombo(){
+  const MAX_TRIES = 220;
+  let fallback = null;
+
+  for(let i=0; i<MAX_TRIES; i++){
+    const bgBase = pickColorNonRepeating("bg", sel.bgColor, new Set()) || current.bgBase || "#ffffff";
+    const fgBase = pickColorNonRepeating("fg", sel.fgColor, new Set([bgBase])) || current.fgBase || "#000000";
+    const bdBase = pickColorNonRepeating("bd", sel.bdColor, new Set([bgBase, fgBase])) || current.bdBase || "#4d4d4d";
+    const key = colorComboKey(bgBase, fgBase, bdBase);
+    fallback = { bgBase, fgBase, bdBase };
+    if(!recentColorComboCount.has(key)){
+      rememberRecentColorCombo(bgBase, fgBase, bdBase);
+      return fallback;
+    }
+  }
+
+  if(fallback){
+    rememberRecentColorCombo(fallback.bgBase, fallback.fgBase, fallback.bdBase);
+    return fallback;
+  }
+  return {
+    bgBase: current.bgBase || "#ffffff",
+    fgBase: current.fgBase || "#000000",
+    bdBase: current.bdBase || "#4d4d4d"
+  };
 }
 
 function clonePhraseParts(parts){
@@ -5934,6 +6101,7 @@ function setCalmStart(){
   current.bgBase = consumeColorFromBag("bg", sel.bgColor, bg);
   current.fgBase = consumeColorFromBag("fg", sel.fgColor, fg);
   current.bdBase = consumeColorFromBag("bd", sel.bdColor, fg);
+  rememberRecentColorCombo(current.bgBase, current.fgBase, current.bdBase);
 }
 
 /* ================= UI builders ================= */
@@ -6824,14 +6992,10 @@ function nextFrame(){
   if(isFirstFrame){
     isFirstFrame = false;
   }else if(!isCompositionLocked){
-    const bgBase = pickColorNonRepeating("bg", sel.bgColor, new Set());
-    current.bgBase = bgBase || current.bgBase;
-
-    const fgBase = pickColorNonRepeating("fg", sel.fgColor, new Set([current.bgBase]));
-    current.fgBase = fgBase || current.fgBase;
-
-    const bdBase = pickColorNonRepeating("bd", sel.bdColor, new Set([current.bgBase, current.fgBase]));
-    current.bdBase = bdBase || current.bdBase;
+    const combo = pickNextColorCombo();
+    current.bgBase = combo.bgBase || current.bgBase;
+    current.fgBase = combo.fgBase || current.fgBase;
+    current.bdBase = combo.bdBase || current.bdBase;
   }
 
   if(!isCompositionLocked && !wasFirst){
@@ -7127,6 +7291,7 @@ window.addEventListener("keydown", (e)=>{
   setUiPage("none");
 
   loadRecentPhrases();
+  loadRecentColorCombos();
 
   initPaletteCycles();
   renderSentenceButtons();
