@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <title>Poem Scenes</title>
+  <title>Sculpture Poems</title>
 
   <style>
     :root{
@@ -17,9 +17,9 @@
       --ui3: rgba(0,0,0,0.20);
       --vh: 1vh;
 
-      /* UI sizing (gold-standard) */
-      --barH: clamp(175px, 21vh, 240px); /* slightly squished vertically */
-      --barOffset: 40px; /* LOWER all UI by ~10px vs 50 (since barOffset raises UI up) */
+      /* UI sizing */
+      --barH: clamp(175px, 21vh, 240px);
+      --barOffset: 40px;
 
       /* slight scale that doesn't break layout */
       --uiScale: 1.02;
@@ -37,21 +37,16 @@
       --pillPadX: 10px;
       --pillFont: 7.1px;
 
-      /* Right-side action buttons (Card / Full screen) */
-      --actionW: 86px;
-
       /* Swatches */
       --swOuter: 1px;
       --swRing: 4px;
       --swW: calc(var(--pillH) * 2);
       --menuTextSize: calc(14px * 1.15 * 1.05 * 1.1);
-      --dockOpenShiftX: 0px;
-      --dockOpenShiftY: 10px;
 
-      /* Global UI padding request */
-      --uiPadX: 30px; /* narrower UI: +10px padding each side */
+      /* Global UI padding */
+      --uiPadX: 30px;
 
-      /* Narrow UI lane (your mockup’s big move) */
+      /* UI lane */
       --uiMaxW: 1120px;
       --uiW: min(
         var(--uiMaxW),
@@ -63,8 +58,7 @@
         )
       );
 
-      /* Title placement (now part of UI + fades) */
-      --titlePadTop: 18px; /* moved DOWN slightly */
+      --titlePadTop: 18px;
     }
 
     *{ box-sizing:border-box; }
@@ -198,7 +192,31 @@
       font-size: var(--menuTextSize);
     }
     #menuToggleBtn.dock-hover-focus{
-      font-size: calc(var(--menuTextSize) * 1.12);
+      font-size: var(--menuTextSize);
+    }
+    @media (hover: hover) and (pointer: fine){
+      #menuToggleBtn[data-tip]::after{
+        content: attr(data-tip);
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 2px);
+        transform: translateX(-50%);
+        color: var(--cardUiFg, var(--ui));
+        font-size: calc(var(--menuTextSize) * 0.62);
+        font-weight: 650;
+        line-height: 1;
+        letter-spacing: .02em;
+        text-transform: lowercase;
+        white-space: nowrap;
+        opacity: 0;
+        z-index: 2;
+        pointer-events: none;
+        transition: opacity .12s ease;
+      }
+      #menuToggleBtn[data-tip]:hover::after,
+      #menuToggleBtn[data-tip]:focus-visible::after{
+        opacity: .9;
+      }
     }
 
     /* ===== Title (inside uiWrap) ===== */
@@ -223,24 +241,6 @@
       text-align:center;
       color: var(--ui);
     }
-    #titleBlock .title{
-      font-size: 15.5px;
-      letter-spacing: .22em;
-      text-transform: uppercase;
-      line-height: 1;
-      font-weight: 700;
-    }
-    #titleBlock .sub{
-      font-size: 10.5px;
-      letter-spacing: .11em;
-      text-transform: uppercase;
-      line-height: 1.2;
-      font-weight: 560;
-      opacity: .88;
-    }
-    /* Title is just the title/subtitle now; all controls live in the bottom dock. */
-    #titleControls, #titleExtras{ display:none; }
-
     .lockBtn{
       height: calc(var(--pillH) + 1px);
       width: 34px; /* match playback icon pills */
@@ -542,7 +542,6 @@
       font-size: var(--pillFont);
       min-width: 0;
     }
-    #dockMenuAnchor{ display:none; }
     #screenshotBtn{ grid-area: shot; }
     #tabColorsBtn{ grid-area: colors; }
     #fsBtn{ grid-area: fs; }
@@ -605,8 +604,7 @@
       opacity: .9;
     }
     #panelInner .uiPage .ssBtn,
-    #panelInner .uiPage .colorBtn,
-    #panelInner .uiPage .actionBtn{
+    #panelInner .uiPage .colorBtn{
       border-radius: 0;
       border: none;
       background: var(--cardUiBg, transparent);
@@ -618,16 +616,13 @@
     #panelInner .uiPage .ssBtn:hover,
     #panelInner .uiPage .ssBtn:focus-visible,
     #panelInner .uiPage .colorBtn:hover,
-    #panelInner .uiPage .colorBtn:focus-visible,
-    #panelInner .uiPage .actionBtn:hover,
-    #panelInner .uiPage .actionBtn:focus-visible{
+    #panelInner .uiPage .colorBtn:focus-visible{
       color: var(--cardUiFg, var(--ui));
     }
     #panelInner .uiPage .label,
     #panelInner .uiPage .val,
     #panelInner .uiPage .ssBtn,
-    #panelInner .uiPage .colorBtn,
-    #panelInner .uiPage .actionBtn{
+    #panelInner .uiPage .colorBtn{
       font-size: var(--menuTextSize) !important;
       line-height: 1;
     }
@@ -639,7 +634,6 @@
       text-transform: lowercase;
       font-weight: 650;
     }
-    #panelInner .uiPage--layout,
     #panelInner .uiPage--contrast,
     #panelInner .uiPage--speed{
       background: transparent;
@@ -659,7 +653,7 @@
     }
     #dock .dockControl.dock-focus{
       --btnScale: 1;
-      transform: scale(1.08);
+      transform: scale(1);
       z-index: 62;
     }
     #dock .dockControl.dock-hover-focus{
@@ -673,6 +667,11 @@
     /* When a panel is open, keep extra center space by shrinking non-focused controls. */
     body[data-ui-page]:not([data-ui-page="none"]) #dock .dockControl.dock-shrink{
       --btnScale: 1;
+      transform: scale(0.9);
+    }
+    body[data-ui-page]:not([data-ui-page="none"]) #dock .dockControl.dock-focus{
+      --btnScale: 1;
+      transform: scale(1);
     }
     #dock .dockObject{
       position: fixed;
@@ -709,13 +708,6 @@
       text-transform: lowercase;
       bottom: calc(100% + 2px);
     }
-    #panelInner .uiPage .ssBtn:not(.on){
-      opacity: .68;
-    }
-    #panelInner .uiPage .ssBtn.on{
-      opacity: 1;
-    }
-
     .row{
       display:flex;
       gap:12px;
@@ -786,51 +778,50 @@
       text-transform: uppercase;
       color: var(--ui);
       background: transparent;
-      border: 1px solid var(--ui3);
+      border: none;
       border-radius: 999px;
       padding: 3.6px 6px;
       cursor: pointer;
       line-height: 1;
       user-select: none;
       white-space: nowrap;
-      transition: transform .05s ease, border-color .15s ease, color .15s ease, background-color .15s ease;
+      transition: transform .05s ease, color .15s ease, background-color .15s ease;
       -webkit-tap-highlight-color: transparent;
     }
     button:active{ transform: translateY(1px); }
-    button:hover{ color: var(--ui); border-color: var(--ui3); }
+    button:hover{ color: var(--ui); }
 
     /* When a button is "on", kill the outline entirely (keeps sliders unaffected). */
-    button.on{ border-color: transparent !important; }
-    button.on:hover{ border-color: transparent !important; }
+    button.on{ border: none !important; }
+    button.on:hover{ border: none !important; }
 
     .colorBtn{
       background: var(--btnBg, transparent);
-      border-color: var(--ui3);
+      border: none;
       color: var(--ui);
     }
     .colorBtn:not(.on){
-      background: transparent;
+      background: var(--btnBg, transparent);
     }
     .colorBtn:not(.on):hover,
     .colorBtn.forceHover:not(.on){
-      background: color-mix(in srgb, var(--btnBg) 50%, transparent);
+      background: var(--btnBg, transparent);
       filter: none;
       color: var(--ui);
-      border-color: var(--ui3);
+      border: none;
     }
     .colorBtn.on:hover,
     .colorBtn.forceHover.on{
-      background: color-mix(in srgb, var(--btnBg) 70%, transparent);
+      background: var(--btnBg, transparent);
       filter: none;
       color: var(--ui);
-      border-color: transparent;
+      border: none;
     }
     .colorBtn:not(.on):active{
-      /* Helps Safari apply the hover fill immediately on click. */
-      background: color-mix(in srgb, var(--btnBg) 50%, transparent);
+      background: var(--btnBg, transparent);
     }
     .colorBtn.on:active{
-      background: color-mix(in srgb, var(--btnBg) 70%, transparent);
+      background: var(--btnBg, transparent);
     }
     .colorBtn.disabled{
       opacity: 0.55;
@@ -848,35 +839,6 @@
     }
     .btnGroup.centered{ justify-content: center; }
 
-    .actionSlot{
-      display:flex;
-      align-items:flex-end;
-      justify-content:flex-end;
-      margin-left:auto;
-      flex: 0 0 auto;
-      width: var(--actionW);
-    }
-    .actionGroup{
-      display:flex;
-      flex-direction: column;
-      align-items:center;
-      gap: 6px;
-      width: var(--actionW);
-    }
-    .actionText{
-      font-size: 9px;
-      letter-spacing:.10em;
-      text-transform:uppercase;
-      color: var(--ui);
-      user-select:none;
-      line-height:1;
-      opacity:.82;
-      white-space:nowrap;
-      width: 100%;
-      text-align: center;
-      padding: 0 2px;
-    }
-
     /* Center the "Sentence Structure" title while keeping the tiny on/off indicator on the right. */
     .grp.words .labelRow{
       position: relative;
@@ -891,18 +853,11 @@
     .grp.words .labelRow .hoverVal{
       margin-left: auto;
     }
-    .actionBtn{
-      text-align:center;
-      width: 100%;
-      min-width: 0;
-    }
-
-
     .ssBtn{
       height: var(--pillH);
       padding: 0 var(--pillPadX);
       border-radius: 999px;
-      border: 1px solid transparent;
+      border: none;
       font-weight: 520;
       font-size: var(--pillFont);
       display:inline-flex;
@@ -914,26 +869,26 @@
     .ssBtn.on{
       background: var(--ssBg);
       color: var(--fg);
-      border-color: transparent;
+      border: none;
     }
     .ssBtn:not(.on){
       background: transparent;
       color: var(--ui);
-      border-color: var(--ui3);
+      border: none;
     }
     .ssBtn:not(.on):hover,
     .ssBtn.forceHover:not(.on){
       background: color-mix(in srgb, var(--ssBg) 50%, transparent);
       filter: none;
       color: var(--ui);
-      border-color: var(--ui3);
+      border: none;
     }
     .ssBtn.on:hover,
     .ssBtn.forceHover.on{
       background: color-mix(in srgb, var(--ssBg) 70%, transparent);
       filter: none;
       color: var(--ui);
-      border-color: transparent;
+      border: none;
     }
     .ssBtn:not(.on):active{
       background: color-mix(in srgb, var(--ssBg) 50%, transparent);
@@ -950,43 +905,33 @@
       min-width:0;
     }
 
-    /* ===== Paged UI (Layout / Language / Contrast / Colors / Speed) ===== */
+    /* ===== Paged UI (Language / Contrast / Colors / Speed) ===== */
     .uiPage{ display:none; }
-    body[data-ui-page="layout"] .uiPage--layout{ display:block; }
     body[data-ui-page="language"] .uiPage--language{ display:block; }
+    body[data-ui-page="info"] .uiPage--info{ display:block; }
     body[data-ui-page="contrast"] .uiPage--contrast{ display:block; }
     body[data-ui-page="colors"] .uiPage--colors{ display:block; }
     body[data-ui-page="speed"] .uiPage--speed{ display:block; }
 
-    /* Language panel: sentence structure only, centered and button-like. */
+    /* Language panel: sentence structure buttons are standalone controls. */
     .uiPage--language{
-      max-width: min(760px, 96vw);
+      max-width: min(960px, 96vw);
       margin-left: auto;
       margin-right: auto;
+      background: transparent;
+      padding: 0;
     }
-    .uiPage--language .languagePanelLayout{
-      display: grid;
-      grid-template-columns: minmax(360px, max-content);
-      gap: 0;
+    .uiPage--language #partsRow{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 8px;
       justify-content: center;
-      align-items: stretch;
-      width: fit-content;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .uiPage--language .languageTile{
-      background: var(--cardUiBg, transparent);
-      color: var(--cardUiFg, var(--ui));
-      padding: 10px 12px 12px;
-    }
-    .uiPage--language .labelRow{
-      justify-content: center;
-      margin-bottom: 8px;
+      align-items:center;
     }
     .uiPage--language #partsRow .ssBtn{
       min-width: 118px;
-      min-height: 30px;
-      padding: 6px 10px;
+      height: 36px;
+      padding: 0 12px;
       border-radius: 0;
       border: none;
       background: var(--cardUiBg, transparent);
@@ -994,56 +939,62 @@
       text-transform: lowercase;
       font-weight: 650;
       letter-spacing: .02em;
-    }
-    .uiPage--language #partsRow{
-      gap: 8px;
-      justify-content: center;
+      font-size: calc(var(--menuTextSize) * 1.2) !important;
+      line-height: 1;
     }
     .uiPage--language #partsRow .ssBtn:not(.on){
-      opacity: .62;
-      filter: saturate(.72);
+      opacity: 1;
+      filter: none;
+      box-shadow: none;
     }
     .uiPage--language #partsRow .ssBtn.on{
       opacity: 1;
       filter: none;
-      box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--cardUiFg, var(--ui)) 24%, transparent);
+      box-shadow: none;
     }
     .uiPage--language #partsRow .ssBtn:hover,
-    .uiPage--language #partsRow .ssBtn:focus-visible{
+    .uiPage--language #partsRow .ssBtn:focus-visible,
+    .uiPage--language #partsRow .ssBtn:active{
+      background: var(--cardUiBg, transparent);
       color: var(--cardUiFg, var(--ui));
+      border: none;
     }
 
-    /* Slider submenus: each slider sits in its own large "tile". */
-    .uiPage--layout{
+    .uiPage--info{
       max-width: min(980px, 96vw);
       margin-left: auto;
       margin-right: auto;
     }
-    .uiPage--layout .layoutGridRow--core{
-      display:grid;
-      grid-template-columns: repeat(3, minmax(230px, 1fr)) minmax(160px, max-content);
-      gap: 10px;
-      justify-content: center;
-      align-items: stretch;
+    .uiPage--info .infoTile{
+      background: var(--cardUiBg, transparent);
+      color: var(--cardUiFg, var(--ui));
+      padding: 12px 14px;
+      width: min(92vw, 880px);
+    }
+    .uiPage--info .infoTitle{
+      font-size: calc((var(--menuTextSize) * 0.7) + 2px);
+      font-weight: 650;
+      letter-spacing: .01em;
+      line-height: 1.1;
+      margin-bottom: 4px;
+      text-transform: none;
+    }
+    .uiPage--info .infoByline{
+      font-size: calc((var(--menuTextSize) * 0.7) + 2px);
+      font-weight: 650;
+      line-height: 1.1;
+      margin-bottom: 10px;
+      text-transform: none;
+    }
+    .uiPage--info p{
+      margin: 0 0 10px 0;
+      font-size: calc((var(--menuTextSize) * 0.7) + 1px);
+      line-height: 1.24;
+      letter-spacing: .01em;
+      text-transform: none;
+    }
+    .uiPage--info p:last-child{
       margin-bottom: 0;
-    }
-    .uiPage--layout .ctrl{
-      min-width: 230px;
-    }
-    .uiPage--layout .layoutGridRow--core .actionGroup{
-      justify-self: stretch;
-      align-self: stretch;
-      min-width: 160px;
-    }
-
-    @media(max-width: 860px){
-      .uiPage--layout{ max-width: min(640px, 100%); }
-      .uiPage--layout .layoutGridRow--core{
-        grid-template-columns: repeat(2, minmax(220px, 1fr));
-      }
-    }
-    @media(max-width: 640px){
-      .uiPage--layout .layoutGridRow--core{ grid-template-columns: 1fr; }
     }
 
     /* Contrast panel: dedicated brightness sliders. */
@@ -1072,9 +1023,9 @@
     .uiPage--colors .colorsPanelLayout{
       display: grid;
       grid-template-columns: max-content max-content max-content;
-      align-items: end;
+      align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 14px;
       width: fit-content;
       margin-left: auto;
       margin-right: auto;
@@ -1083,22 +1034,20 @@
     .uiPage--colors .colorsBulkCol{
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      align-items: stretch;
+      gap: 7px;
+      align-items: center;
       justify-content: center;
+      background: transparent;
+      padding: 0;
     }
     .uiPage--colors .colorsGridCol{
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 7px;
+      gap: 8px;
       min-width: 0;
-    }
-    .uiPage--colors .colorsScopeCol,
-    .uiPage--colors .colorsGridCol,
-    .uiPage--colors .colorsBulkCol{
       background: var(--cardUiBg, transparent);
-      padding: 8px;
+      padding: 9px;
     }
     .uiPage--colors .swatchGridPanel{
       background: transparent;
@@ -1110,18 +1059,18 @@
     .uiPage--colors .colorScopeBtn{
       height: auto;
       min-height: 0;
-      min-width: 120px;
-      padding: 6px 10px;
+      min-width: 0;
+      padding: 6px 14px;
       white-space: nowrap;
     }
     .uiPage--colors .colorScopeBtn:not(.on){
-      opacity: .52;
-      filter: saturate(.68);
+      opacity: 1;
+      filter: none;
     }
     .uiPage--colors .colorScopeBtn.on{
       opacity: 1;
       filter: none;
-      box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--cardUiFg, var(--ui)) 24%, transparent);
+      box-shadow: none;
     }
     .uiPage--colors .label,
     .uiPage--colors .val{
@@ -1132,7 +1081,7 @@
       display: grid;
       grid-template-columns: repeat(10, max-content);
       justify-content: center;
-      gap: 8px;
+      gap: 7px;
       width: auto;
     }
     .uiPage--colors .swatchHeader{
@@ -1152,8 +1101,8 @@
     }
     .uiPage--colors .swatchRow--all .swatch{
       position: relative;
-      width: 22px;
-      height: 22px;
+      width: 30px;
+      height: 30px;
       border: none;
       border-radius: 0;
       padding: 0;
@@ -1164,9 +1113,9 @@
     .uiPage--colors .swatchRow--all .swatch::before{
       content:"";
       position:absolute;
-      left: 4px;
-      right: 4px;
-      top: 10px;
+      left: 5px;
+      right: 5px;
+      top: 14px;
       height: 1.6px;
       background: color-mix(in srgb, var(--cardUiFg, var(--ui)) 70%, transparent);
       transform: rotate(42deg);
@@ -1176,9 +1125,9 @@
     .uiPage--colors .swatchRow--all .swatch::after{
       content:"";
       position:absolute;
-      left: 4px;
-      right: 4px;
-      top: 10px;
+      left: 5px;
+      right: 5px;
+      top: 14px;
       height: 1.6px;
       background: color-mix(in srgb, var(--cardUiFg, var(--ui)) 70%, transparent);
       transform: rotate(-42deg);
@@ -1195,7 +1144,7 @@
       background: var(--fillCol);
       opacity: .62;
       filter: saturate(.82);
-      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cardUiFg, var(--ui)) 30%, transparent);
+      box-shadow: none;
     }
     .uiPage--colors .swatchRow--all .swatch:not(.on)::before,
     .uiPage--colors .swatchRow--all .swatch:not(.on)::after{ opacity: .72; }
@@ -1209,17 +1158,15 @@
     .uiPage--colors .swatchRow--all .swatch:not(.on):active{
       background: var(--fillCol);
       opacity: .78;
-      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cardUiFg, var(--ui)) 32%, transparent);
+      box-shadow: none;
     }
 
     @media(max-width: 860px){
-      .uiPage--language{
-        max-width: min(640px, 100%);
+      .uiPage--language{ max-width: min(640px, 100%); }
+      .uiPage--language #partsRow .ssBtn{
+        min-width: 108px;
+        height: 34px;
       }
-      .uiPage--language .languagePanelLayout{
-        grid-template-columns: minmax(280px, 1fr);
-      }
-      .uiPage--language #partsRow .ssBtn{ min-width: 108px; }
 
       .uiPage--contrast{
         max-width: min(640px, 100%);
@@ -1237,7 +1184,7 @@
       }
       .uiPage--colors .colorsScopeCol,
       .uiPage--colors .colorsBulkCol{
-        flex-direction: row;
+        flex-direction: column;
       }
       .uiPage--colors .swatchRow--all{
         grid-template-columns: repeat(6, max-content);
@@ -1247,23 +1194,12 @@
       .uiPage--contrast .colorsBrightnessRow{ grid-template-columns: 1fr; }
     }
 
-    /* ===== Mobile Landscape =====
-       Keep the top buttons compact and show a clean 3-up layout row (text size / height / width),
-       matching the provided landscape reference. */
+    /* ===== Mobile landscape ===== */
     @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px){
       /* Reduce top clutter so the dock never covers the phrase/card. */
       #titleBlock{ gap: 4px; }
       #titleBlock #dock{
         margin-top: 14px;
-        gap: 10px;
-      }
-
-      /* Force 3-up rows again (overrides the <=860px single-column collapse). */
-      .uiPage--layout{
-        max-width: min(920px, 94vw);
-      }
-      .uiPage--layout .layoutGridRow--core{
-        grid-template-columns: repeat(3, minmax(220px, 1fr)) minmax(150px, max-content);
         gap: 10px;
       }
 
@@ -1303,68 +1239,48 @@
     }
     .uiPage--speed .ctrl{ min-width: 230px; }
 
-    .uiPage--layout .ctrl,
     .uiPage--contrast .ctrl,
     .uiPage--speed .ctrl{
       background: var(--cardUiBg, transparent);
       color: var(--cardUiFg, var(--ui));
-      padding: 10px 12px 12px;
+      padding: 12px 14px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
       min-width: 0;
     }
-    .uiPage--layout .actionGroup{
-      background: var(--cardUiBg, transparent);
-      color: var(--cardUiFg, var(--ui));
-      padding: 10px 12px 12px;
-      gap: 8px;
-      justify-content: flex-end;
-      align-items: stretch;
-    }
-    .uiPage--layout .actionText{
-      font-size: calc(var(--menuTextSize) * 0.72);
-      text-transform: lowercase;
-      letter-spacing: .02em;
-      line-height: 1.05;
-      opacity: .95;
-      color: var(--cardUiFg, var(--ui));
-      font-weight: 650;
-    }
-    .uiPage--layout .actionBtn{
-      min-height: 32px;
-      padding: 0 12px;
-      font-size: calc(var(--menuTextSize) * 0.9) !important;
-      line-height: 1;
-    }
-    .uiPage--layout .labelRow,
     .uiPage--contrast .labelRow,
     .uiPage--speed .labelRow{
-      margin-bottom: 2px;
+      margin-bottom: 0;
+      align-items: center;
     }
-    .uiPage--layout input[type=range],
+    .uiPage--contrast .label,
+    .uiPage--speed .label,
+    .uiPage--contrast .val,
+    .uiPage--speed .val{
+      font-size: calc((var(--menuTextSize) * 0.74) + 1px) !important;
+      letter-spacing: .02em;
+      text-transform: lowercase;
+      font-weight: 650;
+    }
     .uiPage--contrast input[type=range],
     .uiPage--speed input[type=range]{
       height: 24px;
     }
-    .uiPage--layout input[type=range]::-webkit-slider-runnable-track,
     .uiPage--contrast input[type=range]::-webkit-slider-runnable-track,
     .uiPage--speed input[type=range]::-webkit-slider-runnable-track{
       height: 3px;
     }
-    .uiPage--layout input[type=range]::-moz-range-track,
     .uiPage--contrast input[type=range]::-moz-range-track,
     .uiPage--speed input[type=range]::-moz-range-track{
       height: 3px;
     }
-    .uiPage--layout input[type=range]::-webkit-slider-thumb,
     .uiPage--contrast input[type=range]::-webkit-slider-thumb,
     .uiPage--speed input[type=range]::-webkit-slider-thumb{
       width: 13px;
       height: 13px;
       margin-top: -5px;
     }
-    .uiPage--layout input[type=range]::-moz-range-thumb,
     .uiPage--contrast input[type=range]::-moz-range-thumb,
     .uiPage--speed input[type=range]::-moz-range-thumb{
       width: 13px;
@@ -1405,14 +1321,14 @@
       border-radius:50%;
       background: currentColor;
       margin-top:-4px;
-      border: 1px solid var(--ui);
+      border: none;
       box-sizing: border-box;
     }
     input[type=range]::-moz-range-thumb{
       width:10px; height:10px;
       border-radius:50%;
       background: currentColor;
-      border: 1px solid var(--ui);
+      border: none;
       box-sizing: border-box;
     }
 
@@ -1455,7 +1371,7 @@
       height: var(--pillH);
       padding: 0;
       border-radius: 999px;
-      border: var(--swOuter) solid var(--fg);
+      border: none;
       background: transparent;
       box-shadow: none;
       cursor: pointer;
@@ -1514,7 +1430,6 @@
     --pillH: 18px;
     --pillPadX: 12px;
     --pillFont: 7.6px;
-    --actionW: 94px;
   }
   button{ font-size: 7.4px; padding: 5px 8px; }
   .iconBtn{ width: 42px; height: var(--pillH); padding: 0; }
@@ -1551,8 +1466,6 @@
         --titlePadTop: 16px;
       }
       #phraseText{ font-size: calc(clamp(28px, 7vw, 70px) * var(--textScale) * var(--fitScale) * var(--sceneZoom)); }
-      #titleBlock .title{ font-size: 14px; }
-      #titleBlock .sub{ font-size: 10px; }
       button{ font-size: 6.8px; padding: 3.4px 5.3px; }
       .label, .val{ font-size: 8.5px; }
       .btnGroup{ gap:4px; }
@@ -1568,8 +1481,6 @@
       }
       /* Bottom dock/panel manages its own scrolling (panelInner). */
       #titleBlock{ gap: 4px; }
-      #titleBlock .title{ letter-spacing: .18em; }
-      #titleBlock .sub{ letter-spacing: .08em; }
     }
   </style>
 </head>
@@ -1586,15 +1497,15 @@
   <div id="uiWrap">
     <div id="titleBlock">
       <!-- TOP BUTTONS (always visible on load; fade with UI) -->
-      <div id="dockTopHost" aria-label="Buttons (top host)">
-        <div id="dock" aria-label="Buttons">
-        <div id="dockPlayback" aria-label="Playback controls">
-          <button id="prevPoemBtn" type="button" class="iconBtn" aria-label="Previous poem (Left arrow)" data-tip="previous">
+      <div id="dockTopHost" aria-label="buttons (top host)">
+        <div id="dock" aria-label="buttons">
+        <div id="dockPlayback" aria-label="playback controls">
+          <button id="prevPoemBtn" type="button" class="iconBtn" aria-label="previous poem (left arrow)" data-tip="previous">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
-          <button id="pausePoemBtn" type="button" class="iconBtn" aria-label="Pause (Space)" aria-pressed="false" data-tip="pause">
+          <button id="pausePoemBtn" type="button" class="iconBtn" aria-label="pause (space)" aria-pressed="false" data-tip="pause">
             <svg class="pauseIcon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="M7 6h3v12H7zM14 6h3v12h-3z" fill="currentColor"/>
             </svg>
@@ -1602,17 +1513,17 @@
               <path d="M9 7l10 5-10 5V7z" fill="currentColor"/>
             </svg>
           </button>
-          <button id="nextPoemBtn" type="button" class="iconBtn" aria-label="Next poem (Right arrow)" data-tip="forward">
+          <button id="nextPoemBtn" type="button" class="iconBtn" aria-label="next poem (right arrow)" data-tip="forward">
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
         </div>
 
-        <div id="dockBottom" aria-label="Utilities">
-          <button id="screenshotBtn" type="button" class="colorBtn dockBtn" aria-label="Screenshot (S)" data-tip="take pic">Screenshot</button>
-          <button id="fsBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Full screen</button>
-          <button id="lockCompositionBtn" type="button" class="colorBtn lockBtn" aria-label="Lock composition" aria-pressed="false" data-tip="lock">
+        <div id="dockBottom" aria-label="utilities">
+          <button id="screenshotBtn" type="button" class="colorBtn dockBtn" aria-label="screenshot (s)" data-tip="take pic">screenshot</button>
+          <button id="fsBtn" type="button" class="colorBtn dockBtn" aria-pressed="false" data-tip="zoom">full screen</button>
+          <button id="lockCompositionBtn" type="button" class="colorBtn lockBtn" aria-label="lock composition" aria-pressed="false" data-tip="lock">
             <span class="lockIcons" aria-hidden="true">
               <svg class="lockSvg lockSvg--open" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
                 <rect x="5" y="10" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
@@ -1628,13 +1539,13 @@
           </button>
         </div>
 
-        <div id="dockMenu" aria-label="Menus">
-          <button id="tabLanguageBtn" type="button" class="colorBtn dockBtn" aria-pressed="false" data-tip="change phrase structure">Language</button>
-          <button id="tabContrastBtn" type="button" class="colorBtn dockBtn" aria-pressed="false">Contrast</button>
-          <button id="tabColorsBtn" type="button" class="colorBtn dockBtn" aria-pressed="false" data-tip="adjust available pallette">Colors</button>
-          <button id="tabSpeedBtn" type="button" class="colorBtn dockBtn" aria-pressed="false" data-tip="adjust sequence">Speed</button>
+        <div id="dockMenu" aria-label="menus">
+          <button id="tabLanguageBtn" type="button" class="colorBtn dockBtn" aria-pressed="false" data-tip="change phrase structure">language</button>
+          <button id="tabContrastBtn" type="button" class="colorBtn dockBtn" aria-pressed="false" data-tip="adjust light / dark">contrast</button>
+          <button id="tabColorsBtn" type="button" class="colorBtn dockBtn" aria-pressed="false" data-tip="adjust swatches">colors</button>
+          <button id="tabSpeedBtn" type="button" class="colorBtn dockBtn" aria-pressed="false" data-tip="adjust sequence">speed</button>
+          <button id="tabInfoBtn" type="button" class="colorBtn dockBtn" aria-pressed="false" data-tip="sculpture poems">info</button>
         </div>
-        <div id="dockMenuAnchor" aria-hidden="true"></div>
       </div>
       </div>
     </div>
@@ -1642,102 +1553,89 @@
     <div id="bar">
       <div class="barInner">
 
-        <!-- MOBILE PAGES -->
-        <div id="panelWrap" aria-label="Submenu panel">
+        <!-- Submenu pages -->
+        <div id="panelWrap" aria-label="submenu panel">
           <div id="panelInner">
-            <section class="uiPage uiPage--language" aria-label="Language">
-              <div class="languagePanelLayout">
-                <div class="languageTile languageTile--parts">
-                  <div class="labelRow">
-                    <div class="label">sentence structure</div>
-                  </div>
-                  <div class="btnGroup centered" id="partsRow"></div>
-                </div>
+            <section class="uiPage uiPage--language" aria-label="language">
+              <div class="btnGroup centered" id="partsRow"></div>
+            </section>
+
+            <section class="uiPage uiPage--info" aria-label="info">
+              <div class="infoTile">
+                <div class="infoTitle">Sculpture Poems</div>
+                <div class="infoByline">Margot DeMarco</div>
+                <p>These poems are randomly generated scenes. Each phrase is made from a person or an object, a description, an action, and a location. All language is drawn from a large bank of words written by the artist and continuously reshuffled. They have scale, color, duration, and placement, and are encountered in space and time. Each poem creates an evocative sculptural scene without further context. The viewer is left to imagine the larger world in which the phrase exists and the conditions under which that circumstance came to be.</p>
               </div>
             </section>
 
-            <section class="uiPage uiPage--speed" aria-label="Speed">
+            <section class="uiPage uiPage--speed" aria-label="speed">
               <div class="sliderRow">
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">Speed</div><div class="val" id="speedVal">7.0s</div></div>
+                  <div class="labelRow"><div class="label">speed</div><div class="val" id="speedVal">7.0s</div></div>
                   <input id="speedSlider" type="range" min="0" max="1" step="0.001" value="0.595">
                 </div>
               </div>
             </section>
 
-            <section class="uiPage uiPage--layout" aria-label="Layout">
-              <div class="sliderRow layoutGridRow layoutGridRow--core">
-                <div class="ctrl">
-                  <div class="labelRow"><div class="label">Text Size</div><div class="val" id="sizeVal">40%</div></div>
-                  <input id="sizeSlider" type="range" min="0" max="150" step="0.1" value="40">
-                </div>
-                <div class="ctrl">
-                  <div class="labelRow"><div class="label">Height</div><div class="val" id="yVal">50%</div></div>
-                  <input id="ySlider" type="range" min="0" max="100" step="0.01" value="50">
-                </div>
-                <div class="ctrl">
-                  <div class="labelRow"><div class="label">Width</div><div class="val" id="widthVal">40%</div></div>
-                  <input id="widthSlider" type="range" min="0" max="100" step="0.01" value="40">
-                </div>
-                <div class="actionGroup actionGroup--card" aria-label="Card">
-                  <div class="actionText">Card</div>
-                  <button id="bdToggleBtn" type="button" class="colorBtn actionBtn" aria-pressed="true">On</button>
-                </div>
-              </div>
-
-              <div class="ctrl" style="display:none;">
-                <div class="labelRow"><div class="label">Card Size</div><div class="val" id="bdThickVal">30%</div></div>
-                <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.30">
-              </div>
-            </section>
-
-            <section class="uiPage uiPage--contrast" aria-label="Contrast">
+            <section class="uiPage uiPage--contrast" aria-label="contrast">
               <div class="sliderRow colorsBrightnessRow">
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">Background Brightness</div><div class="val" id="bgBrightVal">50%</div></div>
+                  <div class="labelRow"><div class="label">background brightness</div><div class="val" id="bgBrightVal">50%</div></div>
                   <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.50">
                 </div>
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">Text Brightness</div><div class="val" id="fgBrightVal">0%</div></div>
+                  <div class="labelRow"><div class="label">text brightness</div><div class="val" id="fgBrightVal">0%</div></div>
                   <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
                 </div>
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">Card Brightness</div><div class="val" id="bdBrightVal">100%</div></div>
+                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">100%</div></div>
                   <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
                 </div>
               </div>
             </section>
 
-            <section class="uiPage uiPage--colors" aria-label="Colors">
+            <section class="uiPage uiPage--colors" aria-label="colors">
               <div class="colorsPanelLayout">
-                <div class="colorsScopeCol" id="colorScopeRow" aria-label="Color target">
+                <div class="colorsScopeCol" id="colorScopeRow" aria-label="color target">
                   <button id="scopeFgBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="false">text color</button>
                   <button id="scopeBgBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="true">background color</button>
                   <button id="scopeBdBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="false">card color</button>
                 </div>
 
-                <div class="colorsGridCol">
+                <div class="colorsGridCol" id="colorsGridTile">
                   <div class="swatchGridPanel">
                     <div class="swatchRow swatchRow--all" id="allColorsRow"></div>
                   </div>
                 </div>
 
                 <div class="colorsBulkCol">
-                  <button id="allOnBtn" type="button" class="colorBtn colorScopeBtn">all on</button>
                   <button id="allOffBtn" type="button" class="colorBtn colorScopeBtn">all off</button>
+                  <button id="allOnBtn" type="button" class="colorBtn colorScopeBtn">all on</button>
                 </div>
               </div>
             </section>
           </div>
         </div>
 
-        <div id="dockBottomHost" aria-label="Buttons (bottom host)"></div>
+        <div id="layoutStateStore" hidden aria-hidden="true">
+          <input id="sizeSlider" type="range" min="0" max="150" step="0.1" value="40">
+          <input id="ySlider" type="range" min="0" max="100" step="0.01" value="50">
+          <input id="widthSlider" type="range" min="0" max="100" step="0.01" value="40">
+          <input id="bdThickSlider" type="range" min="0" max="1" step="0.001" value="0.30">
+          <button id="bdToggleBtn" type="button" aria-pressed="true">on</button>
+          <span id="sizeVal">40%</span>
+          <span id="yVal">50%</span>
+          <span id="widthVal">40%</span>
+          <span id="bdThickVal">30%</span>
+        </div>
+
+        <div id="dockBottomHost" aria-label="buttons (bottom host)"></div>
 
       </div>
     </div>
   </div>
 
-  <button id="menuToggleBtn" type="button" aria-label="Toggle menu" aria-pressed="false">menu</button>
+  <button id="menuToggleBtn" type="button" aria-label="toggle menu" aria-pressed="false">menu</button>
 
 <script>
 /* ================= Helpers ================= */
@@ -1928,22 +1826,9 @@ const COLOR_OPTS = ["earthy","beachy","fleshy","retro","future","circus"];
 const ALL_SWATCH_COLORS = uniq(Object.values(PAL).flat().map((hex)=> String(hex || "").trim().toLowerCase()));
 const SLIDER_PALS = ["circus","beachy","fleshy","retro","future","earthy","circus","beachy"];
 const palCycleIndex = {};
-const swatchRowOffset = { bg: 0, fg: 0, bd: 0 };
-const titleCtrlTheme = { prev: "beachy", pause: "fleshy", next: "circus" };
 
 function initPaletteCycles(){
   for(const name of COLOR_OPTS) palCycleIndex[name] = 0;
-  const palLen = (PAL[COLOR_OPTS[0]] || []).length || 5;
-  swatchRowOffset.bg = Math.floor(Math.random() * palLen);
-  swatchRowOffset.fg = Math.floor(Math.random() * palLen);
-  swatchRowOffset.bd = Math.floor(Math.random() * palLen);
-
-  // Title transport controls: pick 3 different palettes so the buttons don't match.
-  const picks = COLOR_OPTS.slice();
-  shuffleInPlace(picks);
-  titleCtrlTheme.prev = picks[0] || "beachy";
-  titleCtrlTheme.pause = picks[1] || picks[0] || "fleshy";
-  titleCtrlTheme.next = picks[2] || picks[0] || "circus";
 }
 function paletteColor(name, offset=0){
   const pal = PAL[name] || [];
@@ -1979,79 +1864,6 @@ function paletteColorAvoid(palName, offset=0, avoidHex=""){
   return pal[(idx + offset) % pal.length];
 }
 
-function nudgeHex(hex, lDelta=0.07){
-  const {r,g,b} = hexToRgb(hex);
-  let {h,s,l} = rgbToHsl(r,g,b);
-  l = clamp(l + lDelta, 0, 1);
-  return setHsl(hex, h, s, l);
-}
-
-function pickUniquePaletteColor(palName, startOffset, usedNormSet, avoidHex=""){
-  const pal = PAL[palName] || [];
-  if(!pal.length) return "#000000";
-  const avoid = normHex(avoidHex);
-  const idx = palCycleIndex[palName] ?? 0;
-
-  // First pass: avoid background + avoid already-used colors.
-  for(let i=0; i<pal.length; i++){
-    const c = pal[(idx + startOffset + i) % pal.length];
-    const cn = normHex(c);
-    if(cn === avoid) continue;
-    if(usedNormSet && usedNormSet.has(cn)) continue;
-    if(usedNormSet) usedNormSet.add(cn);
-    return c;
-  }
-
-  // Second pass: if the only remaining option matches background, nudge it so it's not identical.
-  for(let i=0; i<pal.length; i++){
-    const c = pal[(idx + startOffset + i) % pal.length];
-    const cn = normHex(c);
-    if(usedNormSet && usedNormSet.has(cn)) continue;
-    const out = (cn === avoid) ? nudgeHex(c, 0.06) : c;
-    if(usedNormSet) usedNormSet.add(normHex(out));
-    return out;
-  }
-
-  // Fallback: any unused color from any palette (nudged if needed).
-  return pickUniqueAnyColor(usedNormSet, avoidHex);
-}
-
-function pickUniqueAnyColor(usedNormSet, avoidHex=""){
-  const avoid = normHex(avoidHex);
-  for(const palName of COLOR_OPTS){
-    const pal = PAL[palName] || [];
-    const idx = palCycleIndex[palName] ?? 0;
-    for(let i=0; i<pal.length; i++){
-      const c = pal[(idx + i) % pal.length];
-      const cn = normHex(c);
-      if(cn === avoid) continue;
-      if(usedNormSet && usedNormSet.has(cn)) continue;
-      if(usedNormSet) usedNormSet.add(cn);
-      return c;
-    }
-  }
-  // Absolute last resort: re-use a color, nudged.
-  const first = (PAL[COLOR_OPTS[0]] || [])[0] || "#000000";
-  const out = nudgeHex(first, 0.09);
-  if(usedNormSet) usedNormSet.add(normHex(out));
-  return out;
-}
-
-function pickRingColor(palName, startOffset, avoidHex="", fillHex=""){
-  const pal = PAL[palName] || [];
-  if(!pal.length) return "#cccccc";
-  const idx = palCycleIndex[palName] ?? 0;
-  const avoid = normHex(avoidHex);
-  const fillN = normHex(fillHex);
-  for(let i=0; i<pal.length; i++){
-    const c = pal[(idx + startOffset + i) % pal.length];
-    const cn = normHex(c);
-    if(cn === fillN) continue;
-    if(cn === avoid) continue;
-    return c;
-  }
-  return pal[(idx + startOffset) % pal.length];
-}
 function advancePaletteCycle(){
   for(const name of COLOR_OPTS){
     const pal = PAL[name] || [];
@@ -2063,7 +1875,6 @@ function advancePaletteCycle(){
 /* ================= DOM refs ================= */
 const phraseEl = document.getElementById("phraseText");
 const uiWrapEl = document.getElementById("uiWrap");
-const barEl = document.getElementById("bar");
 const panelWrapEl = document.getElementById("panelWrap");
 const panelInnerEl = document.getElementById("panelInner");
 const cardEl = document.getElementById("card");
@@ -2089,6 +1900,7 @@ const tabLanguageBtn = document.getElementById("tabLanguageBtn");
 const tabContrastBtn = document.getElementById("tabContrastBtn");
 const tabColorsBtn = document.getElementById("tabColorsBtn");
 const tabSpeedBtn = document.getElementById("tabSpeedBtn");
+const tabInfoBtn = document.getElementById("tabInfoBtn");
 const dockPlaybackEl = document.getElementById("dockPlayback");
 const scopeBgBtn = document.getElementById("scopeBgBtn");
 const scopeFgBtn = document.getElementById("scopeFgBtn");
@@ -2097,7 +1909,6 @@ const allOnBtn = document.getElementById("allOnBtn");
 const allOffBtn = document.getElementById("allOffBtn");
 const menuToggleBtn = document.getElementById("menuToggleBtn");
 const dockEl = document.getElementById("dock");
-const dockMenuAnchorEl = document.getElementById("dockMenuAnchor");
 const dockTopHostEl = document.getElementById("dockTopHost");
 const dockBottomHostEl = document.getElementById("dockBottomHost");
 
@@ -2119,15 +1930,12 @@ const sliderEls = [
 const dockControlBtns = [
   dockPlaybackEl,
   screenshotBtn, fsBtn, lockCompositionBtn,
-  tabLanguageBtn, tabContrastBtn, tabColorsBtn, tabSpeedBtn
+  tabLanguageBtn, tabContrastBtn, tabColorsBtn, tabSpeedBtn, tabInfoBtn
 ].filter(Boolean);
 const dockControlById = new Map(dockControlBtns.map((btn)=>[btn.id, btn]));
 let dockActiveBtnId = "";
 let dockHoverBtnId = "";
-let dockVariant = 0;
 let dockLayoutRaf = 0;
-let dockPinnedBtnId = "";
-let dockPinnedPos = null;
 const DOCK_LAYOUT_MARGIN = 8;
 const DOCK_LAYOUT_GAP = 6;
 const DOCK_LAYOUT_OBS_PAD = 8;
@@ -2142,6 +1950,7 @@ const DOCK_SUBMENU_IDS = new Set([
   "tabContrastBtn",
   "tabColorsBtn",
   "tabSpeedBtn",
+  "tabInfoBtn",
   "screenshotBtn",
   "fsBtn"
 ]);
@@ -2166,8 +1975,9 @@ function makeDockRect(x, y, w, h, tipTop = 0){
 
 function measureDockControl(btn){
   const rect = btn.getBoundingClientRect();
-  const w = Math.max(20, Math.ceil(rect.width || 0));
-  const h = Math.max(20, Math.ceil(rect.height || 0));
+  // Use layout box dimensions so measurements stay stable while CSS transforms animate.
+  const w = Math.max(20, Math.ceil(btn.offsetWidth || rect.width || 0));
+  const h = Math.max(20, Math.ceil(btn.offsetHeight || rect.height || 0));
   const fontPx = parseFloat(getComputedStyle(btn).fontSize) || 12;
   const hasTip = !!(btn.dataset && btn.dataset.tip);
   const hasChildTips = (btn.id === "dockPlayback");
@@ -2176,31 +1986,17 @@ function measureDockControl(btn){
   return { w, h, tipTop };
 }
 
-function setDockPinnedButton(btnId){
-  dockPinnedBtnId = String(btnId || "");
-  dockPinnedPos = null;
-  const btn = dockControlById.get(dockPinnedBtnId);
-  if(!btn) return;
-  const r = btn.getBoundingClientRect();
-  if(r.width <= 0 || r.height <= 0) return;
-  const leftFromStyle = parseFloat(btn.style.left);
-  const topFromStyle = parseFloat(btn.style.top);
-  dockPinnedPos = {
-    x: Number.isFinite(leftFromStyle) ? leftFromStyle : r.left,
-    y: Number.isFinite(topFromStyle) ? topFromStyle : r.top
-  };
-}
-
 function getDockLayoutOrder(){
   const priority = {
     tabLanguageBtn: 10,
     tabColorsBtn: 20,
-    lockCompositionBtn: 30,
-    tabSpeedBtn: 40,
-    dockPlayback: 50,
-    tabContrastBtn: 60,
-    fsBtn: 70,
-    screenshotBtn: 80
+    tabInfoBtn: 30,
+    lockCompositionBtn: 40,
+    tabSpeedBtn: 50,
+    dockPlayback: 60,
+    tabContrastBtn: 70,
+    fsBtn: 80,
+    screenshotBtn: 90
   };
   return dockControlBtns
     .map((btn)=>btn.id)
@@ -2276,35 +2072,36 @@ function buildPanelCandidates(maxRing){
   return out;
 }
 
-function shouldUsePanelTileLayout(vw, vh){
-  const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-  return !!(coarse || vw <= 930 || vh <= 620);
+function shouldUsePanelTileLayout(vw, vh, page){
+  const activePage = String(page || document.body.dataset.uiPage || "none");
+  if(activePage === "none") return false;
+  return true;
 }
 
 function getActivePanelTileEls(page){
   if(!panelInnerEl) return [];
   const safePage = String(page || "none");
   if(safePage === "language"){
-    return Array.from(panelInnerEl.querySelectorAll(".uiPage--language .languageTile--parts"));
+    return Array.from(panelInnerEl.querySelectorAll(".uiPage--language #partsRow .ssBtn"));
+  }
+  if(safePage === "info"){
+    return Array.from(panelInnerEl.querySelectorAll(".uiPage--info .infoTile"));
   }
   if(safePage === "contrast"){
     return Array.from(panelInnerEl.querySelectorAll(".uiPage--contrast .ctrl"));
   }
   if(safePage === "colors"){
     return [
-      panelInnerEl.querySelector(".uiPage--colors .colorsScopeCol"),
-      panelInnerEl.querySelector(".uiPage--colors .colorsGridCol"),
-      panelInnerEl.querySelector(".uiPage--colors .colorsBulkCol")
+      panelInnerEl.querySelector("#colorsGridTile"),
+      panelInnerEl.querySelector("#scopeFgBtn"),
+      panelInnerEl.querySelector("#scopeBgBtn"),
+      panelInnerEl.querySelector("#scopeBdBtn"),
+      panelInnerEl.querySelector("#allOffBtn"),
+      panelInnerEl.querySelector("#allOnBtn")
     ].filter(Boolean);
   }
   if(safePage === "speed"){
     return Array.from(panelInnerEl.querySelectorAll(".uiPage--speed .ctrl"));
-  }
-  if(safePage === "layout"){
-    return [
-      ...Array.from(panelInnerEl.querySelectorAll(".uiPage--layout .ctrl")),
-      ...Array.from(panelInnerEl.querySelectorAll(".uiPage--layout .actionGroup"))
-    ];
   }
   return [];
 }
@@ -2329,11 +2126,243 @@ function clearPanelFloatingTiles(){
   });
 }
 
-function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed){
+function getPanelTopBounds(vh, blockH, panelTopLimit){
+  const safe = getSceneSafeRect();
+  const safeBottom = safe ? safe.bottom : Math.round(vh * 0.40);
+  const minTop = Math.max(
+    DOCK_LAYOUT_MARGIN,
+    Math.round(safeBottom + UI_SAFE_GAP_PX + 8)
+  );
+  const topLimit = Number.isFinite(panelTopLimit)
+    ? panelTopLimit
+    : (vh - DOCK_LAYOUT_MARGIN);
+  const maxTop = Math.max(minTop, Math.round(topLimit - blockH - 6));
+  return { minTop, maxTop };
+}
+
+function buildPanelFlowRows(items, maxRowW, gapX){
+  const rows = [];
+  let row = [];
+  let rowW = 0;
+  let rowH = 0;
+
+  const flush = ()=>{
+    if(!row.length) return;
+    rows.push({ items: row, rowW, rowH });
+    row = [];
+    rowW = 0;
+    rowH = 0;
+  };
+
+  for(const item of items){
+    const w = item.measure.w;
+    const h = item.measure.h;
+    const nextW = row.length ? (rowW + gapX + w) : w;
+    if(row.length && nextW > maxRowW){
+      flush();
+    }
+    row.push(item);
+    rowW = row.length === 1 ? w : (rowW + gapX + w);
+    rowH = Math.max(rowH, h);
+  }
+  flush();
+  return rows;
+}
+
+function tryPlacePanelFlowCluster(measured, vw, vh, obstacles, placed, opts = {}){
+  if(!measured.length) return false;
+  const preferBelow = !!opts.preferBelow;
+  const gapX = Math.max(6, Math.round(opts.gapX || 8));
+  const gapY = Math.max(6, Math.round(opts.gapY || 8));
+  const maxAvailW = Math.max(120, vw - (DOCK_LAYOUT_MARGIN * 2));
+  const centerX = Number.isFinite(opts.centerX) ? opts.centerX : (vw * 0.5);
+  const requestedRowW = Number.isFinite(opts.maxRowW) ? opts.maxRowW : maxAvailW;
+  const maxRowW = clamp(Math.round(requestedRowW), 120, maxAvailW);
+
+  const rows = buildPanelFlowRows(measured, maxRowW, gapX);
+  if(!rows.length) return false;
+
+  const blockW = Math.max(...rows.map((r)=>r.rowW));
+  const blockH = rows.reduce((sum, r)=>sum + r.rowH, 0) + (gapY * (rows.length - 1));
+  const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
+  const minX = DOCK_LAYOUT_MARGIN;
+  const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
+  const xShifts = [0, -12, 12, -24, 24, -36, 36];
+  const desiredTop = preferBelow
+    ? minTop
+    : clamp(
+        Math.round(minTop + ((maxTop - minTop) * 0.45)),
+        minTop,
+        maxTop
+      );
+  const yCandidates = preferBelow
+    ? Array.from(new Set([
+        minTop,
+        clamp(minTop + 8, minTop, maxTop),
+        clamp(minTop + 16, minTop, maxTop),
+        maxTop
+      ]))
+    : Array.from(new Set([
+        desiredTop,
+        minTop,
+        maxTop,
+        clamp(desiredTop - 10, minTop, maxTop),
+        clamp(desiredTop + 10, minTop, maxTop)
+      ]));
+
+  for(const yBase of yCandidates){
+    for(const sx of xShifts){
+      const blockX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
+      const blockY = clamp(Math.round(yBase), minTop, maxTop);
+      const local = [];
+      const placements = [];
+      let y = blockY;
+      let ok = true;
+
+      for(const row of rows){
+        let x = blockX + Math.round((blockW - row.rowW) * 0.5);
+        for(const item of row.items){
+          const top = y + Math.round((row.rowH - item.measure.h) * 0.5);
+          const rect = makeDockRect(x, top, item.measure.w, item.measure.h, 0);
+          if(!fitsDockRect(rect, vw, vh, obstacles, placed.concat(local))){
+            ok = false;
+            break;
+          }
+          local.push(rect);
+          placements.push({ item, x, y: top, rect });
+          x += item.measure.w + gapX;
+        }
+        if(!ok) break;
+        y += row.rowH + gapY;
+      }
+      if(!ok) continue;
+
+      for(const p of placements){
+        p.item.el.style.left = `${Math.round(p.x)}px`;
+        p.item.el.style.top = `${Math.round(p.y)}px`;
+        obstacles.push(p.rect);
+        placed.push(p.rect);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+function tryPlaceColorsPanelCluster(measured, vw, vh, obstacles, placed, opts = {}){
+  const byId = new Map(measured.map((item)=>[String(item.el && item.el.id || ""), item]));
+  const grid = byId.get("colorsGridTile");
+  const leftBtns = ["scopeFgBtn","scopeBgBtn","scopeBdBtn"]
+    .map((id)=>byId.get(id))
+    .filter(Boolean);
+  const rightBtns = ["allOffBtn","allOnBtn"]
+    .map((id)=>byId.get(id))
+    .filter(Boolean);
+
+  if(!grid || leftBtns.length !== 3 || rightBtns.length !== 2) return false;
+
+  const rowGap = Math.max(6, DOCK_LAYOUT_GAP);
+  const colGap = 12;
+
+  const leftW = Math.max(...leftBtns.map((item)=>item.measure.w));
+  const leftH = leftBtns.reduce((sum, item)=>sum + item.measure.h, 0) + (rowGap * (leftBtns.length - 1));
+  const rightW = Math.max(...rightBtns.map((item)=>item.measure.w));
+  const rightH = rightBtns.reduce((sum, item)=>sum + item.measure.h, 0) + (rowGap * (rightBtns.length - 1));
+  const gridW = grid.measure.w;
+  const gridH = grid.measure.h;
+
+  const blockW = leftW + colGap + gridW + colGap + rightW;
+  const blockH = Math.max(leftH, gridH, rightH);
+
+  const maxAvailW = vw - (DOCK_LAYOUT_MARGIN * 2);
+  if(blockW > maxAvailW){
+    return false;
+  }
+
+  const centerX = Number.isFinite(opts.centerX) ? opts.centerX : (vw * 0.5);
+  const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
+  const minX = DOCK_LAYOUT_MARGIN;
+  const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
+  const desiredTop = clamp(
+    Math.round(minTop + ((maxTop - minTop) * 0.42)),
+    minTop,
+    maxTop
+  );
+  const yCandidates = Array.from(new Set([
+    desiredTop,
+    minTop,
+    maxTop,
+    clamp(desiredTop - 8, minTop, maxTop),
+    clamp(desiredTop + 8, minTop, maxTop)
+  ]));
+
+  const xShifts = [0, -16, 16, -32, 32, -48, 48];
+
+  for(const topBase of yCandidates){
+    for(const sx of xShifts){
+      const leftX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
+      const topY = clamp(Math.round(topBase), minTop, maxTop);
+      const gridX = leftX + leftW + colGap;
+      const rightX = gridX + gridW + colGap;
+      const leftStartY = Math.round(topY + ((blockH - leftH) * 0.5));
+      const gridY = Math.round(topY + ((blockH - gridH) * 0.5));
+      const rightStartY = Math.round(topY + ((blockH - rightH) * 0.5));
+
+      const local = [];
+      const placements = [];
+
+      const gridRect = makeDockRect(gridX, gridY, gridW, gridH, 0);
+      if(!fitsDockRect(gridRect, vw, vh, obstacles, placed.concat(local))) continue;
+      local.push(gridRect);
+      placements.push({ item: grid, x: gridX, y: gridY, rect: gridRect });
+
+      let yL = leftStartY;
+      let ok = true;
+      for(const item of leftBtns){
+        const x = leftX + Math.round((leftW - item.measure.w) * 0.5);
+        const rect = makeDockRect(x, yL, item.measure.w, item.measure.h, 0);
+        if(!fitsDockRect(rect, vw, vh, obstacles, placed.concat(local))){
+          ok = false;
+          break;
+        }
+        local.push(rect);
+        placements.push({ item, x, y: yL, rect });
+        yL += item.measure.h + rowGap;
+      }
+      if(!ok) continue;
+
+      let yR = rightStartY;
+      for(const item of rightBtns){
+        const x = rightX + Math.round((rightW - item.measure.w) * 0.5);
+        const rect = makeDockRect(x, yR, item.measure.w, item.measure.h, 0);
+        if(!fitsDockRect(rect, vw, vh, obstacles, placed.concat(local))){
+          ok = false;
+          break;
+        }
+        local.push(rect);
+        placements.push({ item, x, y: yR, rect });
+        yR += item.measure.h + rowGap;
+      }
+      if(!ok) continue;
+
+      for(const p of placements){
+        p.item.el.style.left = `${Math.round(p.x)}px`;
+        p.item.el.style.top = `${Math.round(p.y)}px`;
+        obstacles.push(p.rect);
+        placed.push(p.rect);
+      }
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, opts = {}){
   if(!panelWrapEl || !panelInnerEl) return false;
   const page = String(document.body.dataset.uiPage || "none");
-  const isCoarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
-  const safe = getSceneSafeRect();
+  const centerX = Number.isFinite(opts.centerX) ? opts.centerX : (vw * 0.5);
+  const panelTopLimit = Number.isFinite(opts.panelTopLimit) ? opts.panelTopLimit : null;
   const tiles = getActivePanelTileEls(page);
   if(!tiles.length) return false;
 
@@ -2366,6 +2395,46 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed){
     item.el.style.pointerEvents = "auto";
   });
 
+  if(page === "colors"){
+    const clustered = tryPlaceColorsPanelCluster(
+      measured,
+      vw,
+      vh,
+      obstacles,
+      placed,
+      {
+        centerX,
+        panelTopLimit
+      }
+    );
+    if(clustered) return true;
+  }
+
+  const flowMaxW = (()=>{
+    if(page === "language") return Math.min(vw - (DOCK_LAYOUT_MARGIN * 2), 860);
+    if(page === "contrast") return vw - (DOCK_LAYOUT_MARGIN * 2);
+    if(page === "speed" || page === "info"){
+      return Math.max(...measured.map((item)=>item.measure.w));
+    }
+    return vw - (DOCK_LAYOUT_MARGIN * 2);
+  })();
+  const flowPlaced = tryPlacePanelFlowCluster(
+    measured,
+    vw,
+    vh,
+    obstacles,
+    placed,
+    {
+      centerX,
+      panelTopLimit,
+      maxRowW: flowMaxW,
+      preferBelow: page === "info",
+      gapX: 8,
+      gapY: 8
+    }
+  );
+  if(flowPlaced) return true;
+
   const ordered = measured.slice().sort((a, b)=>{
     const areaA = a.measure.w * a.measure.h;
     const areaB = b.measure.w * b.measure.h;
@@ -2374,26 +2443,18 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed){
   });
 
   let baseY = Math.round(anchorY - 12);
-  let tileObstacles = obstacles;
-  if(page === "contrast" && isCoarse && safe){
-    // Mobile contrast controls should live above the phrase/card region.
-    baseY = Math.round(Math.max(DOCK_LAYOUT_MARGIN + 28, safe.top - 56));
-    tileObstacles = obstacles.concat([{
-      left: DOCK_LAYOUT_MARGIN,
-      top: Math.max(DOCK_LAYOUT_MARGIN, Math.round(safe.top - 2)),
-      right: vw - DOCK_LAYOUT_MARGIN,
-      bottom: vh - DOCK_LAYOUT_MARGIN
-    }]);
+  if(Number.isFinite(panelTopLimit)){
+    baseY = Math.min(baseY, Math.round(panelTopLimit - 24));
   }
   for(const item of ordered){
     let spot = findDockSpot(
       `__panel_tile_${item.idx}`,
       item.measure,
-      anchorX,
+      centerX,
       baseY,
       vw,
       vh,
-      tileObstacles,
+      obstacles,
       placed,
       {
         stepX: Math.max(10, Math.floor(DOCK_GRID_MIN_STEP_X * 0.9)),
@@ -2402,22 +2463,22 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed){
       }
     );
 
-    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, tileObstacles, placed)){
+    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, obstacles, placed)){
       spot = null;
       const fallbackCandidates = buildPanelCandidates(DOCK_PANEL_MAX_RING + 28);
       for(const c of fallbackCandidates){
-        const cx = anchorX + (c.col * DOCK_GRID_MIN_STEP_X);
+        const cx = centerX + (c.col * DOCK_GRID_MIN_STEP_X);
         const cy = baseY + (c.row * DOCK_GRID_MIN_STEP_Y);
         const x = Math.round(cx - (item.measure.w * 0.5));
         const y = Math.round(cy - (item.measure.h * 0.5));
         const rect = makeDockRect(x, y, item.measure.w, item.measure.h, 0);
-        if(!fitsDockRect(rect, vw, vh, tileObstacles, placed)) continue;
+        if(!fitsDockRect(rect, vw, vh, obstacles, placed)) continue;
         spot = { x, y, rect };
         break;
       }
     }
 
-    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, tileObstacles, placed)){
+    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, obstacles, placed)){
       // Keep strict no-overlap behavior on cramped screens.
       item.el.style.opacity = "0";
       item.el.style.pointerEvents = "none";
@@ -2494,31 +2555,6 @@ function findDockSpot(btnId, measure, anchorX, anchorY, vw, vh, obstacles, place
   return { x: fallbackX, y: fallbackY, rect: fallbackRect };
 }
 
-function tryPlaceDockControl(id, x, y, vw, vh, obstacles, placed, measuresById){
-  const btn = dockControlById.get(id);
-  if(!btn) return false;
-  const m = measuresById.get(id) || measureDockControl(btn);
-  const tries = [
-    { x, y },
-    { x, y: y - 2 },
-    { x, y: y + 2 },
-    { x: x - 3, y },
-    { x: x + 3, y }
-  ];
-  for(const t of tries){
-    const rx = Math.round(t.x);
-    const ry = Math.round(t.y);
-    const rect = makeDockRect(rx, ry, m.w, m.h, m.tipTop);
-    if(!fitsDockRect(rect, vw, vh, obstacles, placed)) continue;
-    btn.classList.add("dockObject");
-    btn.style.left = `${rx}px`;
-    btn.style.top = `${ry}px`;
-    placed.push(rect);
-    return true;
-  }
-  return false;
-}
-
 function placePresetDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measuresById){
   const placedIds = new Set();
   const getM = (id)=> measuresById.get(id) || measureDockControl(dockControlById.get(id));
@@ -2558,12 +2594,13 @@ function placePresetDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, mea
   }
 
   // Target stack (top -> bottom):
-  // language | colors
+  // language | colors | info
   // lock | speed | playback | contrast
   // full screen | menu | screenshot
   const row1 = buildRow([
     { id: "tabLanguageBtn" },
-    { id: "tabColorsBtn" }
+    { id: "tabColorsBtn" },
+    { id: "tabInfoBtn" }
   ]);
   const row2 = buildRow([
     { id: "lockCompositionBtn" },
@@ -2657,6 +2694,7 @@ function placePresetDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, mea
 
 function placeOpenDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measuresById, panelMeasure){
   const placedIds = new Set();
+  const activePage = String(document.body.dataset.uiPage || "none");
   const getM = (id)=> measuresById.get(id) || measureDockControl(dockControlById.get(id));
   const menuRect = menuToggleBtn ? menuToggleBtn.getBoundingClientRect() : null;
   const menuW = Math.max(40, Math.ceil(menuRect ? menuRect.width : 68));
@@ -2733,7 +2771,8 @@ function placeOpenDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measu
 
   const row1 = buildRow([
     { id: "tabLanguageBtn" },
-    { id: "tabColorsBtn" }
+    { id: "tabColorsBtn" },
+    { id: "tabInfoBtn" }
   ]);
   const row2 = buildRow([
     { id: "lockCompositionBtn" },
@@ -2758,8 +2797,11 @@ function placeOpenDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measu
   const p1 = placeRow(row1, row1CenterY);
   if(!p1.ok) return { placedIds, panelPlaced: false };
 
-  if(shouldUsePanelTileLayout(vw, vh)){
-    const panelPlaced = placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed);
+  if(shouldUsePanelTileLayout(vw, vh, activePage)){
+    const panelPlaced = placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, {
+      centerX: vw * 0.5,
+      panelTopLimit: p1.top - panelGap
+    });
     return { placedIds, panelPlaced };
   }
 
@@ -2924,16 +2966,6 @@ function applyDockClickResponse(e){
   const r = el.getBoundingClientRect();
   if(r.width <= 0 || r.height <= 0) return;
 
-  const x = clamp((e.clientX - r.left) / r.width, 0, 1);
-  const y = clamp((e.clientY - r.top) / r.height, 0, 1);
-  const v = (x >= 0.5 ? 1 : 0) + (y >= 0.5 ? 2 : 0);
-  dockVariant = v;
-  document.body.dataset.dockVariant = String(dockVariant);
-
-  const shiftX = Math.round((x - 0.5) * 14);
-  const shiftY = Math.round(8 + (y * 7));
-  document.documentElement.style.setProperty("--dockOpenShiftX", `${shiftX}px`);
-  document.documentElement.style.setProperty("--dockOpenShiftY", `${shiftY}px`);
   scheduleDockLayout();
 }
 
@@ -2943,23 +2975,15 @@ function setDockActiveButton(btnId){
   scheduleDockLayout();
 }
 
-/* ================= Dock Placement (Phone Top, Desktop Bottom) ================= */
-// Keep the dock "up top" on phones (including landscape, where width grows but height shrinks).
-const dockTopMQ = window.matchMedia
-  ? window.matchMedia("(max-width: 640px), (pointer: coarse) and (orientation: landscape) and (max-height: 520px)")
-  : null;
-function shouldDockBeOnTop(){
-  return false;
-}
+/* ================= Dock placement ================= */
 function placeDockForViewport(){
   if(!dockEl || !dockTopHostEl || !dockBottomHostEl) return;
-  const top = shouldDockBeOnTop();
-  const target = top ? dockTopHostEl : dockBottomHostEl;
-  const other = top ? dockBottomHostEl : dockTopHostEl;
+  const target = dockBottomHostEl;
+  const other = dockTopHostEl;
   if(dockEl.parentElement !== target){
     target.appendChild(dockEl);
   }
-  // Prevent empty hosts from affecting layout (titleBlock gap, etc).
+  // Prevent empty hosts from affecting layout.
   target.style.display = "";
   other.style.display = "none";
   scheduleDockLayout();
@@ -2967,16 +2991,8 @@ function placeDockForViewport(){
 }
 
 /* ================= Mobile UI pages ================= */
-const UI_PAGES = ["none","language","contrast","colors","speed"];
+const UI_PAGES = ["none","language","info","contrast","colors","speed"];
 let uiPage = "none";
-const mobilePagerMQ = window.matchMedia ? window.matchMedia("(max-width: 820px)") : null;
-
-function isMobilePaged(){
-  return !!(mobilePagerMQ && mobilePagerMQ.matches);
-}
-function syncMobilePagedClass(){
-  document.body.classList.toggle("isMobilePaged", isMobilePaged());
-}
 function setTabPressed(btn, on){
   if(!btn) return;
   btn.classList.toggle("on", on);
@@ -2994,27 +3010,23 @@ function setUiPage(next){
   uiPage = finalPage;
   document.body.dataset.uiPage = finalPage;
   setTabPressed(tabLanguageBtn, finalPage === "language");
+  setTabPressed(tabInfoBtn, finalPage === "info");
   setTabPressed(tabContrastBtn, finalPage === "contrast");
   setTabPressed(tabColorsBtn, finalPage === "colors");
   setTabPressed(tabSpeedBtn, finalPage === "speed");
-  const pageToPinned = {
-    language: "tabLanguageBtn",
-    contrast: "tabContrastBtn",
-    colors: "tabColorsBtn",
-    speed: "tabSpeedBtn"
-  };
-  if(finalPage !== "none") setDockPinnedButton(pageToPinned[finalPage] || "");
-  else setDockPinnedButton("");
   if(finalPage === "language") setDockActiveButton("tabLanguageBtn");
+  else if(finalPage === "info") setDockActiveButton("tabInfoBtn");
   else if(finalPage === "contrast") setDockActiveButton("tabContrastBtn");
   else if(finalPage === "colors") setDockActiveButton("tabColorsBtn");
   else if(finalPage === "speed") setDockActiveButton("tabSpeedBtn");
   else{
+    dockHoverBtnId = "";
     setDockActiveButton("");
-    dockVariant = 0;
-    document.body.dataset.dockVariant = "0";
-    document.documentElement.style.setProperty("--dockOpenShiftX", "0px");
-    document.documentElement.style.setProperty("--dockOpenShiftY", "10px");
+    // Reset any sticky focus state so closed state returns to the load layout.
+    if(document.activeElement && typeof document.activeElement.blur === "function"){
+      document.activeElement.blur();
+    }
+    requestAnimationFrame(()=> requestAnimationFrame(scheduleDockLayout));
   }
 
   // Recolor on every page switch.
@@ -3074,7 +3086,8 @@ function updatePanelSafeMaxHeight(){
   }
 
   const { w: vw, h: vh } = getViewportSize();
-  if(shouldUsePanelTileLayout(vw, vh)){
+  const activePage = String(document.body.dataset.uiPage || "none");
+  if(shouldUsePanelTileLayout(vw, vh, activePage)){
     panelWrapEl.style.setProperty("--panelMaxH", "0px");
     scheduleDockLayout();
     return;
@@ -4186,12 +4199,6 @@ step-dad
  farmer
  sculptor
  architect
- artist
- accountant
- public defender
- corporate attorney
- supreme court judge
- truck driver
  refugee
  immigrant
  butt-head
@@ -4343,9 +4350,6 @@ knocked over
 getting a tattoo
 shoplifting
 crushing garlic
-lighting a match
-scratching itself
-walking backwards
 slicing onions
 wandering aimlessly
 jogging first thing in the morning
@@ -4365,6 +4369,7 @@ looking within
 filled with an overwhelming sense of dread
 overcome with malaise
 suffering silently
+dented on the corner
 slightly angled
 with a skewed perspective
 shopping
@@ -4518,7 +4523,7 @@ doe eyed
 feeling betrayed
 got dumped
 caught in the rip current
-pulled out to sea
+pulled out to see
 overeating
 binge drinking
 hedonistically indulging
@@ -4541,8 +4546,7 @@ all scratched up
 is getting wasted
 feeling blue
 is all tuckered out
-is over ~it~
-is asking for ~it~
+is over it
 is sitting on its side
 is draped in silk
 is getting encased in resin
@@ -4751,7 +4755,7 @@ under the influence
 coming out of the closet
 waiting for the bus
 needs some help
-not over ~it~
+not over it
 doing its thing
 finding itself
 losing touch with itself
@@ -4912,15 +4916,6 @@ frowning
 crying
 giggling
 chatting
-making a simple salad
-butchering a pig
-scratching a dog
-eating boogers
-picking its butt
-feeling tender
-feeling like old shoe leather
-thinking about its mother
-updating a spreadsheet
 doing a cold plunge
 talking shit
 taking the train
@@ -5003,7 +4998,6 @@ fighting
 tidying up
 decluttering
 dusting
-scraping burnt bits off of a cast iron pan
 with its eyes closed
 smiling politely
 being very theatrical
@@ -5053,7 +5047,7 @@ on a construction site
 inside a movie studio
 on a soundstage
 inside a display case
-near a printing press
+by a printing press
 at the beach
 on the pier
 in the swimming pool
@@ -5135,7 +5129,7 @@ in a root cellar
 in a wine cellar
 in the trunk of a car
 inside an overhead bin
-on an airplane
+in an airplane
 in an airport
 in a theme park
 in a haunted house
@@ -5145,7 +5139,7 @@ at the acropolis
 on a suspension bridge
 at a dude ranch
 at a rodeo
-in an automotive plant
+inside an automotive plant
 in a med spa
 in a day spa
 in a steam room
@@ -5258,7 +5252,6 @@ inside a cramped submarine
 in a same-sex relationship
 in a polyamorous relationship
 in a cul-de-sac
-on a rollercoaster
 in the shadow of a mountain
 at the campgrounds
 at the top of a cherry picker
@@ -5598,7 +5591,7 @@ function syncPauseBtn(){
   if(!pausePoemBtn) return;
   pausePoemBtn.classList.toggle("paused", isPaused);
   pausePoemBtn.setAttribute("aria-pressed", isPaused ? "true" : "false");
-  pausePoemBtn.setAttribute("aria-label", isPaused ? "Play (Space)" : "Pause (Space)");
+  pausePoemBtn.setAttribute("aria-label", isPaused ? "play (space)" : "pause (space)");
   pausePoemBtn.dataset.tip = "pause";
 }
 
@@ -5624,7 +5617,7 @@ function syncCompositionLockBtn(){
   lockCompositionBtn.classList.toggle("locked", isCompositionLocked);
   lockCompositionBtn.classList.toggle("on", isCompositionLocked);
   lockCompositionBtn.setAttribute("aria-pressed", isCompositionLocked ? "true" : "false");
-  lockCompositionBtn.setAttribute("aria-label", isCompositionLocked ? "Unlock composition" : "Lock composition");
+  lockCompositionBtn.setAttribute("aria-label", isCompositionLocked ? "unlock composition" : "lock composition");
   lockCompositionBtn.dataset.tip = "lock";
 }
 function toggleCompositionLock(){
@@ -5681,26 +5674,12 @@ function renderSentenceButtons(){
   if(!container) return;
   container.innerHTML = "";
 
-  const partToPal = {
-    description: "earthy",
-    object: "circus",
-    // Person shares the "slot" with object; keep it in the same palette unless you want it distinct.
-    person: "circus",
-    action: "future",
-    location: "retro"
-  };
-
   for(const opt of PART_OPTS){
     const b = document.createElement("button");
     b.type = "button";
     b.className = "ssBtn";
     b.textContent = opt;
     b.dataset.part = opt;
-
-    const palName = partToPal[opt];
-    const bg = paletteColorAvoid(palName, 0, getBgLiveHex());
-    b.style.setProperty("--ssPal", palName);
-    b.style.setProperty("--ssBg", bg);
 
     b.addEventListener("click", ()=>{
       const isObjOrPerson = (opt === "object" || opt === "person");
@@ -5735,20 +5714,10 @@ function updatePhraseLive(){
 }
 
 function refreshSentenceButtonColors(){
-  const bgAvoid = getBgLiveHex();
   document.querySelectorAll("#partsRow .ssBtn").forEach(btn=>{
-    const pal = btn.style.getPropertyValue("--ssPal").trim() || "earthy";
-    btn.style.setProperty("--ssBg", paletteColorAvoid(pal, 0, bgAvoid));
+    btn.style.removeProperty("--ssPal");
+    btn.style.removeProperty("--ssBg");
   });
-}
-
-function palettePair(name, offset=0){
-  const pal = PAL[name] || [];
-  if(!pal.length) return { fill: "#999999", ring: "#cccccc" };
-  const bgAvoid = getBgLiveHex();
-  const fill = paletteColorAvoid(name, offset, bgAvoid);
-  const ring = paletteColorAvoid(name, offset + 2, bgAvoid);
-  return { fill, ring };
 }
 
 let colorScope = "bg"; // bg | fg | bd
@@ -5900,7 +5869,7 @@ function applyButtonColors(){
   [
     prevPoemBtn, pausePoemBtn, nextPoemBtn,
     screenshotBtn, fsBtn, lockCompositionBtn,
-    tabLanguageBtn, tabContrastBtn, tabColorsBtn, tabSpeedBtn,
+    tabLanguageBtn, tabContrastBtn, tabColorsBtn, tabSpeedBtn, tabInfoBtn,
     scopeBgBtn, scopeFgBtn, scopeBdBtn, allOnBtn, allOffBtn,
     bdToggleBtn
   ].forEach((btn)=>{
@@ -5909,13 +5878,6 @@ function applyButtonColors(){
     btn.style.color = uiFg;
   });
   syncMenuToggleColor(cardLive, uiFg);
-}
-
-function getReadableOnColor(hex){
-  const {r,g,b} = hexToRgb(hex || "#000000");
-  // Relative luminance approximation is enough for this UI badge.
-  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return lum > 0.58 ? "rgba(0,0,0,0.72)" : "rgba(255,255,255,0.94)";
 }
 
 function syncMenuToggleColor(cardHex, fgHex){
@@ -5956,28 +5918,6 @@ function applySliderThumbColors(){
     const offset = pal.length ? (i % pal.length) : 0;
     const col = paletteColor(palName, offset);
     el.style.setProperty("--thumbCol", col);
-  });
-}
-
-function syncActionButtonWidths(){
-  requestAnimationFrame(()=>{
-    const btnW1 = bdToggleBtn ? bdToggleBtn.getBoundingClientRect().width : 0;
-    const btnW2 = fsBtn ? fsBtn.getBoundingClientRect().width : 0;
-
-    const grp1 = bdToggleBtn ? bdToggleBtn.closest(".actionGroup") : null;
-    const grp2 = fsBtn ? fsBtn.closest(".actionGroup") : null;
-    const lbl1 = grp1 ? grp1.querySelector(".actionText") : null;
-    const lbl2 = grp2 ? grp2.querySelector(".actionText") : null;
-    const lblW1 = lbl1 ? Math.max(lbl1.scrollWidth || 0, lbl1.getBoundingClientRect().width || 0) : 0;
-    const lblW2 = lbl2 ? Math.max(lbl2.scrollWidth || 0, lbl2.getBoundingClientRect().width || 0) : 0;
-
-    const w = Math.ceil(Math.max(btnW1, btnW2, lblW1, lblW2) + 6); // small buffer to avoid clipping
-    if(w > 0){
-      if(bdToggleBtn) bdToggleBtn.style.width = `${w}px`;
-      if(fsBtn) fsBtn.style.width = `${w}px`;
-      if(grp1) grp1.style.width = `${w}px`;
-      if(grp2) grp2.style.width = `${w}px`;
-    }
   });
 }
 
@@ -6472,7 +6412,7 @@ function applyColorsLive(){
 
 /* ================= Border toggle button sync ================= */
 function setBorderBtn(){
-  bdToggleBtn.textContent = sel.borderEnabled ? "On" : "Off";
+  bdToggleBtn.textContent = sel.borderEnabled ? "on" : "off";
   bdToggleBtn.classList.toggle("on", sel.borderEnabled);
   bdToggleBtn.setAttribute("aria-pressed", sel.borderEnabled ? "true" : "false");
 }
@@ -6556,6 +6496,11 @@ function setMenuToggleState(open){
   if(!menuToggleBtn) return;
   menuToggleBtn.classList.toggle("on", !!open);
   menuToggleBtn.setAttribute("aria-pressed", open ? "true" : "false");
+  if(open){
+    menuToggleBtn.setAttribute("data-tip", "turn off");
+  }else{
+    menuToggleBtn.removeAttribute("data-tip");
+  }
 }
 function scheduleMenuFade(){
   if(!menuToggleBtn) return;
@@ -6586,7 +6531,7 @@ function showUI(){
   scheduleUiSafeUpdate();
   scheduleHideUI();
 }
-function hideUI(){
+function hideUI(showMenuPeek = true){
   if(hideTimer) clearTimeout(hideTimer);
   hideTimer = null;
   // Closing the UI always returns to the submenu layer (no slider/swatch page left open).
@@ -6595,13 +6540,19 @@ function hideUI(){
   }
   uiWrapEl.classList.add("hidden");
   setMenuToggleState(false);
-  showMenuToggleBriefly();
+  if(showMenuPeek){
+    showMenuToggleBriefly();
+  }else if(menuToggleBtn){
+    if(menuFadeTimer) clearTimeout(menuFadeTimer);
+    menuFadeTimer = null;
+    menuToggleBtn.classList.remove("show");
+  }
 }
 function toggleUI(){
   if(uiWrapEl.classList.contains("hidden")){
     showUI();
   }else{
-    hideUI();
+    hideUI(false);
   }
 }
 function wakeMenuIfUiHidden(){
@@ -6739,6 +6690,7 @@ if(screenshotBtn) screenshotBtn.addEventListener("click", ()=>{ setDockActiveBut
 if(lockCompositionBtn) lockCompositionBtn.addEventListener("click", ()=>{ setDockActiveButton("lockCompositionBtn"); toggleCompositionLock(); showUI(); });
 if(menuToggleBtn) menuToggleBtn.addEventListener("click", ()=>{ setDockActiveButton("menuToggleBtn"); toggleUI(); });
 if(tabLanguageBtn) tabLanguageBtn.addEventListener("click", (e)=>{ applyDockClickResponse(e); setDockActiveButton("tabLanguageBtn"); setUiPage("language"); showUI(); });
+if(tabInfoBtn) tabInfoBtn.addEventListener("click", (e)=>{ applyDockClickResponse(e); setDockActiveButton("tabInfoBtn"); setUiPage("info"); showUI(); });
 if(tabContrastBtn) tabContrastBtn.addEventListener("click", (e)=>{ applyDockClickResponse(e); setDockActiveButton("tabContrastBtn"); setUiPage("contrast"); showUI(); });
 if(tabColorsBtn) tabColorsBtn.addEventListener("click", (e)=>{ applyDockClickResponse(e); setDockActiveButton("tabColorsBtn"); setUiPage("colors"); showUI(); });
 if(tabSpeedBtn) tabSpeedBtn.addEventListener("click", (e)=>{ applyDockClickResponse(e); setDockActiveButton("tabSpeedBtn"); setUiPage("speed"); showUI(); });
@@ -6806,30 +6758,14 @@ window.addEventListener("keydown", (e)=>{
 (function init(){
   setViewportVars();
   document.documentElement.style.setProperty("--sceneZoom", "1");
-  document.body.dataset.dockVariant = String(dockVariant);
   if(window.visualViewport){
     window.visualViewport.addEventListener("resize", setViewportVars, {passive:true});
     window.visualViewport.addEventListener("scroll", setViewportVars, {passive:true});
   }
 
   placeDockForViewport();
-  if(dockTopMQ){
-    const onDockChange = ()=>{
-      placeDockForViewport();
-      syncSwatchHeaderWidths();
-    };
-    if(dockTopMQ.addEventListener) dockTopMQ.addEventListener("change", onDockChange);
-    else if(dockTopMQ.addListener) dockTopMQ.addListener(onDockChange);
-  }
-
-  syncMobilePagedClass();
-  // Start collapsed: show only the three page buttons.
+  // Start collapsed with submenu buttons visible and no adjustment panel open.
   setUiPage("none");
-  if(mobilePagerMQ){
-    const onChange = ()=>{ syncMobilePagedClass(); setUiPage(uiPage); };
-    if(mobilePagerMQ.addEventListener) mobilePagerMQ.addEventListener("change", onChange);
-    else if(mobilePagerMQ.addListener) mobilePagerMQ.addListener(onChange);
-  }
 
   loadRecentPhrases();
 
@@ -6863,7 +6799,7 @@ window.addEventListener("keydown", (e)=>{
     sel.borderThickness = 0.30;
   }
   nextFrame();
-  // Now that background is set, color the page tabs.
+  // Sync button colors with the live scene.
   assignMobileTabColors();
   scheduleTick();
   hideUI();
