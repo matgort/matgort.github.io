@@ -2332,6 +2332,8 @@ function clearPanelFloatingTiles(){
 function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed){
   if(!panelWrapEl || !panelInnerEl) return false;
   const page = String(document.body.dataset.uiPage || "none");
+  const isCoarse = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+  const safe = getSceneSafeRect();
   const tiles = getActivePanelTileEls(page);
   if(!tiles.length) return false;
 
@@ -2371,7 +2373,18 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed){
     return a.idx - b.idx;
   });
 
-  const baseY = Math.round(anchorY - 12);
+  let baseY = Math.round(anchorY - 12);
+  let tileObstacles = obstacles;
+  if(page === "contrast" && isCoarse && safe){
+    // Mobile contrast controls should live above the phrase/card region.
+    baseY = Math.round(Math.max(DOCK_LAYOUT_MARGIN + 28, safe.top - 56));
+    tileObstacles = obstacles.concat([{
+      left: DOCK_LAYOUT_MARGIN,
+      top: Math.max(DOCK_LAYOUT_MARGIN, Math.round(safe.top - 2)),
+      right: vw - DOCK_LAYOUT_MARGIN,
+      bottom: vh - DOCK_LAYOUT_MARGIN
+    }]);
+  }
   for(const item of ordered){
     let spot = findDockSpot(
       `__panel_tile_${item.idx}`,
@@ -2380,7 +2393,7 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed){
       baseY,
       vw,
       vh,
-      obstacles,
+      tileObstacles,
       placed,
       {
         stepX: Math.max(10, Math.floor(DOCK_GRID_MIN_STEP_X * 0.9)),
@@ -2389,7 +2402,7 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed){
       }
     );
 
-    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, obstacles, placed)){
+    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, tileObstacles, placed)){
       spot = null;
       const fallbackCandidates = buildPanelCandidates(DOCK_PANEL_MAX_RING + 28);
       for(const c of fallbackCandidates){
@@ -2398,13 +2411,13 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed){
         const x = Math.round(cx - (item.measure.w * 0.5));
         const y = Math.round(cy - (item.measure.h * 0.5));
         const rect = makeDockRect(x, y, item.measure.w, item.measure.h, 0);
-        if(!fitsDockRect(rect, vw, vh, obstacles, placed)) continue;
+        if(!fitsDockRect(rect, vw, vh, tileObstacles, placed)) continue;
         spot = { x, y, rect };
         break;
       }
     }
 
-    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, obstacles, placed)){
+    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, tileObstacles, placed)){
       // Keep strict no-overlap behavior on cramped screens.
       item.el.style.opacity = "0";
       item.el.style.pointerEvents = "none";
