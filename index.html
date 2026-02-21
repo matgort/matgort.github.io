@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <title>Sculpture Poems</title>
+  <title>Sculpture Poems by Margot DeMarco</title>
 
   <style>
     :root{
@@ -941,20 +941,25 @@
       letter-spacing: .02em;
       font-size: calc(var(--menuTextSize) * 1.2) !important;
       line-height: 1;
-      transform-origin: center center;
-      transition: transform .12s ease;
+      transition: min-width .12s ease, height .12s ease, padding .12s ease, font-size .12s ease;
     }
     .uiPage--language #partsRow .ssBtn:not(.on){
       opacity: 1;
       filter: none;
       box-shadow: none;
-      transform: scale(0.5);
+      min-width: 59px;
+      height: 18px;
+      padding: 0 6px;
+      font-size: calc(var(--menuTextSize) * 0.6) !important;
     }
     .uiPage--language #partsRow .ssBtn.on{
       opacity: 1;
       filter: none;
       box-shadow: none;
-      transform: scale(1);
+      min-width: 118px;
+      height: 36px;
+      padding: 0 12px;
+      font-size: calc(var(--menuTextSize) * 1.2) !important;
     }
     .uiPage--language #partsRow .ssBtn:hover,
     .uiPage--language #partsRow .ssBtn:focus-visible,
@@ -963,37 +968,50 @@
       color: var(--cardUiFg, var(--ui));
       border: none;
     }
-    .uiPage--language #partsRow .ssBtn:not(.on):active{
-      transform: scale(0.5) translateY(1px);
-    }
-    .uiPage--language #partsRow .ssBtn.on:active{
-      transform: scale(1) translateY(1px);
-    }
 
     .uiPage--info{
       max-width: min(980px, 96vw);
       margin-left: auto;
       margin-right: auto;
     }
-    .uiPage--info .infoTile{
+    .uiPage--info .infoGroup{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+      max-width: 94vw;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .uiPage--info .infoHeadTile,
+    .uiPage--info .infoBlurbTile{
       background: var(--cardUiBg, transparent);
       color: var(--cardUiFg, var(--ui));
+      text-align: center;
+    }
+    .uiPage--info .infoHeadTile{
+      padding: 8px 10px;
+      width: max-content;
+      max-width: 94vw;
+    }
+    .uiPage--info .infoBlurbTile{
       padding: 12px 14px;
-      width: min(92vw, 880px);
+      width: min(86vw, 620px);
     }
     .uiPage--info .infoTitle{
       font-size: calc((var(--menuTextSize) * 0.7) + 2px);
-      font-weight: 650;
+      font-weight: 400;
       letter-spacing: .01em;
       line-height: 1.1;
-      margin-bottom: 4px;
+      margin-bottom: 0;
       text-transform: none;
     }
     .uiPage--info .infoByline{
       font-size: calc((var(--menuTextSize) * 0.7) + 2px);
       font-weight: 650;
       line-height: 1.1;
-      margin-bottom: 10px;
+      margin-bottom: 0;
       text-transform: none;
     }
     .uiPage--info p{
@@ -1002,6 +1020,7 @@
       line-height: 1.24;
       letter-spacing: .01em;
       text-transform: none;
+      text-align: center;
     }
     .uiPage--info p:last-child{
       margin-bottom: 0;
@@ -1071,16 +1090,38 @@
       min-height: 0;
       min-width: 0;
       padding: 6px 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       white-space: nowrap;
+      line-height: 1;
+      font-size: var(--menuTextSize) !important;
+      transition: padding .12s ease, font-size .12s ease, opacity .12s ease;
     }
-    .uiPage--colors .colorScopeBtn:not(.on){
+    #panelInner .uiPage--colors .colorScopeBtn{
+      font-size: var(--menuTextSize) !important;
+      padding: 6px 14px;
+    }
+    #panelInner .uiPage--colors .colorScopeBtn:not(.on){
       opacity: 1;
       filter: none;
+      font-size: calc(var(--menuTextSize) * 0.7) !important;
+      padding: 4px 10px !important;
     }
-    .uiPage--colors .colorScopeBtn.on{
+    #panelInner .uiPage--colors .colorScopeBtn.on{
       opacity: 1;
       filter: none;
       box-shadow: none;
+      font-size: var(--menuTextSize) !important;
+      padding: 6px 14px !important;
+    }
+    #panelInner .uiPage--colors .colorScopeBtn:not(.on):active{
+      font-size: calc(var(--menuTextSize) * 0.7) !important;
+      padding: 4px 10px;
+    }
+    #panelInner .uiPage--colors .colorScopeBtn.on:active{
+      font-size: var(--menuTextSize) !important;
+      padding: 6px 14px;
     }
     .uiPage--colors .label,
     .uiPage--colors .val{
@@ -1176,6 +1217,11 @@
       .uiPage--language #partsRow .ssBtn{
         min-width: 108px;
         height: 34px;
+      }
+      .uiPage--language #partsRow .ssBtn:not(.on){
+        min-width: 54px;
+        height: 17px;
+        padding: 0 5px;
       }
 
       .uiPage--contrast{
@@ -1571,10 +1617,13 @@
             </section>
 
             <section class="uiPage uiPage--info" aria-label="info">
-              <div class="infoTile">
-                <div class="infoTitle">Sculpture Poems</div>
-                <div class="infoByline">Margot DeMarco</div>
-                <p>These poems are randomly generated scenes. Each phrase is made from a person or an object, a description, an action, and a location. All language is drawn from a large bank of words written by the artist and continuously reshuffled. Each poem creates an evocative sculptural scene without further context.</p>
+              <div class="infoGroup">
+                <div class="infoHeadTile">
+                  <div class="infoTitle">Sculpture Poems by Margot DeMarco</div>
+                </div>
+                <div class="infoBlurbTile">
+                  <p>These poems are randomly generated object-focused sculptural scenes. All language is drawn from a large bank of words written by the artist and continuously reshuffled. Viewer can adjust the sentence structure of the phrase, as well as how the phrase looks visually.</p>
+                </div>
               </div>
             </section>
 
@@ -1608,8 +1657,8 @@
               <div class="colorsPanelLayout">
                 <div class="colorsScopeCol" id="colorScopeRow" aria-label="color target">
                   <button id="scopeFgBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="false">text color</button>
-                  <button id="scopeBgBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="true">background color</button>
-                  <button id="scopeBdBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="false">card color</button>
+                  <button id="scopeBgBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="false">background color</button>
+                  <button id="scopeBdBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="true">card color</button>
                 </div>
 
                 <div class="colorsGridCol" id="colorsGridTile">
@@ -2095,7 +2144,7 @@ function getActivePanelTileEls(page){
     return Array.from(panelInnerEl.querySelectorAll(".uiPage--language #partsRow .ssBtn"));
   }
   if(safePage === "info"){
-    return Array.from(panelInnerEl.querySelectorAll(".uiPage--info .infoTile"));
+    return Array.from(panelInnerEl.querySelectorAll(".uiPage--info .infoGroup"));
   }
   if(safePage === "contrast"){
     return Array.from(panelInnerEl.querySelectorAll(".uiPage--contrast .ctrl"));
@@ -5766,7 +5815,7 @@ function refreshSentenceButtonColors(){
   });
 }
 
-let colorScope = "bg"; // bg | fg | bd
+let colorScope = "bd"; // bg | fg | bd
 
 function getColorScopeSet(scope = colorScope){
   if(scope === "fg") return sel.fgColor;
