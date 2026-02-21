@@ -7237,44 +7237,28 @@ window.addEventListener("keydown", (e)=>{
   const t = e.target;
   const tag = (t && t.tagName) ? String(t.tagName).toLowerCase() : "";
   const isTypingTarget =
-    tag === "input" || tag === "textarea" || tag === "select" || tag === "button" ||
+    tag === "input" || tag === "textarea" || tag === "select" ||
     (t && t.isContentEditable);
   if(isTypingTarget) return;
 
   if(e.code === "Space"){
     e.preventDefault();
+    setDockActiveButton("dockPlayback");
     togglePaused();
     showUI();
     return;
   }
-  if(e.code === "ArrowLeft"){
+  if(e.code === "ArrowLeft" || e.code === "ArrowUp"){
     e.preventDefault();
+    setDockActiveButton("dockPlayback");
     goPrevPoem();
     showUI();
     return;
   }
-  if(e.code === "ArrowRight"){
+  if(e.code === "ArrowRight" || e.code === "ArrowDown"){
     e.preventDefault();
+    setDockActiveButton("dockPlayback");
     goNextPoem();
-    showUI();
-    return;
-  }
-  if(e.code === "ArrowUp" || e.code === "ArrowDown"){
-    e.preventDefault();
-    const dir = (e.code === "ArrowUp") ? 1 : -1;
-    if(e.shiftKey){
-      const next = clamp(Number(widthEl.value) + dir, 0, 100);
-      widthEl.value = String(next);
-      if(clamp(Number(widthEl.value), 0, 100) === 0){
-        phraseEl.innerHTML = formatPhraseText(current.phrase);
-      }else{
-        phraseEl.textContent = current.phrase;
-      }
-    }else{
-      const next = clamp(Number(sizeEl.value) + dir, 0, 150);
-      sizeEl.value = String(next);
-    }
-    applyTypeAndLayout();
     showUI();
     return;
   }
