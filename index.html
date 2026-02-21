@@ -1742,6 +1742,25 @@ function getViewportSize(){
   };
 }
 
+function isIosDevice(){
+  const ua = navigator.userAgent || "";
+  const classicIos = /iPad|iPhone|iPod/.test(ua);
+  const iPadOsDesktopUa = (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  return classicIos || iPadOsDesktopUa;
+}
+
+function isPortraitViewport(){
+  const { w, h } = getViewportSize();
+  return h >= w;
+}
+
+function applyIosPortraitLoadSizing(){
+  if(!isIosDevice() || !isPortraitViewport()) return;
+  // iOS portrait default: larger phrase/card on first load.
+  sizeEl.value = String(clamp(Math.max(Number(sizeEl.value), 62), 0, 150));
+  widthEl.value = String(clamp(Math.max(Number(widthEl.value), 52), 0, 100));
+}
+
 function parsePx(val){
   const n = Number(String(val || "").replace("px","").trim());
   return Number.isFinite(n) ? n : 0;
@@ -7297,6 +7316,7 @@ window.addEventListener("keydown", (e)=>{
   sel.borderThickness = clamp(Number(bdThickEl.value), 0, 1);
 
   setBorderBtn();
+  applyIosPortraitLoadSizing();
   applyTypeAndLayout();
 
   bgBrightVal.textContent = pctLabel(bgBrightEl.value);
