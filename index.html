@@ -927,6 +927,61 @@
     body[data-ui-page="colors"] .uiPage--colors{ display:block; }
     body[data-ui-page="speed"] .uiPage--speed{ display:block; }
 
+    /* Language panel: sentence structure only, centered and button-like. */
+    .uiPage--language{
+      max-width: min(760px, 96vw);
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .uiPage--language .languagePanelLayout{
+      display: grid;
+      grid-template-columns: minmax(360px, max-content);
+      gap: 0;
+      justify-content: center;
+      align-items: stretch;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .uiPage--language .languageTile{
+      background: var(--cardUiBg, transparent);
+      color: var(--cardUiFg, var(--ui));
+      padding: 10px 12px 12px;
+    }
+    .uiPage--language .labelRow{
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .uiPage--language #partsRow .ssBtn{
+      min-width: 118px;
+      min-height: 30px;
+      padding: 6px 10px;
+      border-radius: 0;
+      border: none;
+      background: var(--cardUiBg, transparent);
+      color: var(--cardUiFg, var(--ui));
+      text-transform: lowercase;
+      font-weight: 650;
+      letter-spacing: .02em;
+    }
+    .uiPage--language #partsRow{
+      gap: 8px;
+      justify-content: center;
+    }
+    .uiPage--language #partsRow .ssBtn:not(.on){
+      opacity: .62;
+      filter: saturate(.72);
+    }
+    .uiPage--language #partsRow .ssBtn.on{
+      opacity: 1;
+      filter: none;
+      box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--cardUiFg, var(--ui)) 24%, transparent);
+    }
+    .uiPage--language #partsRow .ssBtn:hover,
+    .uiPage--language #partsRow .ssBtn:focus-visible{
+      color: var(--cardUiFg, var(--ui));
+    }
+
     /* Slider submenus: each slider sits in its own large "tile". */
     .uiPage--layout{
       max-width: min(980px, 96vw);
@@ -1127,6 +1182,14 @@
     }
 
     @media(max-width: 860px){
+      .uiPage--language{
+        max-width: min(640px, 100%);
+      }
+      .uiPage--language .languagePanelLayout{
+        grid-template-columns: minmax(280px, 1fr);
+      }
+      .uiPage--language #partsRow .ssBtn{ min-width: 108px; }
+
       .uiPage--contrast{
         max-width: min(640px, 100%);
       }
@@ -1552,11 +1615,10 @@
         <div id="panelWrap" aria-label="Submenu panel">
           <div id="panelInner">
             <section class="uiPage uiPage--language" aria-label="Language">
-              <div class="row centerRow">
-                <div class="grp words">
+              <div class="languagePanelLayout">
+                <div class="languageTile languageTile--parts">
                   <div class="labelRow">
-                    <div class="label">Sentence Structure</div>
-                    <div class="val hoverVal" id="partsHover">&nbsp;</div>
+                    <div class="label">sentence structure</div>
                   </div>
                   <div class="btnGroup centered" id="partsRow"></div>
                 </div>
@@ -2016,9 +2078,6 @@ const yVal = document.getElementById("yVal");
 const widthVal = document.getElementById("widthVal");
 const bdThickVal = document.getElementById("bdThickVal");
 
-/* hover labels */
-const partsHover = document.getElementById("partsHover");
-
 const sliderEls = [
   speedEl, bgBrightEl, fgBrightEl, bdBrightEl,
   bdThickEl, sizeEl, yEl, widthEl
@@ -2371,6 +2430,164 @@ function placePresetDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, mea
   return placedIds;
 }
 
+function placeOpenDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measuresById, panelMeasure){
+  const placedIds = new Set();
+  const getM = (id)=> measuresById.get(id) || measureDockControl(dockControlById.get(id));
+  const menuRect = menuToggleBtn ? menuToggleBtn.getBoundingClientRect() : null;
+  const menuW = Math.max(40, Math.ceil(menuRect ? menuRect.width : 68));
+  const menuH = Math.max(24, Math.ceil(menuRect ? menuRect.height : 32));
+  const g = DOCK_LAYOUT_GAP;
+  const rowGap = 4;
+  const panelGap = 6;
+
+  function buildRow(items){
+    const present = items
+      .map((item)=>{
+        if(!item || !item.id){
+          return {
+            id: "",
+            w: Math.max(0, Math.ceil(item && item.w ? item.w : 0)),
+            h: Math.max(0, Math.ceil(item && item.h ? item.h : 0)),
+            tipTop: 0
+          };
+        }
+        const btn = dockControlById.get(item.id);
+        if(!btn) return null;
+        const m = getM(item.id);
+        if(!m) return null;
+        return { id: item.id, w: m.w, h: m.h, tipTop: m.tipTop || 0 };
+      })
+      .filter(Boolean);
+
+    const rowW = present.reduce((sum, item)=> sum + item.w, 0) + (Math.max(0, present.length - 1) * g);
+    const maxHalfH = present.reduce((max, item)=> Math.max(max, item.h * 0.5), 0);
+    const hasTips = present.some((item)=> item.tipTop > 0);
+    const up = maxHalfH + (hasTips ? 8 : 0);
+    const down = maxHalfH;
+    return { items: present, rowW, up, down };
+  }
+
+  function placeRow(row, centerY){
+    if(!row || !row.items.length) return { ok: true, top: centerY, byId: new Map() };
+    const minX = DOCK_LAYOUT_MARGIN;
+    const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - row.rowW);
+    const startX = clamp(Math.round(anchorX - (row.rowW * 0.5)), minX, maxX);
+    let x = startX;
+    const localRects = [];
+    const localPos = [];
+    const byId = new Map();
+    for(const item of row.items){
+      if(!item.id){
+        x += item.w + g;
+        continue;
+      }
+      const y = Math.round(centerY - (item.h * 0.5));
+      const rect = makeDockRect(Math.round(x), y, item.w, item.h, 0);
+      if(!fitsDockRect(rect, vw, vh, obstacles, placed.concat(localRects))){
+        return { ok: false, top: y, byId: new Map() };
+      }
+      localRects.push(rect);
+      localPos.push({ id: item.id, x: Math.round(x), y });
+      byId.set(item.id, { x: Math.round(x), y, w: item.w, h: item.h });
+      x += item.w + g;
+    }
+    for(const pos of localPos){
+      const btn = dockControlById.get(pos.id);
+      if(!btn) continue;
+      btn.classList.add("dockObject");
+      btn.style.left = `${pos.x}px`;
+      btn.style.top = `${pos.y}px`;
+      placedIds.add(pos.id);
+    }
+    for(const rect of localRects){
+      placed.push(rect);
+    }
+    const rowTop = Math.round(centerY - row.up);
+    return { ok: true, top: rowTop, byId };
+  }
+
+  const row1 = buildRow([
+    { id: "tabLanguageBtn" },
+    { id: "tabColorsBtn" }
+  ]);
+  const row2 = buildRow([
+    { id: "lockCompositionBtn" },
+    { id: "tabSpeedBtn" },
+    { id: "dockPlayback" },
+    { id: "tabContrastBtn" }
+  ]);
+  const row3 = buildRow([
+    { id: "fsBtn" },
+    { id: "", w: menuW + (DOCK_LAYOUT_GAP * 2), h: menuH },
+    { id: "screenshotBtn" }
+  ]);
+
+  const row3CenterY = anchorY;
+  const row2CenterY = row3CenterY - (row2.down + rowGap + row3.up);
+  const row1CenterY = row2CenterY - (row1.down + rowGap + row2.up);
+
+  const p3 = placeRow(row3, row3CenterY);
+  if(!p3.ok) return { placedIds, panelPlaced: false };
+  const p2 = placeRow(row2, row2CenterY);
+  if(!p2.ok) return { placedIds, panelPlaced: false };
+  const p1 = placeRow(row1, row1CenterY);
+  if(!p1.ok) return { placedIds, panelPlaced: false };
+
+  if(!panelWrapEl || !panelMeasure || panelMeasure.w <= 0 || panelMeasure.h <= 0){
+    return { placedIds, panelPlaced: false };
+  }
+
+  const panelAnchorX = vw * 0.5;
+  const maxPanelLeft = Math.max(DOCK_LAYOUT_MARGIN, vw - DOCK_LAYOUT_MARGIN - panelMeasure.w);
+  const panelBottom = p1.top - panelGap;
+  const safe = getSceneSafeRect();
+  const safeBottom = safe ? safe.bottom : (vh * 0.5);
+  const minPanelY = Math.max(DOCK_LAYOUT_MARGIN, Math.round(safeBottom + UI_SAFE_GAP_PX + 6));
+  const maxPanelY = Math.max(minPanelY, Math.round(panelBottom - panelMeasure.h));
+  const centeredGapY = Math.round(minPanelY + ((maxPanelY - minPanelY) * 0.5));
+
+  const yCandidates = [centeredGapY, maxPanelY, minPanelY];
+  const xCandidates = [0, -16, 16, -32, 32, -48, 48];
+  let panelRect = null;
+  let panelX = 0;
+  let panelY = centeredGapY;
+
+  for(const yTry of yCandidates){
+    for(const d of xCandidates){
+      const x = clamp(Math.round(panelAnchorX - (panelMeasure.w * 0.5) + d), DOCK_LAYOUT_MARGIN, maxPanelLeft);
+      const y = clamp(Math.round(yTry), DOCK_LAYOUT_MARGIN, Math.max(DOCK_LAYOUT_MARGIN, vh - DOCK_LAYOUT_MARGIN - panelMeasure.h));
+      const rect = makeDockRect(x, y, panelMeasure.w, panelMeasure.h, 0);
+      if(fitsDockRect(rect, vw, vh, obstacles, placed)){
+        panelRect = rect;
+        panelX = x;
+        panelY = y;
+        break;
+      }
+    }
+    if(panelRect) break;
+  }
+
+  if(!panelRect){
+    // Deterministic fallback: keep buttons stable, then find any legal spot for panel.
+    const panelSpot = findDockSpot("__panel__", panelMeasure, panelAnchorX, Math.min(anchorY, maxPanelY), vw, vh, obstacles, placed, {
+      stepX: DOCK_GRID_MIN_STEP_X,
+      stepY: DOCK_GRID_MIN_STEP_Y,
+      maxRing: DOCK_PANEL_MAX_RING
+    });
+    panelX = Math.round(panelSpot.x);
+    panelY = Math.round(panelSpot.y);
+    panelRect = panelSpot.rect;
+  }
+
+  panelWrapEl.style.left = `${panelX}px`;
+  panelWrapEl.style.top = `${panelY}px`;
+  panelWrapEl.style.bottom = "auto";
+  panelWrapEl.style.transform = "none";
+  obstacles.push(panelRect);
+  placed.push(panelRect);
+  return { placedIds, panelPlaced: true };
+}
+
 function layoutDockObjects(){
   if(!dockControlBtns.length) return;
   const { w: vw, h: vh } = getViewportSize();
@@ -2385,19 +2602,18 @@ function layoutDockObjects(){
   const measuresById = new Map();
   const order = getDockLayoutOrder();
   const panelOpen = !!(document.body.dataset.uiPage && document.body.dataset.uiPage !== "none");
+  const panelInnerEl = document.getElementById("panelInner");
+  const panelRectMeasure = panelInnerEl ? panelInnerEl.getBoundingClientRect() : (panelWrapEl ? panelWrapEl.getBoundingClientRect() : null);
+  const panelMeasure = panelWrapEl ? {
+    w: Math.max(42, Math.ceil((panelRectMeasure && panelRectMeasure.width) || panelWrapEl.scrollWidth || 0)),
+    h: Math.max(24, Math.ceil((panelRectMeasure && panelRectMeasure.height) || panelWrapEl.scrollHeight || 0)),
+    tipTop: 0
+  } : null;
   for(const id of order){
     const btn = dockControlById.get(id);
     if(!btn) continue;
     const m = measureDockControl(btn);
-    if(panelOpen && id === dockActiveBtnId){
-      measuresById.set(id, {
-        w: Math.ceil(m.w * 1.08),
-        h: Math.ceil(m.h * 1.08),
-        tipTop: m.tipTop
-      });
-    }else{
-      measuresById.set(id, m);
-    }
+    measuresById.set(id, m);
   }
   const layoutCfg = {
     stepX: DOCK_GRID_MIN_STEP_X,
@@ -2406,57 +2622,12 @@ function layoutDockObjects(){
   };
   const presetPlacedIds = (!panelOpen)
     ? placePresetDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measuresById)
-    : new Set();
-  let pinnedPlaced = false;
-
-  if(panelOpen && dockPinnedBtnId){
-    const pinnedBtn = dockControlById.get(dockPinnedBtnId);
-    const pinnedMeasure = pinnedBtn ? (measuresById.get(dockPinnedBtnId) || measureDockControl(pinnedBtn)) : null;
-    if(pinnedBtn && pinnedMeasure){
-      const px = dockPinnedPos && Number.isFinite(dockPinnedPos.x)
-        ? dockPinnedPos.x
-        : (parseFloat(pinnedBtn.style.left) || pinnedBtn.getBoundingClientRect().left);
-      const py = dockPinnedPos && Number.isFinite(dockPinnedPos.y)
-        ? dockPinnedPos.y
-        : (parseFloat(pinnedBtn.style.top) || pinnedBtn.getBoundingClientRect().top);
-      const pRect = makeDockRect(Math.round(px), Math.round(py), pinnedMeasure.w, pinnedMeasure.h, pinnedMeasure.tipTop);
-      if(fitsDockRect(pRect, vw, vh, obstacles, placed)){
-        pinnedBtn.style.left = `${Math.round(px)}px`;
-        pinnedBtn.style.top = `${Math.round(py)}px`;
-        placed.push(pRect);
-        pinnedPlaced = true;
-      }else{
-        dockPinnedPos = null;
-      }
-    }
-  }
-  if(panelOpen && panelWrapEl){
-    const panelInnerEl = document.getElementById("panelInner");
-    const panelRectMeasure = panelInnerEl ? panelInnerEl.getBoundingClientRect() : panelWrapEl.getBoundingClientRect();
-    const panelMeasure = {
-      w: Math.max(42, Math.ceil(panelRectMeasure.width || panelWrapEl.scrollWidth || 0)),
-      h: Math.max(24, Math.ceil(panelRectMeasure.height || panelWrapEl.scrollHeight || 0)),
-      tipTop: 0
-    };
-    const panelSpot = findDockSpot("__panel__", panelMeasure, anchorX, anchorY, vw, vh, obstacles, placed, {
-      ...layoutCfg,
-      maxRing: DOCK_PANEL_MAX_RING
-    });
-    panelWrapEl.style.left = `${Math.round(panelSpot.x)}px`;
-    panelWrapEl.style.top = `${Math.round(panelSpot.y)}px`;
-    panelWrapEl.style.bottom = "auto";
-    panelWrapEl.style.transform = "none";
-    obstacles.push(panelSpot.rect);
-    placed.push(panelSpot.rect);
-  }
+    : (placeOpenDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measuresById, panelMeasure).placedIds || new Set());
 
   for(const id of order){
     const btn = dockControlById.get(id);
     if(!btn) continue;
-    if(!panelOpen && presetPlacedIds.has(id)){
-      continue;
-    }
-    if(panelOpen && pinnedPlaced && id === dockPinnedBtnId){
+    if(presetPlacedIds.has(id)){
       continue;
     }
     btn.classList.add("dockObject");
@@ -2596,9 +2767,6 @@ function setUiPage(next){
   setTabPressed(tabContrastBtn, finalPage === "contrast");
   setTabPressed(tabColorsBtn, finalPage === "colors");
   setTabPressed(tabSpeedBtn, finalPage === "speed");
-  if(tabColorsBtn){
-    tabColorsBtn.textContent = (finalPage === "colors") ? "turn off colors" : "colors";
-  }
   const pageToPinned = {
     language: "tabLanguageBtn",
     contrast: "tabContrastBtn",
@@ -4941,49 +5109,99 @@ function rememberRecentPhrase(p){
   scheduleSaveRecentPhrases();
 }
 
-function buildPhrase(partsSet){
+function clonePhraseParts(parts){
+  if(!parts || typeof parts !== "object") return null;
+  return {
+    desc: safeStr(parts.desc),
+    obj: safeStr(parts.obj),
+    person: safeStr(parts.person),
+    actRaw: safeStr(parts.actRaw),
+    locRaw: safeStr(parts.locRaw)
+  };
+}
+
+function buildPhrasePartsSeed(partsSet){
+  const useObj = partsSet.has("object");
+  const usePerson = partsSet.has("person") && !useObj;
+  return {
+    desc: safeStr(pickDescriptor(useObj, usePerson)),
+    obj: safeStr(pickObject()),
+    person: safeStr(pickPerson()),
+    actRaw: safeStr(pickAction()),
+    locRaw: safeStr(pickLocation())
+  };
+}
+
+function composePhraseFromParts(partsSet, partsData){
   const useDesc = partsSet.has("description");
   const useObj  = partsSet.has("object");
   const usePerson = partsSet.has("person") && !useObj;
   const useAct  = partsSet.has("action");
   const useLoc  = partsSet.has("location");
   if(!useDesc && !useObj && !usePerson && !useAct && !useLoc) return "";
+  const p = clonePhraseParts(partsData) || {
+    desc: "",
+    obj: "",
+    person: "",
+    actRaw: "",
+    locRaw: ""
+  };
 
-  let lastOut = "";
-  const MAX_TRIES = 600;
+  const desc = useDesc ? p.desc : "";
+  const obj = useObj ? p.obj : "";
+  const person = usePerson ? p.person : "";
+  let act = useAct ? p.actRaw : "";
+  let loc = useLoc ? p.locRaw : "";
 
-  for(let tries=0; tries<MAX_TRIES; tries++){
-    const desc = useDesc ? safeStr(pickDescriptor(useObj, usePerson)) : "";
-    const obj  = useObj ? safeStr(pickObject()) : "";
-    const person = usePerson ? safeStr(pickPerson()) : "";
-    let act  = useAct ? safeStr(pickAction()) : "";
-    let loc  = useLoc ? safeStr(pickLocation()) : "";
+  // If object isn't present, pronouns in action/location can map to person pronouns.
+  if(!useObj){
+    if(useAct && act) act = swapItPronounsForPerson(act);
+    if(useLoc && loc) loc = swapItPronounsForPerson(loc);
+  }
 
-    // If "object" isn't present in the sentence (person is on OR both person+object are off),
-    // treat "it/its/itself" anywhere in the phrase like a person pronoun swap.
-    if(!useObj){
-      if(useAct && act) act = swapItPronounsForPerson(act);
-      if(useLoc && loc) loc = swapItPronounsForPerson(loc);
-    }
+  let out = "";
+  if(useDesc && desc) out += desc + " ";
+  if(useObj && obj) out += obj;
+  if(usePerson && person) out += person;
+  if(useAct && act) out += (out ? " " : "") + act;
+  if(useLoc && loc) out += (out ? " " : "") + loc;
+  return out.replace(/\s+/g," ").trim();
+}
 
-    let out = "";
-    if(useDesc && desc) out += desc + " ";
-    if(useObj && obj) out += obj;
-    if(usePerson && person) out += person;
-    if(useAct && act) out += (out ? " " : "") + act;
-    if(useLoc && loc) out += (out ? " " : "") + loc;
+function buildPhrase(partsSet, opts = {}){
+  const fromCurrent = !!opts.fromCurrent;
+  const remember = opts.remember !== false;
 
-    out = out.replace(/\s+/g," ").trim();
-    if(!out) continue;
-    lastOut = out;
-
-    if(!recentPhraseSet.has(out)){
-      rememberRecentPhrase(out);
+  if(fromCurrent){
+    const currentParts = clonePhraseParts(opts.partsData || current.phraseParts);
+    if(currentParts){
+      const out = composePhraseFromParts(partsSet, currentParts);
+      if(out && remember) rememberRecentPhrase(out);
+      current.phraseParts = currentParts;
       return out;
     }
   }
 
-  if(lastOut) rememberRecentPhrase(lastOut);
+  let lastOut = "";
+  let lastParts = null;
+  const MAX_TRIES = 600;
+
+  for(let tries=0; tries<MAX_TRIES; tries++){
+    const partsData = buildPhrasePartsSeed(partsSet);
+    const out = composePhraseFromParts(partsSet, partsData);
+    if(!out) continue;
+    lastOut = out;
+    lastParts = partsData;
+
+    if(!recentPhraseSet.has(out)){
+      if(remember) rememberRecentPhrase(out);
+      current.phraseParts = clonePhraseParts(partsData);
+      return out;
+    }
+  }
+
+  if(lastParts) current.phraseParts = clonePhraseParts(lastParts);
+  if(lastOut && remember) rememberRecentPhrase(lastOut);
   return lastOut;
 }
 
@@ -5043,6 +5261,7 @@ function consumeColorFromBag(key, paletteSet, targetHex){
 /* ================= Current frame ================= */
 const current = {
   phrase: "",
+  phraseParts: null,
   bgBase: "#F7C6D0",
   fgBase: "#231423",
   bdBase: "#231423"
@@ -5066,6 +5285,7 @@ function snapshotScene(){
   }
   return {
     phrase: current.phrase,
+    phraseParts: clonePhraseParts(current.phraseParts),
     bgBase: current.bgBase,
     fgBase: current.fgBase,
     bdBase: current.bdBase,
@@ -5083,6 +5303,7 @@ function restoreSceneAt(index){
   sceneIndex = index;
 
   current.phrase = String(sc.phrase || "");
+  current.phraseParts = clonePhraseParts(sc.phraseParts);
   current.bgBase = String(sc.bgBase || current.bgBase);
   current.fgBase = String(sc.fgBase || current.fgBase);
   current.bdBase = String(sc.bdBase || current.bdBase);
@@ -5164,6 +5385,12 @@ function goPrevPoem(){
 
 function goNextPoem(){
   setPaused(true);
+  // In lock mode, "forward" should always generate a new phrase
+  // while preserving the current visual composition.
+  if(isCompositionLocked){
+    nextFrame();
+    return;
+  }
   if(sceneIndex < sceneHistory.length - 1){
     restoreSceneAt(sceneIndex + 1);
     return;
@@ -5182,19 +5409,22 @@ function setCalmStart(){
 }
 
 /* ================= UI builders ================= */
+function syncSentenceStructureUI(){
+  const container = document.getElementById("partsRow");
+  if(container){
+    Array.from(container.querySelectorAll(".ssBtn")).forEach((btn)=>{
+      const name = String(btn.dataset.part || "").toLowerCase();
+      const on = sel.parts.has(name);
+      btn.classList.toggle("on", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+}
+
 function renderSentenceButtons(){
   const container = document.getElementById("partsRow");
+  if(!container) return;
   container.innerHTML = "";
-  let stickyLabel = "";
-
-  function setPartsHoverText(t){
-    if(!partsHover) return;
-    if(t){
-      partsHover.textContent = String(t).toLowerCase();
-    }else{
-      partsHover.innerHTML = "&nbsp;";
-    }
-  }
 
   const partToPal = {
     description: "earthy",
@@ -5210,13 +5440,12 @@ function renderSentenceButtons(){
     b.type = "button";
     b.className = "ssBtn";
     b.textContent = opt;
+    b.dataset.part = opt;
 
     const palName = partToPal[opt];
     const bg = paletteColorAvoid(palName, 0, getBgLiveHex());
     b.style.setProperty("--ssPal", palName);
     b.style.setProperty("--ssBg", bg);
-
-    if(sel.parts.has(opt)) b.classList.add("on");
 
     b.addEventListener("click", ()=>{
       const isObjOrPerson = (opt === "object" || opt === "person");
@@ -5229,30 +5458,25 @@ function renderSentenceButtons(){
 
       if(sel.parts.has(opt)) sel.parts.delete(opt); else sel.parts.add(opt);
       if(sel.parts.size === 0) sel.parts.add(opt);
-
-      Array.from(container.children).forEach(btn=>{
-        const name = btn.textContent;
-        btn.classList.toggle("on", sel.parts.has(name));
-      });
-
-      stickyLabel = sel.parts.has(opt) ? "on" : "off";
-      setPartsHoverText(stickyLabel);
+      syncSentenceStructureUI();
+      updatePhraseLive();
+      showUI();
     });
 
     container.appendChild(b);
   }
 
-  container.addEventListener("mouseover", (e)=>{
-    const btn = e.target.closest(".ssBtn");
-    if(!btn) return;
-    const name = btn.textContent;
-    if(!name) return;
-    // Show the action (what clicking will do).
-    setPartsHoverText(sel.parts.has(name) ? "off" : "on");
-  });
-  container.addEventListener("mouseleave", ()=>{
-    setPartsHoverText(stickyLabel);
-  });
+  syncSentenceStructureUI();
+}
+
+function updatePhraseLive(){
+  const p = buildPhrase(sel.parts, { fromCurrent: true, remember: false });
+  current.phrase = p;
+  phraseEl.innerHTML = formatPhraseText(current.phrase);
+  last.phrase = current.phrase;
+  smartPhraseWidth();
+  applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+  commitGeneratedScene();
 }
 
 function refreshSentenceButtonColors(){
@@ -5961,15 +6185,17 @@ function applyColorsLive(){
   let fg  = applyDimmer(current.fgBase, Number(fgBrightEl.value));
   let bd  = applyDimmer(current.bdBase, Number(bdBrightEl.value));
 
-  if(bg.toLowerCase() === fg.toLowerCase()){
-    const alt = pickColorNonRepeating("fg", sel.fgColor, new Set([current.bgBase]));
-    if(alt) current.fgBase = alt;
-    fg = applyDimmer(current.fgBase, Number(fgBrightEl.value));
-  }
-  if(bd.toLowerCase() === bg.toLowerCase()){
-    const altB = pickColorNonRepeating("bd", sel.bdColor, new Set([current.bgBase, current.fgBase]));
-    if(altB) current.bdBase = altB;
-    bd = applyDimmer(current.bdBase, Number(bdBrightEl.value));
+  if(!isCompositionLocked){
+    if(bg.toLowerCase() === fg.toLowerCase()){
+      const alt = pickColorNonRepeating("fg", sel.fgColor, new Set([current.bgBase]));
+      if(alt) current.fgBase = alt;
+      fg = applyDimmer(current.fgBase, Number(fgBrightEl.value));
+    }
+    if(bd.toLowerCase() === bg.toLowerCase()){
+      const altB = pickColorNonRepeating("bd", sel.bdColor, new Set([current.bgBase, current.fgBase]));
+      if(altB) current.bdBase = altB;
+      bd = applyDimmer(current.bdBase, Number(bdBrightEl.value));
+    }
   }
 
   document.body.style.background = bg;
