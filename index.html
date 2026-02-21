@@ -41,7 +41,8 @@
       --swOuter: 1px;
       --swRing: 4px;
       --swW: calc(var(--pillH) * 2);
-      --menuTextSize: calc(14px * 1.15 * 1.05 * 1.1);
+      --uiGlobalScale: 0.9;
+      --menuTextSize: calc(14px * 1.15 * 1.05 * 1.1 * var(--uiGlobalScale));
 
       /* Global UI padding */
       --uiPadX: 30px;
@@ -152,8 +153,8 @@
       bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
       transform: translateX(-50%);
       z-index: 80;
-      width: calc(66px * 1.1);
-      height: calc(30px * 1.1);
+      width: calc(66px * 1.1 * var(--uiGlobalScale));
+      height: calc(30px * 1.1 * var(--uiGlobalScale));
       border-radius: 0;
       padding: 0;
       display:inline-flex;
@@ -255,8 +256,8 @@
 
     .lockIcons{
       position: relative;
-      width: 14px;
-      height: 14px;
+      width: calc(14px * var(--uiGlobalScale));
+      height: calc(14px * var(--uiGlobalScale));
       display:inline-block;
       flex: 0 0 auto;
       opacity: 0.72;
@@ -267,8 +268,8 @@
       transition: opacity 140ms ease;
     }
     .lockSvg{
-      width: 14px;
-      height: 14px;
+      width: calc(14px * var(--uiGlobalScale));
+      height: calc(14px * var(--uiGlobalScale));
       display:block;
       overflow: visible;
     }
@@ -552,7 +553,7 @@
     #dock .dockBtn,
     #dock .iconBtn,
     #dock .lockBtn{
-      --btnScale: 1;
+      --btnScale: var(--uiGlobalScale);
       border-radius: 0;
       border: none;
       background: var(--cardUiBg, transparent);
@@ -587,8 +588,8 @@
       border-radius: 0;
     }
     #dock .iconBtn svg{
-      width: 14px;
-      height: 14px;
+      width: calc(14px * var(--uiGlobalScale));
+      height: calc(14px * var(--uiGlobalScale));
     }
     #dock .lockBtn{
       width: calc(30px * var(--btnScale));
@@ -648,29 +649,29 @@
       transition: width .16s ease, height .16s ease, padding .16s ease, font-size .16s ease, margin-top .16s ease, left .18s ease, top .18s ease, transform .12s ease;
     }
     #dock .dockControl.dock-shrink{
-      --btnScale: 1;
+      --btnScale: var(--uiGlobalScale);
       transform: scale(1);
     }
     #dock .dockControl.dock-focus{
-      --btnScale: 1;
+      --btnScale: var(--uiGlobalScale);
       transform: scale(1);
       z-index: 62;
     }
     #dock .dockControl.dock-hover-focus{
-      --btnScale: 1;
+      --btnScale: var(--uiGlobalScale);
       transform: scale(1);
     }
     #dock .dockControl.dock-hover-shrink{
-      --btnScale: 1;
+      --btnScale: var(--uiGlobalScale);
       transform: scale(1);
     }
     /* When a panel is open, keep extra center space by shrinking non-focused controls. */
     body[data-ui-page]:not([data-ui-page="none"]) #dock .dockControl.dock-shrink{
-      --btnScale: 1;
+      --btnScale: var(--uiGlobalScale);
       transform: scale(0.9);
     }
     body[data-ui-page]:not([data-ui-page="none"]) #dock .dockControl.dock-focus{
-      --btnScale: 1;
+      --btnScale: var(--uiGlobalScale);
       transform: scale(1);
     }
     #dock .dockObject{
@@ -931,8 +932,8 @@
     .uiPage--language #partsRow .ssBtn{
       min-width: max-content;
       width: max-content;
-      height: 36px;
-      padding: 0 12px;
+      height: calc(36px * var(--uiGlobalScale));
+      padding: 0 calc(12px * var(--uiGlobalScale));
       border-radius: 0;
       border: none;
       background: var(--cardUiBg, transparent);
@@ -950,8 +951,8 @@
       box-shadow: none;
       min-width: max-content;
       width: max-content;
-      height: 18px;
-      padding: 0 8px;
+      height: calc(18px * var(--uiGlobalScale));
+      padding: 0 calc(8px * var(--uiGlobalScale));
       font-size: calc(var(--menuTextSize) * 0.6) !important;
     }
     .uiPage--language #partsRow .ssBtn.on{
@@ -960,8 +961,8 @@
       box-shadow: none;
       min-width: max-content;
       width: max-content;
-      height: 36px;
-      padding: 0 12px;
+      height: calc(36px * var(--uiGlobalScale));
+      padding: 0 calc(12px * var(--uiGlobalScale));
       font-size: calc(var(--menuTextSize) * 1.2) !important;
     }
     .uiPage--language #partsRow .ssBtn:hover,
@@ -994,12 +995,12 @@
       text-align: center;
     }
     .uiPage--info .infoHeadTile{
-      padding: 8px 10px;
+      padding: calc(8px * var(--uiGlobalScale)) calc(10px * var(--uiGlobalScale));
       width: max-content;
       max-width: 94vw;
     }
     .uiPage--info .infoBlurbTile{
-      padding: 12px 14px;
+      padding: calc(12px * var(--uiGlobalScale)) calc(14px * var(--uiGlobalScale));
       width: min(86vw, 620px);
     }
     .uiPage--info .infoTitle{
@@ -1038,11 +1039,11 @@
     .uiPage--contrast .colorsBrightnessRow{
       margin-bottom: 0;
       display:grid;
-      grid-template-columns: repeat(3, minmax(230px, 1fr));
+      grid-template-columns: repeat(3, minmax(196px, 1fr));
       gap: 10px;
     }
     .uiPage--contrast .ctrl{
-      min-width: 230px;
+      min-width: 196px;
       flex: 1 1 auto;
     }
 
@@ -1079,7 +1080,7 @@
       gap: 8px;
       min-width: 0;
       background: var(--cardUiBg, transparent);
-      padding: 9px;
+      padding: calc(9px * var(--uiGlobalScale));
     }
     .uiPage--colors .swatchGridPanel{
       background: transparent;
@@ -1093,7 +1094,7 @@
       min-height: 0;
       min-width: max-content;
       width: max-content;
-      padding: 6px 14px;
+      padding: calc(6px * var(--uiGlobalScale)) calc(14px * var(--uiGlobalScale));
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1104,7 +1105,7 @@
     }
     #panelInner .uiPage--colors .colorScopeBtn{
       font-size: var(--menuTextSize) !important;
-      padding: 6px 14px;
+      padding: calc(6px * var(--uiGlobalScale)) calc(14px * var(--uiGlobalScale));
       min-width: max-content;
       width: max-content;
     }
@@ -1112,22 +1113,22 @@
       opacity: 1;
       filter: none;
       font-size: calc(var(--menuTextSize) * 0.7) !important;
-      padding: 4px 10px !important;
+      padding: calc(4px * var(--uiGlobalScale)) calc(10px * var(--uiGlobalScale)) !important;
     }
     #panelInner .uiPage--colors .colorScopeBtn.on{
       opacity: 1;
       filter: none;
       box-shadow: none;
       font-size: var(--menuTextSize) !important;
-      padding: 6px 14px !important;
+      padding: calc(6px * var(--uiGlobalScale)) calc(14px * var(--uiGlobalScale)) !important;
     }
     #panelInner .uiPage--colors .colorScopeBtn:not(.on):active{
       font-size: calc(var(--menuTextSize) * 0.7) !important;
-      padding: 4px 10px;
+      padding: calc(4px * var(--uiGlobalScale)) calc(10px * var(--uiGlobalScale));
     }
     #panelInner .uiPage--colors .colorScopeBtn.on:active{
       font-size: var(--menuTextSize) !important;
-      padding: 6px 14px;
+      padding: calc(6px * var(--uiGlobalScale)) calc(14px * var(--uiGlobalScale));
     }
     .uiPage--colors .label,
     .uiPage--colors .val{
@@ -1221,18 +1222,18 @@
     @media(max-width: 860px){
       .uiPage--language{ max-width: min(640px, 100%); }
       .uiPage--language #partsRow .ssBtn{
-        height: 34px;
+        height: calc(34px * var(--uiGlobalScale));
       }
       .uiPage--language #partsRow .ssBtn:not(.on){
-        height: 17px;
-        padding: 0 7px;
+        height: calc(17px * var(--uiGlobalScale));
+        padding: 0 calc(7px * var(--uiGlobalScale));
       }
 
       .uiPage--contrast{
         max-width: min(640px, 100%);
       }
       .uiPage--contrast .colorsBrightnessRow{
-        grid-template-columns: repeat(2, minmax(220px, 1fr));
+        grid-template-columns: repeat(2, minmax(187px, 1fr));
       }
       .uiPage--colors{
         max-width: min(640px, 100%);
@@ -1308,10 +1309,10 @@
     .uiPage--speed .ctrl{
       background: var(--cardUiBg, transparent);
       color: var(--cardUiFg, var(--ui));
-      padding: 9px 12px;
+      padding: calc(9px * var(--uiGlobalScale)) calc(12px * var(--uiGlobalScale));
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: calc(7px * var(--uiGlobalScale));
       min-width: 0;
     }
     .uiPage--contrast .labelRow,
@@ -1330,7 +1331,7 @@
     }
     .uiPage--contrast input[type=range],
     .uiPage--speed input[type=range]{
-      height: 20px;
+      height: calc(20px * var(--uiGlobalScale));
     }
     .uiPage--contrast input[type=range]::-webkit-slider-runnable-track,
     .uiPage--speed input[type=range]::-webkit-slider-runnable-track{
@@ -1342,14 +1343,14 @@
     }
     .uiPage--contrast input[type=range]::-webkit-slider-thumb,
     .uiPage--speed input[type=range]::-webkit-slider-thumb{
-      width: 12px;
-      height: 12px;
-      margin-top: -4.5px;
+      width: calc(12px * var(--uiGlobalScale));
+      height: calc(12px * var(--uiGlobalScale));
+      margin-top: calc(-4.5px * var(--uiGlobalScale));
     }
     .uiPage--contrast input[type=range]::-moz-range-thumb,
     .uiPage--speed input[type=range]::-moz-range-thumb{
-      width: 12px;
-      height: 12px;
+      width: calc(12px * var(--uiGlobalScale));
+      height: calc(12px * var(--uiGlobalScale));
     }
 
     /* Dock buttons stay fully visible in the unified card-color style. */
@@ -1631,7 +1632,7 @@
                   <div class="infoTitle">Sculpture Poems by Margot DeMarco</div>
                 </div>
                 <div class="infoBlurbTile">
-                  <p>These poems are randomly generated object-focused sculptural scenes. All language is drawn from a large bank of words written by the artist and continuously reshuffled. Viewer can adjust the sentence structure of the phrase, as well as how the phrase looks visually.</p>
+                  <p>These poems are randomly generated object-focused sculptural scenes, continuously reshuffled. All language is drawn from a large bank of words written by the artist. Viewer can adjust the sentence structure of the poems, as well as how they look visually.</p>
                 </div>
               </div>
             </section>
