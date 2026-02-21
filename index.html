@@ -929,7 +929,8 @@
       align-items:center;
     }
     .uiPage--language #partsRow .ssBtn{
-      min-width: 118px;
+      min-width: max-content;
+      width: max-content;
       height: 36px;
       padding: 0 12px;
       border-radius: 0;
@@ -941,22 +942,24 @@
       letter-spacing: .02em;
       font-size: calc(var(--menuTextSize) * 1.2) !important;
       line-height: 1;
-      transition: min-width .12s ease, height .12s ease, padding .12s ease, font-size .12s ease;
+      transition: height .12s ease, padding .12s ease, font-size .12s ease;
     }
     .uiPage--language #partsRow .ssBtn:not(.on){
       opacity: 1;
       filter: none;
       box-shadow: none;
-      min-width: 59px;
+      min-width: max-content;
+      width: max-content;
       height: 18px;
-      padding: 0 6px;
+      padding: 0 8px;
       font-size: calc(var(--menuTextSize) * 0.6) !important;
     }
     .uiPage--language #partsRow .ssBtn.on{
       opacity: 1;
       filter: none;
       box-shadow: none;
-      min-width: 118px;
+      min-width: max-content;
+      width: max-content;
       height: 36px;
       padding: 0 12px;
       font-size: calc(var(--menuTextSize) * 1.2) !important;
@@ -1088,7 +1091,8 @@
     .uiPage--colors .colorScopeBtn{
       height: auto;
       min-height: 0;
-      min-width: 0;
+      min-width: max-content;
+      width: max-content;
       padding: 6px 14px;
       display: inline-flex;
       align-items: center;
@@ -1101,6 +1105,8 @@
     #panelInner .uiPage--colors .colorScopeBtn{
       font-size: var(--menuTextSize) !important;
       padding: 6px 14px;
+      min-width: max-content;
+      width: max-content;
     }
     #panelInner .uiPage--colors .colorScopeBtn:not(.on){
       opacity: 1;
@@ -1215,13 +1221,11 @@
     @media(max-width: 860px){
       .uiPage--language{ max-width: min(640px, 100%); }
       .uiPage--language #partsRow .ssBtn{
-        min-width: 108px;
         height: 34px;
       }
       .uiPage--language #partsRow .ssBtn:not(.on){
-        min-width: 54px;
         height: 17px;
-        padding: 0 5px;
+        padding: 0 7px;
       }
 
       .uiPage--contrast{
@@ -1248,6 +1252,11 @@
     }
     @media(max-width: 640px){
       .uiPage--contrast .colorsBrightnessRow{ grid-template-columns: 1fr; }
+    }
+
+    #panelInner .uiPage button{
+      overflow: hidden;
+      text-overflow: clip;
     }
 
     /* ===== Mobile landscape ===== */
