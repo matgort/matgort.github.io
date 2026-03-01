@@ -33,6 +33,8 @@
       --fitScale: 1;
       --sceneZoom: 1;
       --yPct: 50%;
+      --basePhraseLiftPx: 10px;
+      --uiPhraseLiftPx: 0px;
       --phraseW: 75vw;
       --edgePad: 50px;
 
@@ -94,7 +96,7 @@
     #phrase{
       position:absolute;
       left:50%;
-      top: var(--yPct);
+      top: calc(var(--yPct) - var(--basePhraseLiftPx) - var(--uiPhraseLiftPx));
       transform: translate(-50%, -50%);
       user-select:none;
 
@@ -125,7 +127,7 @@
     #card{
       position:absolute;
       left:50%;
-      top: var(--yPct);
+      top: calc(var(--yPct) - var(--basePhraseLiftPx) - var(--uiPhraseLiftPx));
       transform: translate(-50%, -50%);
       background: transparent;
       pointer-events: none;
@@ -264,7 +266,17 @@
       height: calc(14px * var(--uiGlobalScale));
       display:inline-block;
       flex: 0 0 auto;
-      opacity: 0.72;
+      opacity: 0.86;
+      transform: scale(1);
+      transform-origin: center center;
+      transition: transform 140ms ease, opacity 140ms ease;
+    }
+    .lockBtn:not(.locked):hover .lockIcons{
+      opacity: 1;
+    }
+    .lockBtn.locked .lockIcons{
+      transform: scale(1.34);
+      opacity: 1;
     }
     .lockIcons .lockSvg{
       position:absolute;
@@ -281,10 +293,6 @@
     .lockBtn .lockSvg--closed{ opacity: 0; }
     .lockBtn.locked .lockSvg--open{ opacity: 0; }
     .lockBtn.locked .lockSvg--closed{ opacity: 1; }
-    .lockBtn:not(.locked):hover .lockSvg--open{ opacity: 0; }
-    .lockBtn:not(.locked):hover .lockSvg--closed{ opacity: 1; }
-    .lockBtn.locked:hover .lockSvg--open{ opacity: 1; }
-    .lockBtn.locked:hover .lockSvg--closed{ opacity: 0; }
 
     @media (hover: hover) and (pointer: fine){
       .lockBtn[data-tip]::after{
@@ -596,12 +604,22 @@
       height: calc(14px * var(--uiGlobalScale));
     }
     #dock .lockBtn{
-      width: calc(30px * var(--btnScale));
-      height: calc(30px * var(--btnScale));
+      width: calc(28px * var(--btnScale));
+      height: calc(28px * var(--btnScale));
       padding: 0;
+      transition: width .14s ease, height .14s ease;
+    }
+    #dock .lockBtn.locked{
+      width: calc(36px * var(--btnScale));
+      height: calc(36px * var(--btnScale));
     }
     #dock .lockIcons{
       opacity: 1;
+      transform: scale(1);
+      transition: transform 140ms ease, opacity 140ms ease;
+    }
+    #dock .lockBtn.locked .lockIcons{
+      transform: scale(1.28);
     }
     #panelInner .uiPage .label,
     #panelInner .uiPage .val{
@@ -650,7 +668,7 @@
       z-index: 60;
       transform: scale(1);
       transform-origin: center center;
-      transition: width .16s ease, height .16s ease, padding .16s ease, font-size .16s ease, margin-top .16s ease, left .18s ease, top .18s ease, transform .12s ease;
+      transition: none;
     }
     #dock .dockControl.dock-shrink{
       --btnScale: var(--uiGlobalScale);
@@ -1373,7 +1391,7 @@
       color: var(--thumbCol, var(--fg));
       margin:0;
       padding:0;
-      touch-action: none;
+      touch-action: pan-x;
     }
     input[type=range]::-webkit-slider-runnable-track{
       height:2px;
@@ -1538,14 +1556,30 @@
   }
   .uiPage--language #partsRow .ssBtn,
   .uiPage--language #partsRow .ssBtn.on{
-    height: calc(24px * var(--uiGlobalScale));
-    padding: 0 calc(6px * var(--uiGlobalScale));
-    font-size: calc(var(--menuTextSize) * 0.54) !important;
+    height: calc(30px * var(--uiGlobalScale));
+    padding: 0 calc(14px * var(--uiGlobalScale));
+    font-size: var(--menuTextSize) !important;
   }
   .uiPage--language #partsRow .ssBtn:not(.on){
-    height: calc(20px * var(--uiGlobalScale));
-    padding: 0 calc(5px * var(--uiGlobalScale));
-    font-size: calc(var(--menuTextSize) * 0.48) !important;
+    height: calc(22px * var(--uiGlobalScale));
+    padding: 0 calc(10px * var(--uiGlobalScale));
+    font-size: calc(var(--menuTextSize) * 0.7) !important;
+  }
+
+  .uiPage--info{
+    max-width: min(100vw - 8px, 980px);
+  }
+  .uiPage--info .infoGroup{
+    width: min(96vw, 980px);
+    max-width: 96vw;
+  }
+  .uiPage--info .infoHeadTile,
+  .uiPage--info .infoBlurbTile{
+    width: min(96vw, 980px);
+    max-width: 96vw;
+  }
+  .uiPage--info .infoBlurbTile p{
+    white-space: normal;
   }
 }
     
@@ -1672,9 +1706,7 @@
                   <div class="infoTitle">Sculpture Poems by Margot DeMarco</div>
                 </div>
                 <div class="infoBlurbTile">
-                  <p>These poems are written by the artist, but their elements are continuously reshuffled.</p>
-                  <p>Each poem is randomly assembled into a sculptural, object-focused scene.</p>
-                  <p>The viewer can adjust the sentence structure of the poems, as well as their visual appearance.</p>
+                  <p>These poems are written by the artist, but their elements are continuously reshuffled. Each poem is randomly assembled into a sculptural, object-focused scene. The viewer can adjust the sentence structure of the poems, as well as their visual appearance.</p>
                 </div>
               </div>
             </section>
@@ -1807,9 +1839,8 @@ function applyIosPortraitLoadSizing(){
   widthEl.value = String(clamp(Math.max(Number(widthEl.value), 52), 0, 100));
 }
 
-function applyMobileViewerDefaults(){
-  if(!isMobileMode()) return;
-  // Keep the poem vertically centered on the full mobile viewport.
+function applyLoadViewerDefaults(){
+  // Always start centered; base lift keeps it a hair above true center.
   yEl.value = "50";
 }
 
@@ -2359,16 +2390,8 @@ function clearPanelFloatingTiles(){
 }
 
 function getPanelTopBounds(vh, blockH, panelTopLimit){
-  const { w: vw } = getViewportSize();
   const safe = getSceneSafeRect();
-  if(shouldUseBandedMobileLayout(vw, vh) && safe){
-    const minTopBand = DOCK_LAYOUT_MARGIN;
-    const topZoneBottom = Math.max(minTopBand, Math.round(safe.top - UI_SAFE_GAP_PX - 6));
-    const maxTopBand = Math.max(minTopBand, topZoneBottom - blockH);
-    if(maxTopBand >= minTopBand){
-      return { minTop: minTopBand, maxTop: maxTopBand };
-    }
-  }
+  // Keep adjustment layers below the phrase/card safe zone.
   const safeBottom = safe ? safe.bottom : Math.round(vh * 0.40);
   const minTop = Math.max(
     DOCK_LAYOUT_MARGIN,
@@ -2719,9 +2742,14 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, opts =
     return a.idx - b.idx;
   });
 
-  let baseY = Math.round(anchorY - 12);
+  const safe = getSceneSafeRect();
+  const panelMinTop = safe
+    ? Math.max(DOCK_LAYOUT_MARGIN, Math.round(safe.bottom + UI_SAFE_GAP_PX + 8))
+    : DOCK_LAYOUT_MARGIN;
+
+  let baseY = Math.max(panelMinTop, Math.round(anchorY - 12));
   if(Number.isFinite(panelTopLimit)){
-    baseY = Math.min(baseY, Math.round(panelTopLimit - 24));
+    baseY = Math.max(panelMinTop, Math.min(baseY, Math.round(panelTopLimit - 24)));
   }
   for(const item of ordered){
     let spot = findDockSpot(
@@ -2740,7 +2768,7 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, opts =
       }
     );
 
-    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, obstacles, placed)){
+    if(!spot || !spot.rect || spot.rect.top < panelMinTop || !fitsDockRect(spot.rect, vw, vh, obstacles, placed)){
       spot = null;
       const fallbackCandidates = buildPanelCandidates(DOCK_PANEL_MAX_RING + 28);
       for(const c of fallbackCandidates){
@@ -2748,6 +2776,7 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, opts =
         const cy = baseY + (c.row * DOCK_GRID_MIN_STEP_Y);
         const x = Math.round(cx - (item.measure.w * 0.5));
         const y = Math.round(cy - (item.measure.h * 0.5));
+        if(y < panelMinTop) continue;
         const rect = makeDockRect(x, y, item.measure.w, item.measure.h, 0);
         if(!fitsDockRect(rect, vw, vh, obstacles, placed)) continue;
         spot = { x, y, rect };
@@ -2755,7 +2784,7 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, opts =
       }
     }
 
-    if(!spot || !spot.rect || !fitsDockRect(spot.rect, vw, vh, obstacles, placed)){
+    if(!spot || !spot.rect || spot.rect.top < panelMinTop || !fitsDockRect(spot.rect, vw, vh, obstacles, placed)){
       // Keep strict no-overlap behavior on cramped screens.
       item.el.style.opacity = "0";
       item.el.style.pointerEvents = "none";
@@ -3420,14 +3449,186 @@ function placeDockForViewport(){
   // Prevent empty hosts from affecting layout.
   target.style.display = "";
   other.style.display = "none";
+  // Run one immediate pass so controls never flash at top-of-screen on load.
+  layoutDockObjects();
   scheduleDockLayout();
   scheduleUiSafeUpdate();
+  schedulePhraseUiLift();
   scheduleMobileCentering();
 }
 
 /* ================= Mobile UI pages ================= */
 const UI_PAGES = ["none","language","info","contrast","colors","speed"];
 let uiPage = "none";
+const UI_PHRASE_LIFT_PX = 18;
+const UI_PHRASE_LIFT_PANEL_PX = 34;
+const UI_PHRASE_SAFE_GAP_PX = 12;
+let infoBlurbFitRaf = 0;
+let phraseLiftRaf = 0;
+
+function getUiPhraseLiftTargetPx(){
+  const uiHidden = uiWrapEl.classList.contains("hidden");
+  if(uiHidden) return 0;
+  const pageOpen = !!(document.body.dataset.uiPage && document.body.dataset.uiPage !== "none");
+  return pageOpen ? UI_PHRASE_LIFT_PANEL_PX : UI_PHRASE_LIFT_PX;
+}
+
+function getAdjustmentLayerTopPx(){
+  const page = String(document.body.dataset.uiPage || "none");
+  if(page === "none") return null;
+
+  let top = Infinity;
+  const considerRect = (r)=>{
+    if(!r) return;
+    if(!(r.width > 0 && r.height > 0)) return;
+    if(!Number.isFinite(r.top)) return;
+    top = Math.min(top, r.top);
+  };
+
+  if(panelWrapEl && !panelWrapEl.classList.contains("panel-tiles")){
+    const s = getComputedStyle(panelWrapEl);
+    if(s.opacity !== "0" && s.pointerEvents !== "none"){
+      considerRect(panelWrapEl.getBoundingClientRect());
+    }
+  }
+
+  if(panelInnerEl){
+    panelInnerEl.querySelectorAll(".panelTileFloat").forEach((el)=>{
+      considerRect(el.getBoundingClientRect());
+    });
+  }
+
+  return Number.isFinite(top) ? top : null;
+}
+
+function getSceneContentBottomPx(){
+  const cardShown = !!cardEl && getComputedStyle(cardEl).display !== "none";
+  const r = cardShown ? cardEl.getBoundingClientRect() : (phraseInkBounds() || phraseEl.getBoundingClientRect());
+  if(!r || !Number.isFinite(r.bottom)) return null;
+  return r.bottom;
+}
+
+function getLowerUiTopPx(){
+  let top = Infinity;
+  const consider = (el)=>{
+    if(!el) return;
+    const r = el.getBoundingClientRect();
+    if(!(r.width > 0 && r.height > 0)) return;
+    const cs = getComputedStyle(el);
+    if(cs.display === "none" || cs.visibility === "hidden") return;
+    if((parseFloat(cs.opacity) || 0) <= 0.01) return;
+    top = Math.min(top, r.top);
+  };
+
+  const uiVisible = !!uiWrapEl && !uiWrapEl.classList.contains("hidden");
+  if(uiVisible){
+    document.querySelectorAll("#dock .dockControl").forEach((el)=>{
+      if(!el.style.left || !el.style.top) return;
+      consider(el);
+    });
+    if(panelWrapEl && document.body.dataset.uiPage && document.body.dataset.uiPage !== "none" && !panelWrapEl.classList.contains("panel-tiles")){
+      consider(panelWrapEl);
+    }
+    if(panelInnerEl){
+      panelInnerEl.querySelectorAll(".panelTileFloat").forEach(consider);
+    }
+  }else if(menuToggleBtn && (menuToggleBtn.classList.contains("show") || menuToggleBtn.classList.contains("on"))){
+    consider(menuToggleBtn);
+  }
+
+  return Number.isFinite(top) ? top : null;
+}
+
+function clampYPctToUiBoundary(nextY){
+  const desired = clamp(Number(nextY), 0, 100);
+  const uiTop = getLowerUiTopPx();
+  if(uiTop == null) return desired;
+
+  const { h } = getViewportSize();
+  if(!Number.isFinite(h) || h <= 0) return desired;
+
+  const scene = getSceneSafeRect();
+  if(!scene || !Number.isFinite(scene.bottom)) return desired;
+
+  const currentY = clamp(Number(yEl.value), 0, 100);
+  const limitBottom = uiTop - UI_SAFE_GAP_PX;
+  const maxDeltaYPct = ((limitBottom - scene.bottom) / h) * 100;
+  const maxY = clamp(currentY + maxDeltaYPct, 0, 100);
+
+  return Math.min(desired, maxY);
+}
+
+function syncPhraseUiLift(){
+  const baseLift = getUiPhraseLiftTargetPx();
+  const setLift = (v)=>{
+    const px = Math.max(0, Math.round(Number(v) || 0));
+    document.documentElement.style.setProperty("--uiPhraseLiftPx", px + "px");
+  };
+
+  setLift(baseLift);
+  applyCardStyle(getCardLiveColor());
+
+  const layerTop = getAdjustmentLayerTopPx();
+  if(layerTop == null) return;
+
+  const sceneBottom = getSceneContentBottomPx();
+  if(sceneBottom == null) return;
+
+  const needed = (sceneBottom + UI_PHRASE_SAFE_GAP_PX) - layerTop;
+  if(needed <= 0.5) return;
+
+  setLift(baseLift + needed);
+  applyCardStyle(getCardLiveColor());
+}
+
+function schedulePhraseUiLift(){
+  if(phraseLiftRaf) return;
+  phraseLiftRaf = requestAnimationFrame(()=>{
+    phraseLiftRaf = 0;
+    syncPhraseUiLift();
+    requestAnimationFrame(syncPhraseUiLift);
+  });
+}
+
+function fitInfoBlurbLines(){
+  const tile = document.querySelector(".uiPage--info .infoBlurbTile");
+  if(!tile) return;
+  const lines = Array.from(tile.querySelectorAll("p"));
+  if(!lines.length) return;
+
+  lines.forEach((line)=>{
+    line.style.removeProperty("font-size");
+  });
+
+  if(!isMobileMode()) return;
+
+  const tileStyles = getComputedStyle(tile);
+  const padX = (parseFloat(tileStyles.paddingLeft) || 0) + (parseFloat(tileStyles.paddingRight) || 0);
+  const avail = Math.max(1, tile.clientWidth - padX);
+  let maxLineW = 0;
+  lines.forEach((line)=>{
+    maxLineW = Math.max(maxLineW, line.scrollWidth || 0);
+  });
+  if(maxLineW <= 0) return;
+
+  const scale = clamp((avail * 0.985) / maxLineW, 0.55, 1);
+  if(scale >= 0.999) return;
+
+  const baseFont = parseFloat(getComputedStyle(lines[0]).fontSize) || 12;
+  const nextFont = Math.max(7, baseFont * scale);
+  lines.forEach((line)=>{
+    line.style.fontSize = nextFont.toFixed(2) + "px";
+  });
+}
+
+function scheduleInfoBlurbFit(){
+  if(infoBlurbFitRaf) return;
+  infoBlurbFitRaf = requestAnimationFrame(()=>{
+    infoBlurbFitRaf = 0;
+    fitInfoBlurbLines();
+  });
+}
+
 function setTabPressed(btn, on){
   if(!btn) return;
   btn.classList.toggle("on", on);
@@ -3470,7 +3671,9 @@ function setUiPage(next){
   // Keep the sliding panel out of the phrase/card region (especially on mobile landscape).
   syncMenuTogglePosition();
   scheduleUiSafeUpdate();
+  schedulePhraseUiLift();
   scheduleMobileCentering();
+  scheduleInfoBlurbFit();
 }
 
 /* ================= UI Safe Zone (Never Overlap Phrase/Card) ================= */
@@ -3561,14 +3764,18 @@ const sceneSwipe = {
   startX: 0,
   startY: 0,
   lastX: 0,
-  lastY: 0
+  lastY: 0,
+  startYPct: 50,
+  axis: "none"
 };
 const SCENE_SWIPE_MIN_DX = 48;
 const SCENE_SWIPE_AXIS_RATIO = 1.35;
+const SCENE_DRAG_LOCK_PX = 8;
 
 function resetSceneSwipe(){
   sceneSwipe.active = false;
   sceneSwipe.pointerId = null;
+  sceneSwipe.axis = "none";
 }
 
 function setSceneZoom(next){
@@ -3577,7 +3784,7 @@ function setSceneZoom(next){
   if(Math.abs(z - sceneZoom) < 0.0005) return;
   sceneZoom = z;
   document.documentElement.style.setProperty("--sceneZoom", sceneZoom.toFixed(3));
-  applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+  applyCardStyle(getCardLiveColor());
 }
 
 function pointInRect(x, y, r){
@@ -3622,39 +3829,75 @@ function onScenePointerDown(e){
   if(e.pointerType === "mouse" && e.button !== 0) return;
   if(isUiTarget(e.target)) return;
 
-  const inScene = pointInRect(e.clientX, e.clientY, getSceneGestureRect());
+  const inGestureRect = pointInRect(e.clientX, e.clientY, getSceneGestureRect());
   const allowSecondTouch = sceneGesture.active && sceneGesture.pointers.size === 1 && e.pointerType !== "mouse";
-  if(!inScene && !allowSecondTouch) return;
 
-  sceneGesture.active = true;
-  sceneGesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  refreshSceneGestureMode();
+  if(inGestureRect || allowSecondTouch){
+    resetSceneSwipe();
+    sceneGesture.active = true;
+    sceneGesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    refreshSceneGestureMode();
 
-  if(sceneGesture.pointers.size === 1 && e.pointerType !== "mouse"){
+    if(e.target && typeof e.target.setPointerCapture === "function"){
+      try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
+    }
+    e.preventDefault();
+    return;
+  }
+
+  // Background interactions: horizontal swipe = playback, vertical drag = phrase Y position.
+  if(!sceneGesture.active && !sceneSwipe.active){
     sceneSwipe.active = true;
     sceneSwipe.pointerId = e.pointerId;
     sceneSwipe.startX = e.clientX;
     sceneSwipe.startY = e.clientY;
     sceneSwipe.lastX = e.clientX;
     sceneSwipe.lastY = e.clientY;
-  }else if(sceneGesture.pointers.size > 1){
-    resetSceneSwipe();
-  }
+    sceneSwipe.startYPct = clamp(Number(yEl.value), 0, 100);
+    sceneSwipe.axis = "none";
 
-  if(e.target && typeof e.target.setPointerCapture === "function"){
-    try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
+    if(e.target && typeof e.target.setPointerCapture === "function"){
+      try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
+    }
+    e.preventDefault();
   }
-  e.preventDefault();
 }
 
 function onScenePointerMove(e){
-  if(!sceneGesture.pointers.has(e.pointerId)) return;
-  sceneGesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
   if(sceneSwipe.active && sceneSwipe.pointerId === e.pointerId){
     sceneSwipe.lastX = e.clientX;
     sceneSwipe.lastY = e.clientY;
+
+    const dx = sceneSwipe.lastX - sceneSwipe.startX;
+    const dy = sceneSwipe.lastY - sceneSwipe.startY;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    if(sceneSwipe.axis === "none"){
+      if(absDy >= SCENE_DRAG_LOCK_PX && absDy > (absDx * 1.05)){
+        sceneSwipe.axis = "vertical";
+      }else if(absDx >= SCENE_DRAG_LOCK_PX && absDx > (absDy * 1.05)){
+        sceneSwipe.axis = "horizontal";
+      }
+    }
+
+    if(sceneSwipe.axis === "vertical"){
+      const { h } = getViewportSize();
+      if(Number.isFinite(h) && h > 0){
+        const nextY = clampYPctToUiBoundary(clamp(sceneSwipe.startYPct + ((dy / h) * 100), 0, 100));
+        yEl.value = String(nextY);
+        document.documentElement.style.setProperty("--yPct", nextY + "%");
+        yVal.textContent = Math.round(nextY) + "%";
+        syncPhraseUiLift();
+      }
+    }
+
+    e.preventDefault();
+    return;
   }
+
+  if(!sceneGesture.pointers.has(e.pointerId)) return;
+  sceneGesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
   if(sceneGesture.pointers.size > 1){
     resetSceneSwipe();
@@ -3679,38 +3922,38 @@ function onScenePointerMove(e){
 }
 
 function onScenePointerEnd(e){
-  if(!sceneGesture.pointers.has(e.pointerId)) return;
-
-  let swipeDir = 0;
-  if(
-    sceneSwipe.active &&
-    sceneSwipe.pointerId === e.pointerId &&
-    e.pointerType !== "mouse" &&
-    sceneGesture.pointers.size === 1
-  ){
-    const dx = sceneSwipe.lastX - sceneSwipe.startX;
-    const dy = sceneSwipe.lastY - sceneSwipe.startY;
-    const absDx = Math.abs(dx);
-    const absDy = Math.abs(dy);
-    if(absDx >= SCENE_SWIPE_MIN_DX && absDx >= (absDy * SCENE_SWIPE_AXIS_RATIO)){
-      swipeDir = dx < 0 ? -1 : 1;
+  if(sceneSwipe.active && sceneSwipe.pointerId === e.pointerId){
+    let swipeDir = 0;
+    if(sceneSwipe.axis !== "vertical"){
+      const dx = sceneSwipe.lastX - sceneSwipe.startX;
+      const dy = sceneSwipe.lastY - sceneSwipe.startY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+      if(absDx >= SCENE_SWIPE_MIN_DX && absDx >= (absDy * SCENE_SWIPE_AXIS_RATIO)){
+        swipeDir = dx < 0 ? -1 : 1;
+      }
     }
+
+    if(e.target && typeof e.target.releasePointerCapture === "function"){
+      try{ e.target.releasePointerCapture(e.pointerId); }catch(_){}
+    }
+    resetSceneSwipe();
+
+    if(swipeDir !== 0){
+      setDockActiveButton("dockPlayback");
+      if(swipeDir < 0) goPrevPoem(); else goNextPoem();
+      showUI();
+    }
+    return;
   }
+
+  if(!sceneGesture.pointers.has(e.pointerId)) return;
 
   sceneGesture.pointers.delete(e.pointerId);
   if(e.target && typeof e.target.releasePointerCapture === "function"){
     try{ e.target.releasePointerCapture(e.pointerId); }catch(_){}
   }
-  if(sceneSwipe.pointerId === e.pointerId){
-    resetSceneSwipe();
-  }
   refreshSceneGestureMode();
-
-  if(swipeDir !== 0){
-    setDockActiveButton("dockPlayback");
-    if(swipeDir < 0) goPrevPoem(); else goNextPoem();
-    showUI();
-  }
 }
 
 /* ================= Selection state ================= */
@@ -6335,12 +6578,10 @@ function toggleCompositionLock(){
 
 function goPrevPoem(){
   if(sceneIndex <= 0) return;
-  setPaused(true);
   restoreSceneAt(sceneIndex - 1);
 }
 
 function goNextPoem(){
-  setPaused(true);
   // In lock mode, "forward" should always generate a new phrase
   // while preserving the current visual composition.
   if(isCompositionLocked){
@@ -6426,7 +6667,7 @@ function updatePhraseLive(){
   phraseEl.innerHTML = formatPhraseText(current.phrase);
   last.phrase = current.phrase;
   smartPhraseWidth();
-  applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+  applyCardStyle(getCardLiveColor());
   scheduleMobileCentering();
   commitGeneratedScene();
 }
@@ -6439,9 +6680,9 @@ function refreshSentenceButtonColors(){
 }
 
 let colorScope = "bd"; // bg | fg | bd
-const ALL_OFF_BG_HEX = "#4d4d4d";
+const ALL_OFF_BG_HEX = "#999999";
 const ALL_OFF_BD_HEX = "#999999";
-const ALL_OFF_FG_HEX = "#ffffff";
+const ALL_OFF_FG_HEX = "#999999";
 
 function isAllOffState(){
   return (
@@ -6455,6 +6696,12 @@ function toPureGrayHex(hex){
   const { r, g, b } = hexToRgb(String(hex || "#000000"));
   const y = Math.round((r * 0.2126) + (g * 0.7152) + (b * 0.0722));
   return rgbToHex(y, y, y);
+}
+
+function getCardLiveColor(){
+  let bd = applyDimmer(current.bdBase, Number(bdBrightEl.value));
+  if(isAllOffState()) bd = toPureGrayHex(bd);
+  return normHex(bd || current.bdBase || "#000000");
 }
 
 function getColorScopeSet(scope = colorScope){
@@ -6574,12 +6821,20 @@ function renderAllSwatches(){
 
     sw.addEventListener("click", ()=>{
       const setRef = getColorScopeSet(colorScope);
+      const total = ALL_SWATCH_COLORS.length;
+      const isAllOn = setRef.size >= total;
       const on = setRef.has(hex);
-      if(on){
-        setRef.delete(hex);
-      }else{
+
+      // First click isolates a single swatch; later clicks add/remove within that subset.
+      if(isAllOn){
+        setRef.clear();
         setRef.add(hex);
+      }else if(!on){
+        setRef.add(hex);
+      }else if(setRef.size > 1){
+        setRef.delete(hex);
       }
+
       ensureCurrentBaseColorsValid();
       applyColorsLive();
       syncAllSwatchSelection();
@@ -6600,7 +6855,7 @@ function refreshSwatchColors(){
 }
 
 function applyButtonColors(){
-  const cardLive = normHex(current.bdLive || applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+  const cardLive = normHex(current.bdLive || getCardLiveColor());
   const uiFg = normHex(current.fgLive || getFgLiveHex() || "#000000");
 
   document.documentElement.style.setProperty("--cardUiBg", cardLive);
@@ -6680,7 +6935,9 @@ function applyTypeAndLayout(){
   document.documentElement.style.setProperty("--textScale", scale);
   sizeVal.textContent = `${Math.round(sizePct)}%`;
 
-  const y = clamp(Number(yEl.value), 0, 100);
+  const yInput = clamp(Number(yEl.value), 0, 100);
+  const y = clampYPctToUiBoundary(yInput);
+  if(Math.abs(y - yInput) > 0.001) yEl.value = String(y);
   document.documentElement.style.setProperty("--yPct", `${y}%`);
   yVal.textContent = `${Math.round(y)}%`;
 
@@ -6714,6 +6971,10 @@ function phraseInkBounds(){
   return { left, right, top, bottom, width: right - left, height: bottom - top };
 }
 
+function getTotalPhraseLiftPx(){
+  return getRootVarPx("--basePhraseLiftPx") + getRootVarPx("--uiPhraseLiftPx");
+}
+
 let centerPoemMidpointBusy = false;
 function centerPoemMidpointIfMobile(){
   if(!isMobileMode()) return;
@@ -6728,19 +6989,19 @@ function centerPoemMidpointIfMobile(){
   if(!r || !Number.isFinite(r.top) || !Number.isFinite(r.bottom)) return;
 
   const mid = (r.top + r.bottom) * 0.5;
-  const target = h * 0.5;
+  const target = (h * 0.5) - getTotalPhraseLiftPx();
   const dy = target - mid;
   if(Math.abs(dy) < 0.5) return;
 
   const currentY = clamp(Number(yEl.value), 0, 100);
-  const nextY = clamp(currentY + ((dy / h) * 100), 0, 100);
+  const nextY = clampYPctToUiBoundary(clamp(currentY + ((dy / h) * 100), 0, 100));
   if(Math.abs(nextY - currentY) < 0.01) return;
 
   centerPoemMidpointBusy = true;
   yEl.value = String(nextY);
   document.documentElement.style.setProperty("--yPct", `${nextY}%`);
   yVal.textContent = `${Math.round(nextY)}%`;
-  applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+  applyCardStyle(getCardLiveColor());
   centerPoemMidpointBusy = false;
 }
 
@@ -6759,25 +7020,25 @@ function scheduleMobileCentering(){
 function fitPhraseToBox(){
   if(Math.abs(sceneZoom - 1) > 0.001){
     // Keep manual drag/pinch zoom authoritative.
-    applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+    applyCardStyle(getCardLiveColor());
     return;
   }
 
   const sizePct = clamp(Number(sizeEl.value), 0, 150);
   if(sizePct <= 0){
     document.documentElement.style.setProperty("--fitScale", "1");
-    applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+    applyCardStyle(getCardLiveColor());
     return;
   }
   if(sizePct >= 150){
     document.documentElement.style.setProperty("--fitScale", "1");
-    applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+    applyCardStyle(getCardLiveColor());
     return;
   }
   const text = (phraseEl.textContent || "").trim();
   if(!text){
     document.documentElement.style.setProperty("--fitScale", "1");
-    applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+    applyCardStyle(getCardLiveColor());
     return;
   }
 
@@ -6785,7 +7046,7 @@ function fitPhraseToBox(){
   const rect = phraseInkBounds() || phraseEl.getBoundingClientRect();
   if(rect.width <= 0 || rect.height <= 0){
     document.documentElement.style.setProperty("--fitScale", "1");
-    applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+    applyCardStyle(getCardLiveColor());
     return;
   }
 
@@ -6802,7 +7063,7 @@ function fitPhraseToBox(){
   scale = clamp(scale, 0.01, 1);
 
   document.documentElement.style.setProperty("--fitScale", scale.toFixed(3));
-  applyCardStyle(applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+  applyCardStyle(getCardLiveColor());
 }
 
 function widenPhraseToAvoidOverfullLines(){
@@ -7454,10 +7715,12 @@ function showUI(){
   if(menuToggleBtn) menuToggleBtn.classList.add("show");
   syncMenuTogglePosition();
   scheduleUiSafeUpdate();
+  schedulePhraseUiLift();
   scheduleMobileCentering();
+  scheduleInfoBlurbFit();
   scheduleHideUI();
 }
-function hideUI(showMenuPeek = true){
+function hideUI(showMenuPeek = true, recenterPhrase = false){
   if(hideTimer) clearTimeout(hideTimer);
   hideTimer = null;
   // Closing the UI always returns to the submenu layer (no slider/swatch page left open).
@@ -7473,13 +7736,19 @@ function hideUI(showMenuPeek = true){
     menuFadeTimer = null;
     menuToggleBtn.classList.remove("show");
   }
+  if(recenterPhrase){
+    yEl.value = "50";
+    document.documentElement.style.setProperty("--yPct", "50%");
+    yVal.textContent = "50%";
+  }
+  schedulePhraseUiLift();
   scheduleMobileCentering();
 }
 function toggleUI(){
   if(uiWrapEl.classList.contains("hidden")){
     showUI();
   }else{
-    hideUI(false);
+    hideUI(false, true);
   }
 }
 function wakeMenuIfUiHidden(){
@@ -7488,6 +7757,13 @@ function wakeMenuIfUiHidden(){
 }
 function keepUiAliveWhileMoving(){
   if(uiWrapEl.classList.contains("hidden")) return;
+  scheduleHideUI();
+}
+function nudgeUiOnControlInput(){
+  if(uiWrapEl.classList.contains("hidden")){
+    showUI();
+    return;
+  }
   scheduleHideUI();
 }
 
@@ -7565,10 +7841,10 @@ if(menuToggleBtn){
   });
 }
 
-speedEl.addEventListener("input", ()=>{ scheduleTick(); showUI(); });
-bgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); showUI(); });
-fgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); showUI(); });
-bdBrightEl.addEventListener("input", ()=>{ applyColorsLive(); showUI(); });
+speedEl.addEventListener("input", ()=>{ scheduleTick(); nudgeUiOnControlInput(); });
+bgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); nudgeUiOnControlInput(); });
+fgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); nudgeUiOnControlInput(); });
+bdBrightEl.addEventListener("input", ()=>{ applyColorsLive(); nudgeUiOnControlInput(); });
 
 bdThickEl.addEventListener("input", ()=>{
   sel.borderThickness = clamp(Number(bdThickEl.value), 0, 1);
@@ -7679,6 +7955,7 @@ window.addEventListener("keydown", (e)=>{
   placeDockForViewport();
   // Start collapsed with submenu buttons visible and no adjustment panel open.
   setUiPage("none");
+  scheduleInfoBlurbFit();
 
   loadRecentPhrases();
   loadRecentColorCombos();
@@ -7695,7 +7972,7 @@ window.addEventListener("keydown", (e)=>{
 
   setBorderBtn();
   applyIosPortraitLoadSizing();
-  applyMobileViewerDefaults();
+  applyLoadViewerDefaults();
   applyTypeAndLayout();
 
   bgBrightVal.textContent = pctLabel(bgBrightEl.value);
@@ -7725,11 +8002,11 @@ window.addEventListener("resize", ()=>{
   setViewportVars();
   placeDockForViewport();
   syncMenuTogglePosition();
-  applyMobileViewerDefaults();
   applyTypeAndLayout();
   applyColorsLive();
   syncSwatchHeaderWidths();
   scheduleMobileCentering();
+  scheduleInfoBlurbFit();
 });
 </script>
 </body>
