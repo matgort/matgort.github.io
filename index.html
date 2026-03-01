@@ -1551,7 +1551,7 @@
     --pillPadX: 12px;
     --pillFont: 7.6px;
     --mobileTextScale: 0.95;
-    --uiGlobalScale: 0.81;
+    --uiGlobalScale: 0.729;
   }
   button{ font-size: 7.4px; padding: 5px 8px; }
   .iconBtn{ width: 42px; height: var(--pillH); padding: 0; }
@@ -1568,16 +1568,18 @@
 
 @media (pointer: coarse){
   .uiPage--contrast{
-    max-width: min(100vw - 10px, 980px);
+    max-width: min(96vw, 560px);
   }
   .uiPage--contrast .colorsBrightnessRow{
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    justify-items: center;
   }
   .uiPage--contrast .ctrl{
-    width: clamp(88px, calc((100vw - 30px) / 3), 180px);
-    min-width: 0 !important;
-    padding: calc(7px * var(--uiGlobalScale)) calc(7px * var(--uiGlobalScale));
+    width: min(92vw, 520px);
+    max-width: 92vw;
+    min-width: min(92vw, 300px) !important;
+    padding: calc(8px * var(--uiGlobalScale)) calc(10px * var(--uiGlobalScale));
   }
 
   .uiPage--language{
@@ -1607,7 +1609,7 @@
     max-width: 96vw;
   }
   .uiPage--info .infoHeadTile{
-    width: min(96vw, 980px);
+    width: max-content;
     max-width: 96vw;
   }
   .uiPage--info .infoBlurbTile{
@@ -1616,6 +1618,11 @@
   }
   .uiPage--info .infoBlurbTile p{
     white-space: normal;
+  }
+
+  .uiPage--colors .swatchRow--all .swatch{
+    width: calc(34px * 1.10 * 0.80);
+    height: calc(34px * 1.10 * 0.80);
   }
 }
     
@@ -2436,7 +2443,8 @@ function getPanelTopBounds(vh, blockH, panelTopLimit){
   // Keep adjustment layers below the phrase/card and out of the upper half on mobile.
   const minSafeTop = Math.round(safeBottom + UI_SAFE_GAP_PX + 8);
   const mobileFloor = isBanded ? Math.round(vh * 0.52) : DOCK_LAYOUT_MARGIN;
-  const minTop = Math.max(DOCK_LAYOUT_MARGIN, minSafeTop, mobileFloor);
+  const mobilePanelDownShift = isMobileMode() ? Math.round(Math.max(10, vh * 0.035)) : 0;
+  const minTop = Math.max(DOCK_LAYOUT_MARGIN, minSafeTop, mobileFloor) + mobilePanelDownShift;
 
   const topLimit = Number.isFinite(panelTopLimit)
     ? panelTopLimit
@@ -5279,7 +5287,7 @@ buried in the back yard
 buried under rubble
 buying a raffle ticket
 buying crypto
-can't handle it anymore
+can't handle ~it~ anymore
 can't get out of bed
 can't hit the pinata
 can't stop laughing
@@ -5348,7 +5356,7 @@ dicing onions
 dimming the lights
 disappointing itself
 disassociating
-disrespected
+being disrespected
 doe eyed
 doesn't smell great
 doing a cold plunge
