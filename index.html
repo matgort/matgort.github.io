@@ -1515,6 +1515,41 @@
       }
     }
 
+@media (pointer: coarse){
+  .uiPage--contrast{
+    max-width: min(100vw - 10px, 980px);
+  }
+  .uiPage--contrast .colorsBrightnessRow{
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .uiPage--contrast .ctrl{
+    width: clamp(88px, calc((100vw - 30px) / 3), 180px);
+    min-width: 0 !important;
+    padding: calc(7px * var(--uiGlobalScale)) calc(7px * var(--uiGlobalScale));
+  }
+
+  .uiPage--language{
+    max-width: min(100vw - 8px, 980px);
+  }
+  .uiPage--language #partsRow{
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+  .uiPage--language #partsRow .ssBtn,
+  .uiPage--language #partsRow .ssBtn.on{
+    height: calc(24px * var(--uiGlobalScale));
+    padding: 0 calc(6px * var(--uiGlobalScale));
+    font-size: calc(var(--menuTextSize) * 0.54) !important;
+  }
+  .uiPage--language #partsRow .ssBtn:not(.on){
+    height: calc(20px * var(--uiGlobalScale));
+    padding: 0 calc(5px * var(--uiGlobalScale));
+    font-size: calc(var(--menuTextSize) * 0.48) !important;
+  }
+}
+    
+
     @media(max-width: 980px){
       :root{
         --barH: clamp(240px, 34vh, 330px);
@@ -1637,7 +1672,9 @@
                   <div class="infoTitle">Sculpture Poems by Margot DeMarco</div>
                 </div>
                 <div class="infoBlurbTile">
-                  <p>These poems are randomly generated object-focused sculptural scenes, continuously reshuffled. All language is drawn from a large bank of words written by the artist. Viewer can adjust the sentence structure of the poems, as well as how they look visually.</p>
+                  <p>These poems are written by the artist, but their elements are continuously reshuffled.</p>
+                  <p>Each poem is randomly assembled into a sculptural, object-focused scene.</p>
+                  <p>The viewer can adjust the sentence structure of the poems, as well as their visual appearance.</p>
                 </div>
               </div>
             </section>
@@ -3518,6 +3555,21 @@ const sceneGesture = {
   startY: 0,
   startDist: 1
 };
+const sceneSwipe = {
+  active: false,
+  pointerId: null,
+  startX: 0,
+  startY: 0,
+  lastX: 0,
+  lastY: 0
+};
+const SCENE_SWIPE_MIN_DX = 48;
+const SCENE_SWIPE_AXIS_RATIO = 1.35;
+
+function resetSceneSwipe(){
+  sceneSwipe.active = false;
+  sceneSwipe.pointerId = null;
+}
 
 function setSceneZoom(next){
   const z = clamp(Number(next), SCENE_ZOOM_MIN, SCENE_ZOOM_MAX);
@@ -3548,6 +3600,7 @@ function isUiTarget(target){
 function refreshSceneGestureMode(){
   const points = Array.from(sceneGesture.pointers.values());
   if(points.length >= 2){
+    resetSceneSwipe();
     const [a, b] = points;
     sceneGesture.mode = "pinch";
     sceneGesture.startDist = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
@@ -3562,6 +3615,7 @@ function refreshSceneGestureMode(){
   }
   sceneGesture.mode = "none";
   sceneGesture.active = false;
+  resetSceneSwipe();
 }
 
 function onScenePointerDown(e){
@@ -3575,6 +3629,18 @@ function onScenePointerDown(e){
   sceneGesture.active = true;
   sceneGesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   refreshSceneGestureMode();
+
+  if(sceneGesture.pointers.size === 1 && e.pointerType !== "mouse"){
+    sceneSwipe.active = true;
+    sceneSwipe.pointerId = e.pointerId;
+    sceneSwipe.startX = e.clientX;
+    sceneSwipe.startY = e.clientY;
+    sceneSwipe.lastX = e.clientX;
+    sceneSwipe.lastY = e.clientY;
+  }else if(sceneGesture.pointers.size > 1){
+    resetSceneSwipe();
+  }
+
   if(e.target && typeof e.target.setPointerCapture === "function"){
     try{ e.target.setPointerCapture(e.pointerId); }catch(_){}
   }
@@ -3584,6 +3650,15 @@ function onScenePointerDown(e){
 function onScenePointerMove(e){
   if(!sceneGesture.pointers.has(e.pointerId)) return;
   sceneGesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+  if(sceneSwipe.active && sceneSwipe.pointerId === e.pointerId){
+    sceneSwipe.lastX = e.clientX;
+    sceneSwipe.lastY = e.clientY;
+  }
+
+  if(sceneGesture.pointers.size > 1){
+    resetSceneSwipe();
+  }
 
   if(sceneGesture.mode === "drag" && sceneGesture.pointers.size === 1){
     const p = sceneGesture.pointers.get(e.pointerId);
@@ -3605,11 +3680,37 @@ function onScenePointerMove(e){
 
 function onScenePointerEnd(e){
   if(!sceneGesture.pointers.has(e.pointerId)) return;
+
+  let swipeDir = 0;
+  if(
+    sceneSwipe.active &&
+    sceneSwipe.pointerId === e.pointerId &&
+    e.pointerType !== "mouse" &&
+    sceneGesture.pointers.size === 1
+  ){
+    const dx = sceneSwipe.lastX - sceneSwipe.startX;
+    const dy = sceneSwipe.lastY - sceneSwipe.startY;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+    if(absDx >= SCENE_SWIPE_MIN_DX && absDx >= (absDy * SCENE_SWIPE_AXIS_RATIO)){
+      swipeDir = dx < 0 ? -1 : 1;
+    }
+  }
+
   sceneGesture.pointers.delete(e.pointerId);
   if(e.target && typeof e.target.releasePointerCapture === "function"){
     try{ e.target.releasePointerCapture(e.pointerId); }catch(_){}
   }
+  if(sceneSwipe.pointerId === e.pointerId){
+    resetSceneSwipe();
+  }
   refreshSceneGestureMode();
+
+  if(swipeDir !== 0){
+    setDockActiveButton("dockPlayback");
+    if(swipeDir < 0) goPrevPoem(); else goNextPoem();
+    showUI();
+  }
 }
 
 /* ================= Selection state ================= */
@@ -5166,7 +5267,8 @@ reminiscing
 rescued from danger
 resigned to its fate
 resting
-resting its head against a window
+resting
+resting against a window
 resting quietly
 revealing a mean streak
 riding a dirtbike
@@ -5174,7 +5276,6 @@ ringing slightly
 ripening on the kitchen counter
 ripped to shreds
 roasting in the sun
-roasting coffee
 rock climbing
 rocking back and forth
 rollerblading
@@ -5185,10 +5286,7 @@ rubbing its neck
 running its fingers through cool water
 running its fingers through its hair
 running on a treadmill
-running through an open field
 running through water
-running to catch a flight
-running to catch the train
 rusted
 sailing east
 sanding furniture
@@ -5212,7 +5310,7 @@ shoplifting
 shopping
 shrinking
 shuffling around
-sick of fighting
+sick of arguing
 singing acapella
 singing softly
 sinking into snow
@@ -5222,9 +5320,8 @@ sitting
 sitting on a balcony
 sitting on a milk crate
 sitting under a heat lamp
-sitting under dappled light
 sitting untouched
-skipping stones
+skipping
 slicing onions
 sliding across a table
 slightly angled
@@ -5319,9 +5416,9 @@ took a huge bong hit
 topless
 toppled over
 touching itself
+touching itself
 toweled dry
 traveling with friends
-transitioning its gender
 treading mud onto the carpet
 treading water
 treating a burn
@@ -5341,6 +5438,7 @@ under a lot of pressure
 under a pile of clothes
 under a tight deadline
 under arrest
+under dappled light
 under scrutiny
 under the influence
 under water
@@ -5371,16 +5469,12 @@ watching the sunset
 waxing its legs
 wearing
 wearing a bikini
+wearing a bikini
 wearing a mini skirt
-wearing a grease-stained apron
 wearing a tracksuit
-wearing a tuxedo
-wearing a wedding dress
-wearing a sarong
-wearing flip flops
 wearing cargo pants
 wearing chunky heels
-wearing kitten heels
+wearing cutoffs
 wearing cutoffs
 wearing incredible jeans
 wearing overalls
@@ -5392,7 +5486,6 @@ weeping
 weeping
 whispering
 wide awake
-winking suggestively
 wiping away tears
 with a bouquet of flowers
 with a brutal headache
@@ -5429,7 +5522,6 @@ at a dive bar
 at a dude ranch
 at a foggy ferry terminal
 at a gay bar
-at a goth club
 at a pawn shop
 at a poker table
 at a pumpkin patch
@@ -5465,7 +5557,6 @@ at the trailhead
 at the waterfront
 at the world trade center
 behind barbed wire fencing
-behind bulletproof glass
 beneath a flickering neon sign
 buried in a shallow grave
 by a printing press
@@ -5481,6 +5572,7 @@ in a breakfast nook
 in a cafeteria
 in a cemetery
 in a ceramics studio
+in a city center
 in a clown car
 in a corner office
 in a cozy brownstone apartment
@@ -5640,8 +5732,6 @@ on the waterfront in portugal
 on the yucatan peninsula
 on vacation
 outside a closed movie theater
-peering through a two-way mirror
-peering through a peep-hole
 sitting in a diner booth
 skimming the headlines
 stuck to the floor of a movie theater
@@ -5660,9 +5750,7 @@ while testifying in court
 while trapped in an elevator
 while trapped underwater
 while walking the runway show
-with damp socks
 with feet in the sand
-with feet stuck in mud
 within a sinister gated community
 `);
 
@@ -6351,6 +6439,23 @@ function refreshSentenceButtonColors(){
 }
 
 let colorScope = "bd"; // bg | fg | bd
+const ALL_OFF_BG_HEX = "#4d4d4d";
+const ALL_OFF_BD_HEX = "#999999";
+const ALL_OFF_FG_HEX = "#ffffff";
+
+function isAllOffState(){
+  return (
+    sel.bgColor.size === 0 &&
+    sel.fgColor.size === 0 &&
+    sel.bdColor.size === 0
+  );
+}
+
+function toPureGrayHex(hex){
+  const { r, g, b } = hexToRgb(String(hex || "#000000"));
+  const y = Math.round((r * 0.2126) + (g * 0.7152) + (b * 0.0722));
+  return rgbToHex(y, y, y);
+}
 
 function getColorScopeSet(scope = colorScope){
   if(scope === "fg") return sel.fgColor;
@@ -6365,10 +6470,17 @@ function setColorScopeBtnState(btn, on){
 }
 
 function syncBulkColorButtons(){
-  const setRef = getColorScopeSet(colorScope);
   const total = ALL_SWATCH_COLORS.length;
-  setColorScopeBtnState(allOnBtn, setRef.size >= total);
-  setColorScopeBtnState(allOffBtn, setRef.size === 0);
+  const allOn =
+    sel.bgColor.size >= total &&
+    sel.fgColor.size >= total &&
+    sel.bdColor.size >= total;
+  const allOff =
+    sel.bgColor.size === 0 &&
+    sel.fgColor.size === 0 &&
+    sel.bdColor.size === 0;
+  setColorScopeBtnState(allOnBtn, allOn);
+  setColorScopeBtnState(allOffBtn, allOff);
 }
 
 function getFirstSetColor(setRef, fallbackHex){
@@ -6385,19 +6497,19 @@ function ensureCurrentBaseColorsValid(){
   const bdSet = sel.bdColor;
 
   if(!bgSet.size){
-    current.bgBase = "#ffffff";
+    current.bgBase = ALL_OFF_BG_HEX;
   }else if(!bgSet.has(normHex(current.bgBase))){
     current.bgBase = getFirstSetColor(bgSet, current.bgBase);
   }
 
   if(!fgSet.size){
-    current.fgBase = "#000000";
+    current.fgBase = ALL_OFF_FG_HEX;
   }else if(!fgSet.has(normHex(current.fgBase))){
     current.fgBase = getFirstSetColor(fgSet, current.fgBase);
   }
 
   if(!bdSet.size){
-    current.bdBase = "#4d4d4d";
+    current.bdBase = ALL_OFF_BD_HEX;
   }else if(!bdSet.has(normHex(current.bdBase))){
     current.bdBase = getFirstSetColor(bdSet, current.bdBase);
   }
@@ -6411,23 +6523,21 @@ function syncColorScopeButtons(){
 }
 
 function setCurrentScopeAll(on){
-  const setRef = getColorScopeSet(colorScope);
+  const allSets = [sel.bgColor, sel.fgColor, sel.bdColor];
   if(on){
-    setRef.clear();
-    for(const hex of ALL_SWATCH_COLORS) setRef.add(hex);
-    // Immediately restore a vivid base color for the active scope.
-    if(colorScope === "bg"){
-      const nextBg = pickColorNonRepeating("bg", sel.bgColor, new Set());
-      current.bgBase = nextBg || getFirstSetColor(sel.bgColor, current.bgBase);
-    }else if(colorScope === "fg"){
-      const nextFg = pickColorNonRepeating("fg", sel.fgColor, new Set([current.bgBase]));
-      current.fgBase = nextFg || getFirstSetColor(sel.fgColor, current.fgBase);
-    }else{
-      const nextBd = pickColorNonRepeating("bd", sel.bdColor, new Set([current.bgBase, current.fgBase]));
-      current.bdBase = nextBd || getFirstSetColor(sel.bdColor, current.bdBase);
-    }
+    allSets.forEach((setRef)=>{
+      setRef.clear();
+      for(const hex of ALL_SWATCH_COLORS) setRef.add(hex);
+    });
+    const combo = pickNextColorCombo();
+    current.bgBase = combo.bgBase || current.bgBase;
+    current.fgBase = combo.fgBase || current.fgBase;
+    current.bdBase = combo.bdBase || current.bdBase;
   }else{
-    setRef.clear();
+    allSets.forEach((setRef)=> setRef.clear());
+    current.bgBase = ALL_OFF_BG_HEX;
+    current.fgBase = ALL_OFF_FG_HEX;
+    current.bdBase = ALL_OFF_BD_HEX;
   }
   ensureCurrentBaseColorsValid();
   applyColorsLive();
@@ -6490,8 +6600,8 @@ function refreshSwatchColors(){
 }
 
 function applyButtonColors(){
-  const cardLive = applyDimmer(current.bdBase, Number(bdBrightEl.value));
-  const uiFg = getFgLiveHex() || "#000000";
+  const cardLive = normHex(current.bdLive || applyDimmer(current.bdBase, Number(bdBrightEl.value)));
+  const uiFg = normHex(current.fgLive || getFgLiveHex() || "#000000");
 
   document.documentElement.style.setProperty("--cardUiBg", cardLive);
   document.documentElement.style.setProperty("--cardUiFg", uiFg);
@@ -7175,12 +7285,18 @@ function formatDuration(seconds){
 
 /* ================= Visual apply ================= */
 function applyColorsLive(){
-  const bg = applyDimmer(current.bgBase, Number(bgBrightEl.value));
-  current.bgLive = bg;
+  const allOff = isAllOffState();
+  if(allOff){
+    current.bgBase = ALL_OFF_BG_HEX;
+    current.fgBase = ALL_OFF_FG_HEX;
+    current.bdBase = ALL_OFF_BD_HEX;
+  }
+
+  let bg = applyDimmer(current.bgBase, Number(bgBrightEl.value));
   let fg  = applyDimmer(current.fgBase, Number(fgBrightEl.value));
   let bd  = applyDimmer(current.bdBase, Number(bdBrightEl.value));
 
-  if(!isCompositionLocked){
+  if(!isCompositionLocked && !allOff){
     if(bg.toLowerCase() === fg.toLowerCase()){
       const alt = pickColorNonRepeating("fg", sel.fgColor, new Set([current.bgBase]));
       if(alt) current.fgBase = alt;
@@ -7193,6 +7309,13 @@ function applyColorsLive(){
     }
   }
 
+  if(allOff){
+    bg = toPureGrayHex(bg);
+    fg = toPureGrayHex(fg);
+    bd = toPureGrayHex(bd);
+  }
+
+  current.bgLive = bg;
   document.body.style.background = bg;
   phraseEl.style.color = fg;
   current.fgLive = fg;
@@ -7321,7 +7444,7 @@ function showMenuToggleBriefly(){
 }
 function scheduleHideUI(){
   if(hideTimer) clearTimeout(hideTimer);
-  hideTimer = setTimeout(()=> hideUI(), UI_HIDE_MS);
+  hideTimer = setTimeout(()=> hideUI(false), UI_HIDE_MS);
 }
 function showUI(){
   uiWrapEl.classList.remove("hidden");
