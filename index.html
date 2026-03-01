@@ -1023,10 +1023,10 @@
     }
     .uiPage--info .infoBlurbTile{
       padding: calc(12px * var(--uiGlobalScale)) calc(14px * var(--uiGlobalScale));
-      width: min(86vw, 620px);
+      width: min(var(--infoBlurbW, 620px), 94vw);
     }
     .uiPage--info .infoTitle{
-      font-size: calc((var(--menuTextSize) * 0.7) + 2px);
+      font-size: calc((var(--menuTextSize) * 0.95) + 1px);
       font-weight: 400;
       letter-spacing: .01em;
       line-height: 1.1;
@@ -1042,8 +1042,8 @@
     }
     .uiPage--info p{
       margin: 0 0 10px 0;
-      font-size: calc((var(--menuTextSize) * 0.7) + 1px);
-      line-height: 1.24;
+      font-size: calc((var(--menuTextSize) * 0.95) + 1px);
+      line-height: 1.26;
       letter-spacing: .01em;
       text-transform: none;
       text-align: center;
@@ -1076,24 +1076,14 @@
       margin-right: auto;
     }
     .uiPage--colors .colorsPanelLayout{
-      display: grid;
-      grid-template-columns: max-content max-content max-content;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 14px;
+      gap: 12px;
       width: fit-content;
       margin-left: auto;
       margin-right: auto;
-    }
-    .uiPage--colors .colorsScopeCol,
-    .uiPage--colors .colorsBulkCol{
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-      align-items: center;
-      justify-content: center;
-      background: transparent;
-      padding: 0;
     }
     .uiPage--colors .colorsGridCol{
       display: flex;
@@ -1110,6 +1100,30 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+    }
+    .uiPage--colors .colorsControlRow{
+      width: 100%;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .uiPage--colors .colorsScopeCol,
+    .uiPage--colors .colorsBulkCol{
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 7px;
+      align-items: center;
+      background: transparent;
+      padding: 0;
+    }
+    .uiPage--colors .colorsScopeCol{
+      justify-content: flex-start;
+    }
+    .uiPage--colors .colorsBulkCol{
+      justify-content: flex-end;
+      margin-left: auto;
     }
     .uiPage--colors .colorScopeBtn{
       height: auto;
@@ -1181,8 +1195,8 @@
     }
     .uiPage--colors .swatchRow--all .swatch{
       position: relative;
-      width: 30px;
-      height: 30px;
+      width: calc(34px * 1.10);
+      height: calc(34px * 1.10);
       border: none;
       border-radius: 0;
       padding: 0;
@@ -1195,10 +1209,10 @@
       position:absolute;
       left: 5px;
       right: 5px;
-      top: 14px;
+      top: 50%;
       height: 1.6px;
       background: color-mix(in srgb, var(--cardUiFg, var(--ui)) 70%, transparent);
-      transform: rotate(42deg);
+      transform: translateY(-50%) rotate(42deg);
       opacity: 0;
       pointer-events: none;
     }
@@ -1207,10 +1221,10 @@
       position:absolute;
       left: 5px;
       right: 5px;
-      top: 14px;
+      top: 50%;
       height: 1.6px;
       background: color-mix(in srgb, var(--cardUiFg, var(--ui)) 70%, transparent);
-      transform: rotate(-42deg);
+      transform: translateY(-50%) rotate(-42deg);
       opacity: 0;
       pointer-events: none;
     }
@@ -1261,13 +1275,16 @@
         max-width: min(640px, 100%);
       }
       .uiPage--colors .colorsPanelLayout{
-        grid-template-columns: 1fr;
-        justify-items: center;
+        width: min(94vw, 100%);
+        gap: 10px;
+      }
+      .uiPage--colors .colorsControlRow{
+        width: 100%;
         gap: 10px;
       }
       .uiPage--colors .colorsScopeCol,
       .uiPage--colors .colorsBulkCol{
-        flex-direction: column;
+        gap: 5px;
       }
       .uiPage--colors .swatchRow--all{
         grid-template-columns: repeat(6, max-content);
@@ -1303,11 +1320,10 @@
         max-width: min(920px, 94vw);
       }
       .uiPage--colors .colorsPanelLayout{
-        grid-template-columns: max-content max-content max-content;
+        gap: 12px;
       }
-      .uiPage--colors .colorsScopeCol,
-      .uiPage--colors .colorsBulkCol{
-        flex-direction: column;
+      .uiPage--colors .colorsControlRow{
+        gap: 12px;
       }
       .uiPage--colors .swatchRow--all{
         grid-template-columns: repeat(8, max-content);
@@ -1354,6 +1370,7 @@
     .uiPage--contrast input[type=range],
     .uiPage--speed input[type=range]{
       height: calc(20px * var(--uiGlobalScale));
+      touch-action: pan-x;
     }
     .uiPage--contrast input[type=range]::-webkit-slider-runnable-track,
     .uiPage--speed input[type=range]::-webkit-slider-runnable-track{
@@ -1365,14 +1382,29 @@
     }
     .uiPage--contrast input[type=range]::-webkit-slider-thumb,
     .uiPage--speed input[type=range]::-webkit-slider-thumb{
-      width: calc(12px * var(--uiGlobalScale));
-      height: calc(12px * var(--uiGlobalScale));
-      margin-top: calc(-4.5px * var(--uiGlobalScale));
+      width: calc(16px * var(--uiGlobalScale));
+      height: calc(16px * var(--uiGlobalScale));
+      margin-top: calc(-6.5px * var(--uiGlobalScale));
+      border-radius: 0;
     }
     .uiPage--contrast input[type=range]::-moz-range-thumb,
     .uiPage--speed input[type=range]::-moz-range-thumb{
-      width: calc(12px * var(--uiGlobalScale));
-      height: calc(12px * var(--uiGlobalScale));
+      width: calc(16px * var(--uiGlobalScale));
+      height: calc(16px * var(--uiGlobalScale));
+      border-radius: 0;
+    }
+
+    /* Explicit speed-slider thumb override so it always matches contrast. */
+    #speedSlider::-webkit-slider-thumb{
+      width: calc(16px * var(--uiGlobalScale)) !important;
+      height: calc(16px * var(--uiGlobalScale)) !important;
+      margin-top: calc(-6.5px * var(--uiGlobalScale)) !important;
+      border-radius: 0 !important;
+    }
+    #speedSlider::-moz-range-thumb{
+      width: calc(16px * var(--uiGlobalScale)) !important;
+      height: calc(16px * var(--uiGlobalScale)) !important;
+      border-radius: 0 !important;
     }
 
     /* Dock buttons stay fully visible in the unified card-color style. */
@@ -1573,9 +1605,12 @@
     width: min(96vw, 980px);
     max-width: 96vw;
   }
-  .uiPage--info .infoHeadTile,
-  .uiPage--info .infoBlurbTile{
+  .uiPage--info .infoHeadTile{
     width: min(96vw, 980px);
+    max-width: 96vw;
+  }
+  .uiPage--info .infoBlurbTile{
+    width: min(var(--infoBlurbW, 620px), 96vw);
     max-width: 96vw;
   }
   .uiPage--info .infoBlurbTile p{
@@ -1739,21 +1774,23 @@
 
             <section class="uiPage uiPage--colors" aria-label="colors">
               <div class="colorsPanelLayout">
-                <div class="colorsScopeCol" id="colorScopeRow" aria-label="color target">
-                  <button id="scopeFgBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="false">text color</button>
-                  <button id="scopeBgBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="false">background color</button>
-                  <button id="scopeBdBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="true">card color</button>
-                </div>
-
                 <div class="colorsGridCol" id="colorsGridTile">
                   <div class="swatchGridPanel">
                     <div class="swatchRow swatchRow--all" id="allColorsRow"></div>
                   </div>
                 </div>
 
-                <div class="colorsBulkCol">
-                  <button id="allOffBtn" type="button" class="colorBtn colorScopeBtn">all off</button>
-                  <button id="allOnBtn" type="button" class="colorBtn colorScopeBtn">all on</button>
+                <div class="colorsControlRow">
+                  <div class="colorsScopeCol" id="colorScopeRow" aria-label="color target">
+                    <button id="scopeFgBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="false">text color</button>
+                    <button id="scopeBgBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="false">background color</button>
+                    <button id="scopeBdBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="true">card color</button>
+                  </div>
+
+                  <div class="colorsBulkCol">
+                    <button id="allOffBtn" type="button" class="colorBtn colorScopeBtn">all off</button>
+                    <button id="allOnBtn" type="button" class="colorBtn colorScopeBtn">all on</button>
+                  </div>
                 </div>
               </div>
             </section>
@@ -2548,24 +2585,30 @@ function tryPlaceColorsPanelCluster(measured, vw, vh, obstacles, placed, opts = 
   }
 
   const rowGap = Math.max(6, DOCK_LAYOUT_GAP);
-  const colGap = 12;
+  const sideGapOptions = [18, 14, 10, 8];
+  const btnGapOptions = [10, 8, 6, 4];
+  const maxAvailW = vw - (DOCK_LAYOUT_MARGIN * 2);
 
-  const leftW = Math.max(...leftBtns.map((item)=>item.measure.w));
-  const leftH = leftBtns.reduce((sum, item)=>sum + item.measure.h, 0) + (rowGap * (leftBtns.length - 1));
-  const rightW = Math.max(...rightBtns.map((item)=>item.measure.w));
-  const rightH = rightBtns.reduce((sum, item)=>sum + item.measure.h, 0) + (rowGap * (rightBtns.length - 1));
   const gridW = grid.measure.w;
   const gridH = grid.measure.h;
-  const maxAvailW = vw - (DOCK_LAYOUT_MARGIN * 2);
 
   const centerX = Number.isFinite(opts.centerX) ? opts.centerX : (vw * 0.5);
   const xShifts = [0, -16, 16, -32, 32, -48, 48];
 
-  // layout A: classic left stack + swatch grid + right stack (all shift together).
-  {
-    const blockW = leftW + colGap + gridW + colGap + rightW;
-    const blockH = Math.max(leftH, gridH, rightH);
-    if(blockW <= maxAvailW){
+  // layout A: swatches top, controls row below (left scope buttons / right all on-off).
+  for(const sideGap of sideGapOptions){
+    for(const btnGap of btnGapOptions){
+      const leftRowW = leftBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (btnGap * (leftBtns.length - 1));
+      const leftRowH = Math.max(...leftBtns.map((item)=>item.measure.h));
+      const rightRowW = rightBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (btnGap * (rightBtns.length - 1));
+      const rightRowH = Math.max(...rightBtns.map((item)=>item.measure.h));
+      const controlsW = leftRowW + sideGap + rightRowW;
+      const controlsH = Math.max(leftRowH, rightRowH);
+      const blockW = Math.max(gridW, controlsW);
+      const blockH = gridH + rowGap + controlsH;
+
+      if(blockW > maxAvailW) continue;
+
       const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
       const minX = DOCK_LAYOUT_MARGIN;
       const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
@@ -2581,77 +2624,80 @@ function tryPlaceColorsPanelCluster(measured, vw, vh, obstacles, placed, opts = 
         clamp(desiredTop - 8, minTop, maxTop),
         clamp(desiredTop + 8, minTop, maxTop)
       ]));
+
       for(const topBase of yCandidates){
         for(const sx of xShifts){
-          const leftX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
+          const blockX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
           const topY = clamp(Math.round(topBase), minTop, maxTop);
-          const gridX = leftX + leftW + colGap;
-          const rightX = gridX + gridW + colGap;
-          const leftStartY = Math.round(topY + ((blockH - leftH) * 0.5));
-          const gridY = Math.round(topY + ((blockH - gridH) * 0.5));
-          const rightStartY = Math.round(topY + ((blockH - rightH) * 0.5));
-          const placements = [{ item: grid, x: gridX, y: gridY }];
-          let yL = leftStartY;
+
+          const gridX = blockX + Math.round((blockW - gridW) * 0.5);
+          const controlsY = topY + gridH + rowGap;
+          const leftStartX = blockX;
+          const rightStartX = blockX + blockW - rightRowW;
+
+          const placements = [{ item: grid, x: gridX, y: topY }];
+
+          let xL = leftStartX;
           for(const item of leftBtns){
-            const x = leftX + Math.round((leftW - item.measure.w) * 0.5);
-            placements.push({ item, x, y: yL });
-            yL += item.measure.h + rowGap;
+            const y = controlsY + Math.round((controlsH - item.measure.h) * 0.5);
+            placements.push({ item, x: xL, y });
+            xL += item.measure.w + btnGap;
           }
-          let yR = rightStartY;
+
+          let xR = rightStartX;
           for(const item of rightBtns){
-            const x = rightX + Math.round((rightW - item.measure.w) * 0.5);
-            placements.push({ item, x, y: yR });
-            yR += item.measure.h + rowGap;
+            const y = controlsY + Math.round((controlsH - item.measure.h) * 0.5);
+            placements.push({ item, x: xR, y });
+            xR += item.measure.w + btnGap;
           }
+
           if(commitIfFits(placements)) return true;
         }
       }
     }
   }
 
-  // layout B: narrow fallback, still grouped tightly and moving as one bundle.
+  // layout B fallback: swatches top, compact vertical button stack below.
   {
-    const leftRowW = leftBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (rowGap * (leftBtns.length - 1));
-    const rightRowW = rightBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (rowGap * (rightBtns.length - 1));
-    const leftRowH = Math.max(...leftBtns.map((item)=>item.measure.h));
-    const rightRowH = Math.max(...rightBtns.map((item)=>item.measure.h));
-    const blockW = Math.max(gridW, leftRowW, rightRowW);
-    const blockH = gridH + rowGap + leftRowH + rowGap + rightRowH;
+    const buttonStack = leftBtns.concat(rightBtns);
+    const stackW = Math.max(...buttonStack.map((item)=>item.measure.w));
+    const stackH = buttonStack.reduce((sum, item)=>sum + item.measure.h, 0) + (rowGap * (buttonStack.length - 1));
+    const blockW = Math.max(gridW, stackW);
+    const blockH = gridH + rowGap + stackH;
+
     if(blockW <= maxAvailW){
       const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
       const minX = DOCK_LAYOUT_MARGIN;
       const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
       const desiredTop = clamp(
-        Math.round(minTop + ((maxTop - minTop) * 0.38)),
+        Math.round(minTop + ((maxTop - minTop) * 0.40)),
         minTop,
         maxTop
       );
       const yCandidates = Array.from(new Set([
         desiredTop,
         minTop,
-        clamp(minTop + 12, minTop, maxTop),
-        maxTop
+        maxTop,
+        clamp(desiredTop - 8, minTop, maxTop),
+        clamp(desiredTop + 8, minTop, maxTop)
       ]));
+
       for(const topBase of yCandidates){
         for(const sx of xShifts){
           const blockX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
           const topY = clamp(Math.round(topBase), minTop, maxTop);
           const gridX = blockX + Math.round((blockW - gridW) * 0.5);
-          const leftY = topY + gridH + rowGap;
-          const rightY = leftY + leftRowH + rowGap;
-          const leftStartX = blockX + Math.round((blockW - leftRowW) * 0.5);
-          const rightStartX = blockX + Math.round((blockW - rightRowW) * 0.5);
+          const stackX = blockX + Math.round((blockW - stackW) * 0.5);
+          const stackStartY = topY + gridH + rowGap;
+
           const placements = [{ item: grid, x: gridX, y: topY }];
-          let xL = leftStartX;
-          for(const item of leftBtns){
-            placements.push({ item, x: xL, y: leftY + Math.round((leftRowH - item.measure.h) * 0.5) });
-            xL += item.measure.w + rowGap;
+          let yS = stackStartY;
+          for(const item of buttonStack){
+            const x = stackX + Math.round((stackW - item.measure.w) * 0.5);
+            placements.push({ item, x, y: yS });
+            yS += item.measure.h + rowGap;
           }
-          let xR = rightStartX;
-          for(const item of rightBtns){
-            placements.push({ item, x: xR, y: rightY + Math.round((rightRowH - item.measure.h) * 0.5) });
-            xR += item.measure.w + rowGap;
-          }
+
           if(commitIfFits(placements)) return true;
         }
       }
@@ -2660,6 +2706,7 @@ function tryPlaceColorsPanelCluster(measured, vw, vh, obstacles, placed, opts = 
 
   return false;
 }
+
 
 function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, opts = {}){
   if(!panelWrapEl || !panelInnerEl) return false;
@@ -3582,17 +3629,15 @@ function measurePanelItemHeight(el, fallback){
 
 function getColorsPanelRequiredHeightPx(){
   if(String(document.body.dataset.uiPage || "none") !== "colors") return 0;
-  const gridH = measurePanelItemHeight(document.getElementById("colorsGridTile"), 210);
-  const scopeH = Math.max(
+  const gridH = measurePanelItemHeight(document.getElementById("colorsGridTile"), 220);
+  const controlsH = Math.max(
     measurePanelItemHeight(scopeFgBtn, 30),
     measurePanelItemHeight(scopeBgBtn, 30),
-    measurePanelItemHeight(scopeBdBtn, 30)
-  );
-  const bulkH = Math.max(
+    measurePanelItemHeight(scopeBdBtn, 30),
     measurePanelItemHeight(allOffBtn, 30),
     measurePanelItemHeight(allOnBtn, 30)
   );
-  return gridH + 8 + scopeH + 8 + bulkH + 8;
+  return gridH + 8 + controlsH + 8;
 }
 
 function clampYPctToUiBoundary(nextY){
@@ -3684,7 +3729,16 @@ function schedulePhraseUiLift(){
   });
 }
 
+function syncInfoBlurbWidthToPhrase(){
+  if(!phraseEl) return;
+  const rect = phraseEl.getBoundingClientRect();
+  if(!rect || !Number.isFinite(rect.width) || rect.width <= 0) return;
+  const nextW = Math.max(220, Math.round(rect.width));
+  document.documentElement.style.setProperty("--infoBlurbW", `${nextW}px`);
+}
+
 function fitInfoBlurbLines(){
+  syncInfoBlurbWidthToPhrase();
   const tile = document.querySelector(".uiPage--info .infoBlurbTile");
   if(!tile) return;
   const lines = Array.from(tile.querySelectorAll("p"));
@@ -4369,6 +4423,7 @@ amateur
 anarchist
 annoying
 antifa
+arrogant
 artistic
 athletic
 autistic
@@ -4377,6 +4432,7 @@ balding
 barefoot
 betrayed
 bigoted
+bitchy
 blind
 bloated
 blonde
@@ -4385,9 +4441,11 @@ brassy
 bratty
 british
 broke
+bulky
 bumbling
 butch
 charming
+cherubic
 chic
 chubby
 clever
@@ -4413,6 +4471,7 @@ divorced
 dorky
 down-to-earth
 dried out
+drunk
 eager
 earthy
 easy going
@@ -4420,7 +4479,9 @@ easygoing
 eccentric
 educated
 elegant
+eloquent
 elite
+enchanting
 erudite
 excited
 exhausted
@@ -4430,6 +4491,7 @@ fastidious
 feckless
 female
 feminine
+flambouyant
 flashy
 foolish
 former
@@ -4437,6 +4499,7 @@ frazzled
 french
 fresh-faced
 frugal
+fruity
 funky
 future
 gay
@@ -4463,6 +4526,7 @@ humble
 idealistic
 illiterate
 immature
+impressionable
 incompetent
 indie
 indigenous
@@ -4475,11 +4539,13 @@ insular
 introspective
 introverted
 irate
+irritable
 irritated
 italian
 jaded
 jazzy
 jet-lagged
+kinky
 kleptomaniac
 lanky
 left-wing
@@ -4491,6 +4557,7 @@ lithe
 long haired
 male
 maoist
+mentally ill
 moody
 naive
 nerdy
@@ -4511,6 +4578,7 @@ petulant
 plus-sized
 poor
 popular
+pompous
 potential
 pregnant
 pretentious
@@ -4531,17 +4599,21 @@ ribald
 rich
 ridiculous
 right-wing
+rock star
 rockabilly
 rude
+rubenesque
 scandalized
 scantily clad
 scholarly
 shaved
+sheepish
 short
 short haired
 shrewd
 shy
 silent
+silly
 skanky
 skeletal
 skilled
@@ -4549,6 +4621,7 @@ sleepy
 slim
 slimy
 slumped-over
+slutty
 snappy
 sober
 socialist
@@ -4556,6 +4629,7 @@ sophisticated
 specialized
 spunky
 steampunk
+stoned
 stunned
 stylish
 suave
@@ -5020,11 +5094,16 @@ architect
 art teacher
 art therapist
 artist
+assemblage sculptor
 athlete
 babe
+bandmate
 barber
 bathroom attendant
+beefcake
+belly dancer
 best friend
+big game hunter
 boat builder
 bodega guy
 brain surgeon
@@ -5032,8 +5111,11 @@ bro
 bully
 businessman
 businesswoman
+burlesque dancer
 butt-head
 chaperone
+celebrity
+chemist
 chef
 coal miner
 couples therapist
@@ -5041,6 +5123,10 @@ crane operator
 dancer
 day trader
 dj
+documentary filmmaker
+drag king
+dreamboat
+drummer
 dude
 employee
 ex-husband
@@ -5051,6 +5137,8 @@ father
 flautist
 flight attendant
 florist
+food scientist
+frontman
 friend
 grad student
 grandma
@@ -5064,6 +5152,7 @@ heterosexual
 homeowner
 homosexual
 housemate
+hunk
 immigrant
 improv comic
 insomniac
@@ -5073,6 +5162,8 @@ jazz singer
 jerk
 jock
 journalist
+landscape architect
+lord
 luddite
 machinist
 man
@@ -5092,6 +5183,7 @@ performance artist
 person
 pervert
 photographer
+portrait photographer
 piano player
 playwright
 podcaster
@@ -5107,6 +5199,7 @@ sculptor
 secretary
 shopkeep
 singer
+songwriter
 standup comic
 step-dad
 step-mom
@@ -5116,8 +5209,11 @@ student
 substitute teacher
 tech bro
 trucker
+unemployed guy
+unemployed lady
 waiter
 waitress
+web developer
 woman
 woodcarver
 `);
@@ -5183,6 +5279,7 @@ buried under rubble
 buying a raffle ticket
 buying crypto
 can't handle it anymore
+can't get out of bed
 can't hit the pinata
 can't stop laughing
 carefully stacked
@@ -5209,6 +5306,7 @@ chewing gum
 chewing nicotine gum
 chugging warm beer
 clearly lying
+cleaning up confetti
 climbing over the fence
 clingy
 clutching the hand rail
@@ -5229,6 +5327,7 @@ crunching the numbers
 crushing garlic
 crying
 curled up
+curating an art show
 cut down
 cutting the cord
 dancing
@@ -5288,6 +5387,7 @@ eavesdropping
 effortlessly arranged
 embarrassed
 emitting a high pitched sound
+enlisting in the army
 experimenting
 extremely bored
 facing dire consequences
@@ -5325,6 +5425,7 @@ finding itself
 flickering
 flickering softly
 flipping a house
+flipping houses
 flipping through a magazine
 flipping through a magazine
 flirting
@@ -5332,6 +5433,7 @@ floating
 floating
 flossing aggressively
 folding laundry
+forming a band
 found bedbugs
 freak dancing
 freshly cleaned
@@ -5398,6 +5500,7 @@ half submerged
 half-finished
 half-naked
 hanging out
+hanging framed photos
 happy enough
 happy this way
 has never been
@@ -5508,6 +5611,7 @@ loving life
 lubed up
 lurking
 maintaining control
+making a collage
 making a smoothie
 making an omelette
 making friends
@@ -5575,13 +5679,17 @@ pooping
 popped an advil
 popping a pimple
 practically melting
+prancing around
+preparing a simple pasta dinner
 preparing for surgery
 preparing matcha tea
 pressed against the wall
 pressed into velvet
 proposing marriage
+proselytizing
 protesting the genocide
 proud of itself
+pruning a tree
 pulled a muscle
 pulled out to see
 pulling hair out of the drain
@@ -5714,6 +5822,7 @@ stretching out
 struggling
 struggling with insomnia
 strumming a guitar
+strutting down the street
 strutting its stuff
 strutting its stuff
 stuck in a rut
@@ -7324,6 +7433,9 @@ function smartPhraseWidth(){
   const text = (phraseEl.textContent || "").trim();
   if(!text){
     fitPhraseToBox();
+    syncInfoBlurbWidthToPhrase();
+    scheduleInfoBlurbFit();
+    if(String(document.body.dataset.uiPage || "none") === "info") scheduleDockLayout();
     return;
   }
 
@@ -7331,6 +7443,9 @@ function smartPhraseWidth(){
   const currentStats = getPhraseLineStats();
   if(!currentStats){
     fitPhraseToBox();
+    syncInfoBlurbWidthToPhrase();
+    scheduleInfoBlurbFit();
+    if(String(document.body.dataset.uiPage || "none") === "info") scheduleDockLayout();
     return;
   }
 
@@ -7380,6 +7495,9 @@ function smartPhraseWidth(){
 
   document.documentElement.style.setProperty("--phraseW", `${bestW.toFixed(2)}vw`);
   fitPhraseToBox();
+  syncInfoBlurbWidthToPhrase();
+  scheduleInfoBlurbFit();
+  if(String(document.body.dataset.uiPage || "none") === "info") scheduleDockLayout();
 }
 
 function groupClientRectsIntoLines(rects){
@@ -7579,11 +7697,12 @@ function snapScreenshot(){
 }
 
 /* Card behind phrase */
-function applyCardStyle(colorHex){
+function applyCardStyle(colorHex, opts = {}){
+  const skipUiSafeUpdate = !!(opts && opts.skipUiSafeUpdate);
   const t = sel.borderEnabled ? clamp(sel.borderThickness, 0, 1) : 0;
   if(!sel.borderEnabled || t <= 0){
     cardEl.style.display = "none";
-    scheduleUiSafeUpdate();
+    if(!skipUiSafeUpdate) scheduleUiSafeUpdate();
     return;
   }
   cardEl.style.display = "block";
@@ -7592,7 +7711,7 @@ function applyCardStyle(colorHex){
   const rect = phraseInkBounds() || phraseEl.getBoundingClientRect();
   if(rect.width <= 0 || rect.height <= 0){
     cardEl.style.display = "none";
-    scheduleUiSafeUpdate();
+    if(!skipUiSafeUpdate) scheduleUiSafeUpdate();
     return;
   }
 
@@ -7602,7 +7721,7 @@ function applyCardStyle(colorHex){
   // Add a small base padding so the card doesn't feel cramped when hugging the ink.
   const fontPx = parseFloat(getComputedStyle(phraseEl).fontSize) || 0;
   const basePadX = clamp(fontPx * 0.40, 14, 36);
-  const basePadY = clamp(fontPx * 0.26, 10, 28);
+  const basePadY = clamp(fontPx * 0.20, 8, 22);
 
   // Keep card size stable while moving vertically: padding is based on viewport room,
   // not current distance to edges.
@@ -7617,7 +7736,7 @@ function applyCardStyle(colorHex){
   cardEl.style.top = `${Math.round(rect.top - padY)}px`;
   cardEl.style.width = `${Math.ceil(rect.width + (padX * 2))}px`;
   cardEl.style.height = `${Math.ceil(rect.height + (padY * 2))}px`;
-  scheduleUiSafeUpdate();
+  if(!skipUiSafeUpdate) scheduleUiSafeUpdate();
 }
 
 function pctLabel(x){ return `${Math.round(clamp(Number(x),0,1)*100)}%`; }
@@ -7679,7 +7798,17 @@ function applyColorsLive(opts = {}){
   current.fgLive = fg;
   current.bdLive = bd;
 
-  applyCardStyle(bd);
+  if(fast){
+    const tLive = sel.borderEnabled ? clamp(sel.borderThickness, 0, 1) : 0;
+    if(tLive <= 0){
+      cardEl.style.display = "none";
+    }else{
+      cardEl.style.display = "block";
+      cardEl.style.background = bd;
+    }
+  }else{
+    applyCardStyle(bd, { skipUiSafeUpdate: false });
+  }
   syncMenuToggleColor(bd, fg);
 
   // Update UI accents (swatches, buttons, slider dots) after background is applied.
@@ -7692,6 +7821,7 @@ function applyColorsLive(opts = {}){
   bdBrightVal.textContent = pctLabel(bdBrightEl.value);
   bdThickVal.textContent = `${Math.round(clamp(sel.borderThickness,0,1)*100)}%`;
 }
+
 
 /* ================= Border toggle button sync ================= */
 function setBorderBtn(){
@@ -7886,14 +8016,16 @@ function flushSliderColorUi(){
 }
 function installSliderGestureIsolation(){
   const controls = [bgBrightEl, fgBrightEl, bdBrightEl];
-  const evs = ["pointerdown","pointermove","pointerup","touchstart","touchmove","touchend","mousedown","mousemove","mouseup"];
+  const stopEvs = ["pointerdown","touchstart","mousedown","click"];
   controls.forEach((el)=>{
     if(!el) return;
-    evs.forEach((name)=>{
+    el.style.touchAction = "pan-x";
+    stopEvs.forEach((name)=>{
       el.addEventListener(name, (e)=>{ e.stopPropagation(); });
     });
   });
 }
+
 
 /* ================= Events ================= */
 // Safari sometimes fails to re-apply :hover styles immediately after a click when classes toggle.
