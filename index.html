@@ -5769,7 +5769,6 @@ trying to stay hidden
 tucked into a drawer
 tucked into bed
 twisting and turning
-ugly crying
 unable to lie
 unclogging a toilet
 uncrossing its legs
@@ -5806,7 +5805,7 @@ warped by heat
 watching asmr
 watching the sunset
 waxing its legs
-wearing fluffy slippers
+wearing
 wearing a bikini
 wearing a bikini
 wearing a mini skirt
@@ -5821,6 +5820,7 @@ wearing slacks
 wearing streetwear
 wearing the same old clothes
 wearing yoga pants
+weeping
 weeping
 whispering
 wide awake
@@ -7604,17 +7604,13 @@ function applyCardStyle(colorHex){
   const basePadX = clamp(fontPx * 0.40, 14, 36);
   const basePadY = clamp(fontPx * 0.26, 10, 28);
 
-  const maxPadL = Math.max(0, rect.left);
-  const maxPadR = Math.max(0, vw - rect.right);
-  const maxPadT = Math.max(0, rect.top);
-  const maxPadB = Math.max(0, vh - rect.bottom);
+  // Keep card size stable while moving vertically: padding is based on viewport room,
+  // not current distance to edges.
+  const roomX = Math.max(0, (vw - rect.width) * 0.5);
+  const roomY = Math.max(0, (vh - rect.height) * 0.5);
 
-  // Keep the phrase centered inside the card as it grows: symmetric padding on each axis.
-  const maxSymPadX = Math.min(maxPadL, maxPadR);
-  const maxSymPadY = Math.min(maxPadT, maxPadB);
-
-  const padX = Math.min(maxSymPadX, basePadX + (maxSymPadX * tAdj));
-  const padY = Math.min(maxSymPadY, basePadY + (maxSymPadY * tAdj));
+  const padX = Math.min(roomX, basePadX + (roomX * tAdj));
+  const padY = Math.min(roomY, basePadY + (roomY * tAdj));
 
   cardEl.style.transform = "none";
   cardEl.style.left = `${Math.round(rect.left - padX)}px`;
