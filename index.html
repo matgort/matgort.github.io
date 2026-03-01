@@ -3498,6 +3498,12 @@ function getAdjustmentLayerTopPx(){
 
   if(panelInnerEl){
     panelInnerEl.querySelectorAll(".panelTileFloat").forEach((el)=>{
+      const hasPlacement = !!(el.style.left && el.style.top);
+      const cs = getComputedStyle(el);
+      if(!hasPlacement) return;
+      if(cs.display === "none" || cs.visibility === "hidden") return;
+      if((parseFloat(cs.opacity) || 0) <= 0.01) return;
+      if(cs.pointerEvents === "none") return;
       considerRect(el.getBoundingClientRect());
     });
   }
@@ -3535,13 +3541,58 @@ function getLowerUiTopPx(){
       if(hasPlacement) consider(panelWrapEl);
     }
     if(panelInnerEl){
-      panelInnerEl.querySelectorAll(".panelTileFloat").forEach(consider);
+      panelInnerEl.querySelectorAll(".panelTileFloat").forEach((el)=>{
+        const hasPlacement = !!(el.style.left && el.style.top);
+        if(!hasPlacement) return;
+        const cs = getComputedStyle(el);
+        if(cs.display === "none" || cs.visibility === "hidden") return;
+        if((parseFloat(cs.opacity) || 0) <= 0.01) return;
+        if(cs.pointerEvents === "none") return;
+        consider(el);
+      });
     }
   }else if(menuToggleBtn && (menuToggleBtn.classList.contains("show") || menuToggleBtn.classList.contains("on"))){
     consider(menuToggleBtn);
   }
 
   return Number.isFinite(top) ? top : null;
+}
+
+function getDockControlsTopPx(){
+  let top = Infinity;
+  document.querySelectorAll("#dock .dockControl").forEach((el)=>{
+    if(!el.style.left || !el.style.top) return;
+    const r = el.getBoundingClientRect();
+    if(!(r.width > 0 && r.height > 0)) return;
+    const cs = getComputedStyle(el);
+    if(cs.display === "none" || cs.visibility === "hidden") return;
+    if((parseFloat(cs.opacity) || 0) <= 0.01) return;
+    top = Math.min(top, r.top);
+  });
+  return Number.isFinite(top) ? top : null;
+}
+
+function measurePanelItemHeight(el, fallback){
+  if(!el) return fallback;
+  const r = el.getBoundingClientRect();
+  const h = Math.round(r.height || 0);
+  if(h > 0) return h;
+  return fallback;
+}
+
+function getColorsPanelRequiredHeightPx(){
+  if(String(document.body.dataset.uiPage || "none") !== "colors") return 0;
+  const gridH = measurePanelItemHeight(document.getElementById("colorsGridTile"), 210);
+  const scopeH = Math.max(
+    measurePanelItemHeight(scopeFgBtn, 30),
+    measurePanelItemHeight(scopeBgBtn, 30),
+    measurePanelItemHeight(scopeBdBtn, 30)
+  );
+  const bulkH = Math.max(
+    measurePanelItemHeight(allOffBtn, 30),
+    measurePanelItemHeight(allOnBtn, 30)
+  );
+  return gridH + 8 + scopeH + 8 + bulkH + 8;
 }
 
 function clampYPctToUiBoundary(nextY){
@@ -3592,19 +3643,34 @@ function syncPhraseUiLift(){
   ensurePhraseYWithinViewport();
   applyCardStyle(getCardLiveColor());
 
+  const sceneBottomBase = getSceneContentBottomPx();
+  if(sceneBottomBase == null) return;
+
+  let extraLift = 0;
+
   const layerTop = getAdjustmentLayerTopPx();
-  if(layerTop == null) return;
+  if(layerTop != null){
+    const vhObj = getViewportSize();
+    const h = vhObj.h;
+    if(!(Number.isFinite(h) && h > 0 && layerTop <= (h * 0.45))){
+      const overlapNeed = (sceneBottomBase + UI_PHRASE_SAFE_GAP_PX) - layerTop;
+      if(overlapNeed > extraLift) extraLift = overlapNeed;
+    }
+  }
 
-  const { h } = getViewportSize();
-  if(Number.isFinite(h) && h > 0 && layerTop <= (h * 0.45)) return;
+  if(isMobileMode() && String(document.body.dataset.uiPage || "none") === "colors"){
+    const dockTop = getDockControlsTopPx();
+    const neededPanelH = getColorsPanelRequiredHeightPx();
+    if(dockTop != null && neededPanelH > 0){
+      const available = (dockTop - UI_SAFE_GAP_PX) - sceneBottomBase;
+      const reserveNeed = neededPanelH - available;
+      if(reserveNeed > extraLift) extraLift = reserveNeed;
+    }
+  }
 
-  const sceneBottom = getSceneContentBottomPx();
-  if(sceneBottom == null) return;
+  if(extraLift <= 0.5) return;
 
-  const needed = (sceneBottom + UI_PHRASE_SAFE_GAP_PX) - layerTop;
-  if(needed <= 0.5) return;
-
-  setLift(baseLift + needed);
+  setLift(baseLift + extraLift);
   ensurePhraseYWithinViewport();
   applyCardStyle(getCardLiveColor());
 }
@@ -5703,6 +5769,7 @@ trying to stay hidden
 tucked into a drawer
 tucked into bed
 twisting and turning
+ugly crying
 unable to lie
 unclogging a toilet
 uncrossing its legs
@@ -5739,7 +5806,7 @@ warped by heat
 watching asmr
 watching the sunset
 waxing its legs
-wearing
+wearing fluffy slippers
 wearing a bikini
 wearing a bikini
 wearing a mini skirt
@@ -5754,7 +5821,6 @@ wearing slacks
 wearing streetwear
 wearing the same old clothes
 wearing yoga pants
-weeping
 weeping
 whispering
 wide awake
@@ -7579,7 +7645,8 @@ function formatDuration(seconds){
 }
 
 /* ================= Visual apply ================= */
-function applyColorsLive(){
+function applyColorsLive(opts = {}){
+  const fast = !!(opts && opts.fast);
   const allOff = isAllOffState();
   if(allOff){
     current.bgBase = ALL_OFF_BG_HEX;
@@ -7620,7 +7687,9 @@ function applyColorsLive(){
   syncMenuToggleColor(bd, fg);
 
   // Update UI accents (swatches, buttons, slider dots) after background is applied.
-  applyAccentColors();
+  if(!fast){
+    applyAccentColors();
+  }
 
   bgBrightVal.textContent = pctLabel(bgBrightEl.value);
   fgBrightVal.textContent = pctLabel(fgBrightEl.value);
@@ -7802,6 +7871,34 @@ function nudgeUiOnControlInput(){
   scheduleHideUI();
 }
 
+
+let colorInputRaf = 0;
+function applyColorsFromSliderInput(){
+  if(colorInputRaf) return;
+  colorInputRaf = requestAnimationFrame(()=>{
+    colorInputRaf = 0;
+    applyColorsLive({ fast: true });
+  });
+  nudgeUiOnControlInput();
+}
+function flushSliderColorUi(){
+  if(colorInputRaf){
+    cancelAnimationFrame(colorInputRaf);
+    colorInputRaf = 0;
+  }
+  applyColorsLive();
+}
+function installSliderGestureIsolation(){
+  const controls = [bgBrightEl, fgBrightEl, bdBrightEl];
+  const evs = ["pointerdown","pointermove","pointerup","touchstart","touchmove","touchend","mousedown","mousemove","mouseup"];
+  controls.forEach((el)=>{
+    if(!el) return;
+    evs.forEach((name)=>{
+      el.addEventListener(name, (e)=>{ e.stopPropagation(); });
+    });
+  });
+}
+
 /* ================= Events ================= */
 // Safari sometimes fails to re-apply :hover styles immediately after a click when classes toggle.
 // This adds a tiny "forceHover" class while the pointer is over the button to keep hover fills consistent.
@@ -7877,9 +7974,12 @@ if(menuToggleBtn){
 }
 
 speedEl.addEventListener("input", ()=>{ scheduleTick(); nudgeUiOnControlInput(); });
-bgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); nudgeUiOnControlInput(); });
-fgBrightEl.addEventListener("input", ()=>{ applyColorsLive(); nudgeUiOnControlInput(); });
-bdBrightEl.addEventListener("input", ()=>{ applyColorsLive(); nudgeUiOnControlInput(); });
+bgBrightEl.addEventListener("input", ()=>{ applyColorsFromSliderInput(); });
+bgBrightEl.addEventListener("change", ()=>{ flushSliderColorUi(); nudgeUiOnControlInput(); });
+fgBrightEl.addEventListener("input", ()=>{ applyColorsFromSliderInput(); });
+fgBrightEl.addEventListener("change", ()=>{ flushSliderColorUi(); nudgeUiOnControlInput(); });
+bdBrightEl.addEventListener("input", ()=>{ applyColorsFromSliderInput(); });
+bdBrightEl.addEventListener("change", ()=>{ flushSliderColorUi(); nudgeUiOnControlInput(); });
 
 bdThickEl.addEventListener("input", ()=>{
   sel.borderThickness = clamp(Number(bdThickEl.value), 0, 1);
@@ -8004,6 +8104,7 @@ window.addEventListener("keydown", (e)=>{
   renderSentenceButtons();
 
   renderAllSwatches();
+  installSliderGestureIsolation();
   applyAccentColors();
   syncSwatchHeaderWidths();
 
