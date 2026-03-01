@@ -1842,6 +1842,7 @@ function applyIosPortraitLoadSizing(){
 function applyLoadViewerDefaults(){
   // Always start centered; base lift keeps it a hair above true center.
   yEl.value = "50";
+  setManualYPosition(false);
 }
 
 function parsePx(val){
@@ -3909,6 +3910,7 @@ function onScenePointerMove(e){
     }
 
     if(sceneSwipe.axis === "vertical"){
+      setManualYPosition(true);
       const { h } = getViewportSize();
       if(Number.isFinite(h) && h > 0){
         const nextY = clampYPctToUiBoundary(clamp(sceneSwipe.startYPct + ((dy / h) * 100), 0, 100));
@@ -4464,7 +4466,6 @@ rich
 ridiculous
 right-wing
 rockabilly
-rock star
 rude
 scandalized
 scantily clad
@@ -5152,7 +5153,7 @@ committing tax fraud
 comparison shopping
 completely wasted
 cooling slightly
-couldn't cut ~it~
+couldn't cut it
 counting money
 covered in paint
 covered in vaseline
@@ -7004,10 +7005,15 @@ function getTotalPhraseLiftPx(){
 }
 
 let centerPoemMidpointBusy = false;
+let hasManualYPosition = false;
+function setManualYPosition(on){
+  hasManualYPosition = !!on;
+}
 function centerPoemMidpointIfMobile(){
   if(!isMobileMode()) return;
   if(centerPoemMidpointBusy) return;
   if(Math.abs(sceneZoom - 1) > 0.001) return;
+  if(hasManualYPosition) return;
 
   const { h } = getViewportSize();
   if(!Number.isFinite(h) || h <= 0) return;
@@ -7768,6 +7774,7 @@ function hideUI(showMenuPeek = true, recenterPhrase = false){
     yEl.value = "50";
     document.documentElement.style.setProperty("--yPct", "50%");
     yVal.textContent = "50%";
+    setManualYPosition(false);
   }
   schedulePhraseUiLift();
   scheduleMobileCentering();
@@ -7881,7 +7888,7 @@ bdThickEl.addEventListener("input", ()=>{
 });
 
 sizeEl.addEventListener("input", ()=>{ applyTypeAndLayout(); showUI(); });
-yEl.addEventListener("input", ()=>{ applyTypeAndLayout(); applyColorsLive(); showUI(); });
+yEl.addEventListener("input", ()=>{ setManualYPosition(true); applyTypeAndLayout(); applyColorsLive(); showUI(); });
 widthEl.addEventListener("input", ()=>{
   phraseEl.textContent = current.phrase;
   applyTypeAndLayout();
