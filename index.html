@@ -1634,7 +1634,7 @@
   </div>
 
   <!-- UI WRAP: title + bar (fades together) -->
-  <div id="uiWrap">
+  <div id="uiWrap" class="hidden">
     <div id="titleBlock">
       <!-- TOP BUTTONS (always visible on load; fade with UI) -->
       <div id="dockTopHost" aria-label="buttons (top host)">
@@ -3487,7 +3487,8 @@ function getAdjustmentLayerTopPx(){
 
   if(panelWrapEl && !panelWrapEl.classList.contains("panel-tiles")){
     const s = getComputedStyle(panelWrapEl);
-    if(s.opacity !== "0" && s.pointerEvents !== "none"){
+    const hasPlacement = !!(panelWrapEl.style.left && panelWrapEl.style.top);
+    if(hasPlacement && s.opacity !== "0" && s.pointerEvents !== "none"){
       considerRect(panelWrapEl.getBoundingClientRect());
     }
   }
@@ -3527,7 +3528,8 @@ function getLowerUiTopPx(){
       consider(el);
     });
     if(panelWrapEl && document.body.dataset.uiPage && document.body.dataset.uiPage !== "none" && !panelWrapEl.classList.contains("panel-tiles")){
-      consider(panelWrapEl);
+      const hasPlacement = !!(panelWrapEl.style.left && panelWrapEl.style.top);
+      if(hasPlacement) consider(panelWrapEl);
     }
     if(panelInnerEl){
       panelInnerEl.querySelectorAll(".panelTileFloat").forEach(consider);
@@ -3546,6 +3548,7 @@ function clampYPctToUiBoundary(nextY){
 
   const { h } = getViewportSize();
   if(!Number.isFinite(h) || h <= 0) return desired;
+  if(uiTop <= (h * 0.45)) return desired;
 
   const scene = getSceneSafeRect();
   if(!scene || !Number.isFinite(scene.bottom)) return desired;
@@ -3570,6 +3573,9 @@ function syncPhraseUiLift(){
 
   const layerTop = getAdjustmentLayerTopPx();
   if(layerTop == null) return;
+
+  const { h } = getViewportSize();
+  if(Number.isFinite(h) && h > 0 && layerTop <= (h * 0.45)) return;
 
   const sceneBottom = getSceneContentBottomPx();
   if(sceneBottom == null) return;
@@ -7940,6 +7946,11 @@ window.addEventListener("keydown", (e)=>{
 /* ================= Start ================= */
 (function init(){
   setViewportVars();
+  if(uiWrapEl) uiWrapEl.classList.add("hidden");
+  if(menuToggleBtn){
+    menuToggleBtn.classList.remove("show", "on");
+    menuToggleBtn.setAttribute("aria-pressed", "false");
+  }
   document.documentElement.style.setProperty("--sceneZoom", "1");
   if(window.visualViewport){
     const syncMobileViewport = ()=>{
