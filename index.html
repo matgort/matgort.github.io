@@ -2391,12 +2391,14 @@ function clearPanelFloatingTiles(){
 
 function getPanelTopBounds(vh, blockH, panelTopLimit){
   const safe = getSceneSafeRect();
-  // Keep adjustment layers below the phrase/card safe zone.
+  const isBanded = shouldUseBandedMobileLayout(null, vh);
   const safeBottom = safe ? safe.bottom : Math.round(vh * 0.40);
-  const minTop = Math.max(
-    DOCK_LAYOUT_MARGIN,
-    Math.round(safeBottom + UI_SAFE_GAP_PX + 8)
-  );
+
+  // Keep adjustment layers below the phrase/card and out of the upper half on mobile.
+  const minSafeTop = Math.round(safeBottom + UI_SAFE_GAP_PX + 8);
+  const mobileFloor = isBanded ? Math.round(vh * 0.52) : DOCK_LAYOUT_MARGIN;
+  const minTop = Math.max(DOCK_LAYOUT_MARGIN, minSafeTop, mobileFloor);
+
   const topLimit = Number.isFinite(panelTopLimit)
     ? panelTopLimit
     : (vh - DOCK_LAYOUT_MARGIN);
@@ -3542,23 +3544,40 @@ function getLowerUiTopPx(){
 }
 
 function clampYPctToUiBoundary(nextY){
-  const desired = clamp(Number(nextY), 0, 100);
-  const uiTop = getLowerUiTopPx();
-  if(uiTop == null) return desired;
-
+  const raw = clamp(Number(nextY), 0, 100);
   const { h } = getViewportSize();
-  if(!Number.isFinite(h) || h <= 0) return desired;
-  if(uiTop <= (h * 0.45)) return desired;
-
-  const scene = getSceneSafeRect();
-  if(!scene || !Number.isFinite(scene.bottom)) return desired;
+  if(!Number.isFinite(h) || h <= 0) return raw;
 
   const currentY = clamp(Number(yEl.value), 0, 100);
+  let bounded = raw;
+
+  const scene = getSceneSafeRect();
+  if(scene && Number.isFinite(scene.top)){
+    const topLimit = Math.max(4, UI_SAFE_GAP_PX - 2);
+    const minDeltaYPct = ((topLimit - scene.top) / h) * 100;
+    const minY = clamp(currentY + minDeltaYPct, 0, 100);
+    bounded = Math.max(bounded, minY);
+  }
+
+  const uiTop = getLowerUiTopPx();
+  if(uiTop == null || uiTop <= (h * 0.45) || !scene || !Number.isFinite(scene.bottom)){
+    return bounded;
+  }
+
   const limitBottom = uiTop - UI_SAFE_GAP_PX;
   const maxDeltaYPct = ((limitBottom - scene.bottom) / h) * 100;
   const maxY = clamp(currentY + maxDeltaYPct, 0, 100);
+  return Math.min(bounded, maxY);
+}
 
-  return Math.min(desired, maxY);
+function ensurePhraseYWithinViewport(){
+  const curY = clamp(Number(yEl.value), 0, 100);
+  const nextY = clampYPctToUiBoundary(curY);
+  if(Math.abs(nextY - curY) < 0.01) return false;
+  yEl.value = String(nextY);
+  document.documentElement.style.setProperty("--yPct", String(nextY) + "%");
+  yVal.textContent = String(Math.round(nextY)) + "%";
+  return true;
 }
 
 function syncPhraseUiLift(){
@@ -3569,6 +3588,7 @@ function syncPhraseUiLift(){
   };
 
   setLift(baseLift);
+  ensurePhraseYWithinViewport();
   applyCardStyle(getCardLiveColor());
 
   const layerTop = getAdjustmentLayerTopPx();
@@ -3584,6 +3604,7 @@ function syncPhraseUiLift(){
   if(needed <= 0.5) return;
 
   setLift(baseLift + needed);
+  ensurePhraseYWithinViewport();
   applyCardStyle(getCardLiveColor());
 }
 
