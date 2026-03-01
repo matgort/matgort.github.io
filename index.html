@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,6 +26,7 @@
 
       /* Phrase layout */
       --textScale: 1;
+      --mobileTextScale: 1;
       --fitScale: 1;
       --sceneZoom: 1;
       --yPct: 50%;
@@ -106,7 +106,7 @@
       margin-left: auto;
       margin-right: auto;
       font-weight: 650;
-      font-size: calc(clamp(32px, 5vw, 92px) * var(--textScale) * var(--fitScale) * var(--sceneZoom));
+      font-size: calc(clamp(32px, 5vw, 92px) * var(--textScale) * var(--mobileTextScale) * var(--fitScale) * var(--sceneZoom));
       line-height:1.12;
       letter-spacing:.2px;
       width: calc(var(--phraseW) * var(--sceneZoom));
@@ -1497,6 +1497,7 @@
     --pillH: 18px;
     --pillPadX: 12px;
     --pillFont: 7.6px;
+    --mobileTextScale: 0.95;
   }
   button{ font-size: 7.4px; padding: 5px 8px; }
   .iconBtn{ width: 42px; height: var(--pillH); padding: 0; }
@@ -1532,7 +1533,7 @@
         --uiMaxW: 620px;
         --titlePadTop: 16px;
       }
-      #phraseText{ font-size: calc(clamp(28px, 7vw, 70px) * var(--textScale) * var(--fitScale) * var(--sceneZoom)); }
+      #phraseText{ font-size: calc(clamp(28px, 7vw, 70px) * var(--textScale) * var(--mobileTextScale) * var(--fitScale) * var(--sceneZoom)); }
       button{ font-size: 6.8px; padding: 3.4px 5.3px; }
       .label, .val{ font-size: 8.5px; }
       .btnGroup{ gap:4px; }
@@ -1760,6 +1761,13 @@ function applyIosPortraitLoadSizing(){
   // iOS portrait default: larger phrase/card on first load.
   sizeEl.value = String(clamp(Math.max(Number(sizeEl.value), 62), 0, 150));
   widthEl.value = String(clamp(Math.max(Number(widthEl.value), 52), 0, 100));
+}
+
+function applyMobileViewerDefaults(){
+  const coarse = window.matchMedia("(pointer: coarse)").matches || (navigator.maxTouchPoints || 0) > 0;
+  if(!coarse) return;
+  // Keep the poem vertically centered on the full mobile viewport.
+  yEl.value = "50";
 }
 
 function parsePx(val){
@@ -5052,6 +5060,8 @@ nicely toasted
 nodding off
 nonchalantly tossed aside
 not making a sound
+not over it
+not thinking about the news
 noticing what's changed
 on its last legs
 on the run
@@ -5417,9 +5427,9 @@ at the world trade center
 behind barbed wire fencing
 beneath a flickering neon sign
 buried in a shallow grave
-near a printing press
-near the fire pit
-near the water tower
+by a printing press
+by the fire pit
+by the water tower
 during its own wedding
 face down in the mud
 frozen in a block of ice
@@ -5639,9 +5649,6 @@ function pickLocation(){ return bagNextWithCooldown("loc", LOCATIONS, WORD_REPEA
 /* ================= Phrase build ================= */
 function safeStr(x){ return (x == null) ? "" : String(x).trim(); }
 function formatPhraseText(p){
-  if(clamp(Number(widthEl.value), 0, 100) === 0){
-    return p.split(/\s+/).join("<br>");
-  }
   return p;
 }
 
@@ -5738,6 +5745,7 @@ let recentColorComboQueue = [];
 let recentColorComboSet = new Set();
 let recentColorComboCount = new Map();
 let recentColorComboSaveTimer = null;
+const colorComboPoolCache = { sig: "", pool: [] };
 
 function colorComboKey(bgHex, fgHex, bdHex){
   return `${normHex(bgHex)}|${normHex(fgHex)}|${normHex(bdHex)}`;
@@ -5791,25 +5799,122 @@ function rememberRecentColorCombo(bgHex, fgHex, bdHex){
   scheduleSaveRecentColorCombos();
 }
 
-function pickNextColorCombo(){
-  const MAX_TRIES = 220;
-  let fallback = null;
+function getScopeColorPool(setRef){
+  const pool = unionColorsFrom(setRef);
+  return pool.length ? pool : ALL_SWATCH_COLORS.slice();
+}
 
-  for(let i=0; i<MAX_TRIES; i++){
-    const bgBase = pickColorNonRepeating("bg", sel.bgColor, new Set()) || current.bgBase || "#ffffff";
-    const fgBase = pickColorNonRepeating("fg", sel.fgColor, new Set([bgBase])) || current.fgBase || "#000000";
-    const bdBase = pickColorNonRepeating("bd", sel.bdColor, new Set([bgBase, fgBase])) || current.bdBase || "#4d4d4d";
-    const key = colorComboKey(bgBase, fgBase, bdBase);
-    fallback = { bgBase, fgBase, bdBase };
-    if(!recentColorComboCount.has(key)){
-      rememberRecentColorCombo(bgBase, fgBase, bdBase);
-      return fallback;
+function getColorComboPool(){
+  const bgPool = getScopeColorPool(sel.bgColor);
+  const fgPool = getScopeColorPool(sel.fgColor);
+  const bdPool = getScopeColorPool(sel.bdColor);
+
+  const sig = `bg:${bgPool.join(",")}|fg:${fgPool.join(",")}|bd:${bdPool.join(",")}`;
+  if(colorComboPoolCache.sig === sig && colorComboPoolCache.pool.length){
+    return { sig, pool: colorComboPoolCache.pool };
+  }
+
+  const pool = [];
+  for(const bg of bgPool){
+    const bgN = normHex(bg);
+    for(const fg of fgPool){
+      const fgN = normHex(fg);
+      if(fgN === bgN) continue;
+      for(const bd of bdPool){
+        const bdN = normHex(bd);
+        if(bdN === bgN || bdN === fgN) continue;
+        pool.push(colorComboKey(bgN, fgN, bdN));
+      }
     }
   }
 
-  if(fallback){
-    rememberRecentColorCombo(fallback.bgBase, fallback.fgBase, fallback.bdBase);
-    return fallback;
+  colorComboPoolCache.sig = sig;
+  colorComboPoolCache.pool = pool;
+  return { sig, pool };
+}
+
+function parseColorComboKey(key){
+  const [bgRaw, fgRaw, bdRaw] = String(key || "").split("|");
+  return {
+    bgBase: normHex(bgRaw || ""),
+    fgBase: normHex(fgRaw || ""),
+    bdBase: normHex(bdRaw || "")
+  };
+}
+
+function pickNextColorCombo(){
+  const { pool } = getColorComboPool();
+  if(!pool.length){
+    return {
+      bgBase: current.bgBase || "#ffffff",
+      fgBase: current.fgBase || "#000000",
+      bdBase: current.bdBase || "#4d4d4d"
+    };
+  }
+
+  const currentKey = colorComboKey(current.bgBase, current.fgBase, current.bdBase);
+  const currentCard = normHex(current.bdBase);
+  const bdPool = getScopeColorPool(sel.bdColor);
+  const avoidSameCard = bdPool.length > 1;
+  const randomKey = ()=> pool[(Math.random() * pool.length) | 0];
+  const MAX_TRIES = Math.min(Math.max(pool.length * 2, 120), 1000);
+  let fallbackPick = null;
+  for(let tries = 0; tries < MAX_TRIES; tries++){
+    const key = randomKey();
+    if(pool.length > 1 && key === currentKey) continue;
+    const pick = parseColorComboKey(key);
+    if(!pick.bgBase || !pick.fgBase || !pick.bdBase) continue;
+    if(!fallbackPick) fallbackPick = pick;
+    if(avoidSameCard && pick.bdBase === currentCard) continue;
+    rememberRecentColorCombo(pick.bgBase, pick.fgBase, pick.bdBase);
+    return pick;
+  }
+
+  // Deterministic fallback: scan pool once to honor guards if possible.
+  if(pool.length){
+    const start = (Math.random() * pool.length) | 0;
+    let scanFallback = null;
+    for(let i=0; i<pool.length; i++){
+      const key = pool[(start + i) % pool.length];
+      if(pool.length > 1 && key === currentKey) continue;
+      const pick = parseColorComboKey(key);
+      if(!pick.bgBase || !pick.fgBase || !pick.bdBase) continue;
+      if(!scanFallback) scanFallback = pick;
+      if(avoidSameCard && pick.bdBase === currentCard) continue;
+      rememberRecentColorCombo(pick.bgBase, pick.fgBase, pick.bdBase);
+      return pick;
+    }
+    if(scanFallback){
+      rememberRecentColorCombo(scanFallback.bgBase, scanFallback.fgBase, scanFallback.bdBase);
+      return scanFallback;
+    }
+  }
+
+  if(fallbackPick){
+    rememberRecentColorCombo(fallbackPick.bgBase, fallbackPick.fgBase, fallbackPick.bdBase);
+    return fallbackPick;
+  }
+
+  return {
+    bgBase: current.bgBase || "#ffffff",
+    fgBase: current.fgBase || "#000000",
+    bdBase: current.bdBase || "#4d4d4d"
+  };
+}
+
+function pickStartupColorCombo(){
+  const { pool } = getColorComboPool();
+  if(!pool.length){
+    return {
+      bgBase: current.bgBase || "#ffffff",
+      fgBase: current.fgBase || "#000000",
+      bdBase: current.bdBase || "#4d4d4d"
+    };
+  }
+  const key = pool[(Math.random() * pool.length) | 0];
+  const pick = parseColorComboKey(key);
+  if(pick.bgBase && pick.fgBase && pick.bdBase){
+    return pick;
   }
   return {
     bgBase: current.bgBase || "#ffffff",
@@ -6079,7 +6184,8 @@ function syncCompositionLockBtn(){
   lockCompositionBtn.classList.toggle("on", isCompositionLocked);
   lockCompositionBtn.setAttribute("aria-pressed", isCompositionLocked ? "true" : "false");
   lockCompositionBtn.setAttribute("aria-label", isCompositionLocked ? "unlock composition" : "lock composition");
-  lockCompositionBtn.dataset.tip = "lock";
+  lockCompositionBtn.dataset.tip = isCompositionLocked ? "unlock" : "lock";
+  lockCompositionBtn.title = isCompositionLocked ? "unlock composition" : "lock composition";
 }
 function toggleCompositionLock(){
   isCompositionLocked = !isCompositionLocked;
@@ -6109,12 +6215,11 @@ function goNextPoem(){
 }
 
 function setCalmStart(){
-  const palName = COLOR_OPTS[Math.floor(Math.random() * COLOR_OPTS.length)];
-  const bg = lightestHexFromPalette(palName);
-  const fg = darkestHexFromPalette(palName);
-  current.bgBase = consumeColorFromBag("bg", sel.bgColor, bg);
-  current.fgBase = consumeColorFromBag("fg", sel.fgColor, fg);
-  current.bdBase = consumeColorFromBag("bd", sel.bdColor, fg);
+  // First load should always start from a random valid combo.
+  const combo = pickStartupColorCombo();
+  current.bgBase = combo.bgBase || current.bgBase;
+  current.fgBase = combo.fgBase || current.fgBase;
+  current.bdBase = combo.bdBase || current.bdBase;
   rememberRecentColorCombo(current.bgBase, current.fgBase, current.bdBase);
 }
 
@@ -6568,6 +6673,14 @@ function getPhraseLineStats(){
   const relStdDev = Math.sqrt(variance) / Math.max(1, mean);
 
   const renderedLines = getRenderedLinesForScreenshot();
+  const fullText = renderedLines.join(" ").replace(/\s+/g, " ").trim();
+  const lineWordCounts = renderedLines.map((line)=>{
+    const t = String(line || "").trim();
+    return t ? t.split(/\s+/).filter(Boolean).length : 0;
+  });
+  const singleWordLineCount = lineWordCounts.filter((n)=>n === 1).length;
+  const totalWords = lineWordCounts.reduce((sum, n)=> sum + n, 0);
+  const totalChars = fullText.length;
   const lastLineText = renderedLines.length ? String(renderedLines[renderedLines.length - 1]).trim() : "";
   const lastWords = lastLineText ? lastLineText.split(/\s+/).filter(Boolean).length : 0;
 
@@ -6579,15 +6692,44 @@ function getPhraseLineStats(){
     lastW,
     lastRatio,
     relStdDev,
+    lineWordCounts,
+    singleWordLineCount,
+    totalWords,
+    totalChars,
     lastWords
   };
 }
 
+function hasSingleWordLine(stats){
+  if(!stats || stats.lineCount <= 1) return false;
+  return (stats.singleWordLineCount || 0) > 0;
+}
+
+function shouldAvoidSingleLine(stats){
+  if(!stats || stats.lineCount !== 1) return false;
+  const words = Number(stats.totalWords || 0);
+  const chars = Number(stats.totalChars || 0);
+  return words >= 7 || chars >= 42;
+}
+
 function scorePhraseLineBalance(stats){
   if(!stats) return Infinity;
-  if(stats.lineCount <= 1) return 0;
+  if(stats.lineCount <= 1){
+    if(shouldAvoidSingleLine(stats)){
+      const words = Number(stats.totalWords || 0);
+      const chars = Number(stats.totalChars || 0);
+      const wordPenalty = Math.max(0, words - 6) * 2.4;
+      const charPenalty = Math.max(0, chars - 34) * 0.22;
+      return 16 + wordPenalty + charPenalty;
+    }
+    return 0;
+  }
 
   let score = 0;
+  // Strongly discourage any one-word wrapped lines.
+  if(hasSingleWordLine(stats)){
+    score += 20 + ((stats.singleWordLineCount || 0) * 18);
+  }
   // Penalize very short final lines and true widows.
   score += Math.max(0, 0.66 - stats.lastRatio) * 5.5;
   if(stats.lastWords === 1) score += 2.6;
@@ -6604,14 +6746,7 @@ function scorePhraseLineBalance(stats){
 }
 
 function smartPhraseWidth(){
-  const base = clamp(Number(widthEl.value), 0, 100);
-  if(base === 0){
-    document.documentElement.style.setProperty("--phraseW", "100vw");
-    phraseEl.classList.add("oneWord");
-    document.documentElement.style.setProperty("--edgePad", "0px");
-    fitPhraseToBox();
-    return;
-  }
+  const base = clamp(Number(widthEl.value), 1, 100);
   phraseEl.classList.remove("oneWord");
   document.documentElement.style.setProperty("--phraseW", `${base}vw`);
   document.documentElement.style.setProperty("--edgePad", base >= 100 ? "0px" : "50px");
@@ -6632,11 +6767,18 @@ function smartPhraseWidth(){
   }
 
   let bestW = currentW;
+  let bestStats = currentStats;
   let bestScore = scorePhraseLineBalance(currentStats);
 
-  // Explore both narrower and wider widths to avoid one-word ragged last lines.
-  const minSearchW = clamp(currentW - 14, 1, 100);
-  const maxSearchW = clamp(Math.min(100, currentW + 14), 1, 100);
+  // If a one-word line or a long single-line poem appears, aggressively reflow width.
+  const needsSingleLineFix = shouldAvoidSingleLine(currentStats);
+  const needsWidowFix = hasSingleWordLine(currentStats);
+  const minSearchW = (needsWidowFix || needsSingleLineFix) ? 1 : clamp(currentW - 14, 1, 100);
+  const maxSearchW = needsWidowFix
+    ? 100
+    : (needsSingleLineFix
+      ? clamp(currentW, 1, 100)
+      : clamp(Math.min(100, currentW + 14), 1, 100));
   const candidates = buildWidthSearchOrder(currentW, minSearchW, maxSearchW, 1);
 
   for(const candidateW of candidates){
@@ -6646,14 +6788,25 @@ function smartPhraseWidth(){
     const stats = getPhraseLineStats();
     if(!stats) continue;
     const score = scorePhraseLineBalance(stats);
+    const candidateTier =
+      (needsSingleLineFix && shouldAvoidSingleLine(stats)) ? 2 :
+      (hasSingleWordLine(stats) ? 1 : 0);
+    const bestTier =
+      (needsSingleLineFix && shouldAvoidSingleLine(bestStats)) ? 2 :
+      (hasSingleWordLine(bestStats) ? 1 : 0);
 
-    const strongWin = score < (bestScore - 0.08);
+    const tierWin = candidateTier < bestTier;
+    const sameTier = candidateTier === bestTier;
+
+    const strongWin = sameTier && (score < (bestScore - 0.08));
     const tieWin =
+      sameTier &&
       Math.abs(score - bestScore) <= 0.08 &&
       Math.abs(candidateW - base) < Math.abs(bestW - base);
-    if(strongWin || tieWin){
+    if(tierWin || strongWin || tieWin){
       bestScore = score;
       bestW = candidateW;
+      bestStats = stats;
     }
   }
 
@@ -7003,6 +7156,7 @@ function scheduleTick(){
 
 /* ================= Frame generation ================= */
 function nextFrame(){
+  const prevColorKey = colorComboKey(current.bgBase, current.fgBase, current.bdBase);
   let p = buildPhrase(sel.parts);
 
   current.phrase = p;
@@ -7015,7 +7169,11 @@ function nextFrame(){
   if(isFirstFrame){
     isFirstFrame = false;
   }else if(!isCompositionLocked){
-    const combo = pickNextColorCombo();
+    let combo = pickNextColorCombo();
+    if(colorComboKey(combo.bgBase, combo.fgBase, combo.bdBase) === prevColorKey){
+      // Hard guard against accidental back-to-back repeats.
+      combo = pickNextColorCombo();
+    }
     current.bgBase = combo.bgBase || current.bgBase;
     current.fgBase = combo.fgBase || current.fgBase;
     current.bdBase = combo.bdBase || current.bdBase;
@@ -7198,11 +7356,7 @@ bdThickEl.addEventListener("input", ()=>{
 sizeEl.addEventListener("input", ()=>{ applyTypeAndLayout(); showUI(); });
 yEl.addEventListener("input", ()=>{ applyTypeAndLayout(); applyColorsLive(); showUI(); });
 widthEl.addEventListener("input", ()=>{
-  if(clamp(Number(widthEl.value), 0, 100) === 0){
-    phraseEl.innerHTML = formatPhraseText(current.phrase);
-  }else{
-    phraseEl.textContent = current.phrase;
-  }
+  phraseEl.textContent = current.phrase;
   applyTypeAndLayout();
   showUI();
 });
@@ -7312,6 +7466,7 @@ window.addEventListener("keydown", (e)=>{
 
   setBorderBtn();
   applyIosPortraitLoadSizing();
+  applyMobileViewerDefaults();
   applyTypeAndLayout();
 
   bgBrightVal.textContent = pctLabel(bgBrightEl.value);
@@ -7341,6 +7496,7 @@ window.addEventListener("resize", ()=>{
   setViewportVars();
   placeDockForViewport();
   syncMenuTogglePosition();
+  applyMobileViewerDefaults();
   applyTypeAndLayout();
   applyColorsLive();
   syncSwatchHeaderWidths();
