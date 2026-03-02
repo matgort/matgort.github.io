@@ -1576,9 +1576,9 @@
     justify-items: center;
   }
   .uiPage--contrast .ctrl{
-    width: min(92vw, 520px);
-    max-width: 92vw;
-    min-width: min(92vw, 300px) !important;
+    width: min(74vw, 416px);
+    max-width: 74vw;
+    min-width: min(74vw, 240px) !important;
     padding: calc(8px * var(--uiGlobalScale)) calc(10px * var(--uiGlobalScale));
   }
 
@@ -1620,9 +1620,13 @@
     white-space: normal;
   }
 
+  .uiPage--colors .swatchRow--all{
+    grid-template-columns: repeat(10, max-content);
+    gap: 5px;
+  }
   .uiPage--colors .swatchRow--all .swatch{
-    width: calc(34px * 1.10 * 0.80);
-    height: calc(34px * 1.10 * 0.80);
+    width: calc(34px * 1.10 * 0.64);
+    height: calc(34px * 1.10 * 0.64);
   }
 }
     
@@ -3121,9 +3125,11 @@ function placeBandedDockRows(vw, vh, obstacles, placed, measuresById){
     const localPos = [];
     const anchorX = clamp(Math.round((menuRect ? (menuRect.left + (menuRect.width * 0.5)) : (vw * 0.5)) + shiftX), DOCK_LAYOUT_MARGIN, vw - DOCK_LAYOUT_MARGIN);
 
+    // Keep the bottom dock row visually aligned with the centered menu button.
+    // This prevents the mobile cluster from jumping too far upward.
     const row3TargetCenter = menuRect
-      ? Math.round(menuRect.top - 6 - row3.down)
-      : Math.round(vh - DOCK_LAYOUT_MARGIN - row3.down - 36);
+      ? Math.round(menuRect.top + (menuRect.height * 0.5))
+      : Math.round(vh - DOCK_LAYOUT_MARGIN - row3.down - 24);
     const row3MinCenter = Math.round(minTop + row1.h + rowGap + row2.h + rowGap + row3.up);
     const row3MaxCenter = Math.round(vh - DOCK_LAYOUT_MARGIN - row3.down);
     if(row3MinCenter > row3MaxCenter) return null;
@@ -3742,7 +3748,7 @@ function syncInfoBlurbWidthToPhrase(){
   if(!phraseEl) return;
   const rect = phraseEl.getBoundingClientRect();
   if(!rect || !Number.isFinite(rect.width) || rect.width <= 0) return;
-  const nextW = Math.max(220, Math.round(rect.width));
+  const nextW = Math.max(220, Math.round(rect.width * 1.2));
   document.documentElement.style.setProperty("--infoBlurbW", `${nextW}px`);
 }
 
@@ -5356,7 +5362,7 @@ dicing onions
 dimming the lights
 disappointing itself
 disassociating
-being disrespected
+feeling disrespected
 doe eyed
 doesn't smell great
 doing a cold plunge
