@@ -2443,12 +2443,20 @@ function getPanelTopBounds(vh, blockH, panelTopLimit){
   const safe = getSceneSafeRect();
   const isBanded = shouldUseBandedMobileLayout(null, vh);
   const safeBottom = safe ? safe.bottom : Math.round(vh * 0.40);
+  const activePage = String(document.body.dataset.uiPage || "none");
 
   // Keep adjustment layers below the phrase/card and out of the upper half on mobile.
   const minSafeTop = Math.round(safeBottom + UI_SAFE_GAP_PX + 8);
   const mobileFloor = isBanded ? Math.round(vh * 0.52) : DOCK_LAYOUT_MARGIN;
   const mobilePanelDownShift = isMobileMode() ? Math.round(Math.max(10, vh * 0.035)) : 0;
-  const minTop = Math.max(DOCK_LAYOUT_MARGIN, minSafeTop, mobileFloor) + mobilePanelDownShift;
+  const mobileAdjustLayerUpShift = (
+    isMobileMode() &&
+    activePage !== "language" &&
+    activePage !== "speed" &&
+    activePage !== "none"
+  ) ? 20 : 0;
+  const minTopBase = Math.max(DOCK_LAYOUT_MARGIN, minSafeTop, mobileFloor) + mobilePanelDownShift;
+  const minTop = Math.max(DOCK_LAYOUT_MARGIN, minTopBase - mobileAdjustLayerUpShift);
 
   const topLimit = Number.isFinite(panelTopLimit)
     ? panelTopLimit
@@ -3655,6 +3663,21 @@ function getColorsPanelRequiredHeightPx(){
   return gridH + 8 + controlsH + 8;
 }
 
+function getContrastPanelRequiredHeightPx(){
+  if(String(document.body.dataset.uiPage || "none") !== "contrast") return 0;
+  const ctrls = Array.from(panelInnerEl ? panelInnerEl.querySelectorAll(".uiPage--contrast .ctrl") : []);
+  if(!ctrls.length) return 0;
+  const gapY = 8;
+  const totalH = ctrls.reduce((sum, el)=> sum + measurePanelItemHeight(el, 74), 0);
+  return totalH + (gapY * Math.max(0, ctrls.length - 1)) + 8;
+}
+
+function getInfoPanelRequiredHeightPx(){
+  if(String(document.body.dataset.uiPage || "none") !== "info") return 0;
+  const group = panelInnerEl ? panelInnerEl.querySelector(".uiPage--info .infoGroup") : null;
+  return measurePanelItemHeight(group, 190) + 8;
+}
+
 function clampYPctToUiBoundary(nextY){
   const raw = clamp(Number(nextY), 0, 100);
   const { h } = getViewportSize();
@@ -3718,9 +3741,14 @@ function syncPhraseUiLift(){
     }
   }
 
-  if(isMobileMode() && String(document.body.dataset.uiPage || "none") === "colors"){
+  if(isMobileMode()){
+    const page = String(document.body.dataset.uiPage || "none");
     const dockTop = getDockControlsTopPx();
-    const neededPanelH = getColorsPanelRequiredHeightPx();
+    let neededPanelH = 0;
+    if(page === "colors") neededPanelH = getColorsPanelRequiredHeightPx();
+    else if(page === "contrast") neededPanelH = getContrastPanelRequiredHeightPx();
+    else if(page === "info") neededPanelH = getInfoPanelRequiredHeightPx();
+
     if(dockTop != null && neededPanelH > 0){
       const available = (dockTop - UI_SAFE_GAP_PX) - sceneBottomBase;
       const reserveNeed = neededPanelH - available;
@@ -6393,6 +6421,74 @@ function rememberRecentColorCombo(bgHex, fgHex, bdHex){
   scheduleSaveRecentColorCombos();
 }
 
+function wasColorComboUsedRecently(key, lookback = 220){
+  const k = String(key || "").trim();
+  if(!k) return false;
+  const windowSize = Math.max(0, Math.floor(lookback || 0));
+  if(windowSize <= 0) return false;
+  const start = Math.max(0, recentColorComboQueue.length - windowSize);
+  for(let i = recentColorComboQueue.length - 1; i >= start; i--){
+    if(recentColorComboQueue[i] === k) return true;
+  }
+  return false;
+}
+
+function pickRandomFrom(list){
+  if(!Array.isArray(list) || !list.length) return null;
+  return list[(Math.random() * list.length) | 0];
+}
+
+function pickRoleColor(roleKey, pool){
+  const clean = uniq((pool || []).map(normHex).filter(Boolean));
+  if(!clean.length) return null;
+  return bagNext(`combo-role:${String(roleKey || "any")}`, clean);
+}
+
+function buildBalancedColorCombo(options = {}){
+  const allowCurrent = !!options.allowCurrent;
+  const allowSameCard = !!options.allowSameCard;
+  const ignoreRecent = !!options.ignoreRecent;
+  const recentWindow = Math.max(0, Math.floor(options.recentWindow || 220));
+  const maxTries = Math.max(80, Math.floor(options.maxTries || 680));
+
+  const bgPool = uniq(getScopeColorPool(sel.bgColor, current.bgBase || "#ffffff").map(normHex).filter(Boolean));
+  const fgPool = uniq(getScopeColorPool(sel.fgColor, current.fgBase || "#000000").map(normHex).filter(Boolean));
+  const bdPool = uniq(getScopeColorPool(sel.bdColor, current.bdBase || "#4d4d4d").map(normHex).filter(Boolean));
+
+  if(!bgPool.length || !fgPool.length || !bdPool.length) return null;
+
+  const currentKey = colorComboKey(current.bgBase, current.fgBase, current.bdBase);
+  const currentCard = normHex(current.bdBase);
+  const shouldAvoidSameCard = !allowSameCard && bdPool.length > 1;
+  let fallbackPick = null;
+
+  for(let tries = 0; tries < maxTries; tries++){
+    const bg = pickRoleColor("bg", bgPool) || pickRandomFrom(bgPool);
+    if(!bg) continue;
+
+    const fgCandidates = fgPool.filter((fg)=> fg !== bg && contrastRatio(bg, fg) >= 2.4);
+    if(!fgCandidates.length) continue;
+    const fg = pickRoleColor(`fg:${bg}`, fgCandidates) || pickRandomFrom(fgCandidates);
+    if(!fg) continue;
+
+    const bdCandidates = bdPool.filter((bd)=> bd !== bg && bd !== fg && contrastRatio(bd, fg) >= 2.2);
+    if(!bdCandidates.length) continue;
+    const bd = pickRoleColor(`bd:${fg}`, bdCandidates) || pickRandomFrom(bdCandidates);
+    if(!bd) continue;
+
+    const pick = { bgBase: bg, fgBase: fg, bdBase: bd };
+    const key = colorComboKey(bg, fg, bd);
+    if(!fallbackPick) fallbackPick = pick;
+
+    if(!allowCurrent && key === currentKey) continue;
+    if(shouldAvoidSameCard && bd === currentCard) continue;
+    if(!ignoreRecent && wasColorComboUsedRecently(key, recentWindow)) continue;
+    return pick;
+  }
+
+  return fallbackPick;
+}
+
 function getScopeColorPool(setRef, fallbackHex){
   const pool = unionColorsFrom(setRef);
   if(pool.length) return pool;
@@ -6445,6 +6541,18 @@ function parseColorComboKey(key){
 }
 
 function pickNextColorCombo(){
+  const balanced = buildBalancedColorCombo({
+    allowCurrent: false,
+    allowSameCard: false,
+    ignoreRecent: false,
+    recentWindow: 260,
+    maxTries: 760
+  });
+  if(balanced){
+    rememberRecentColorCombo(balanced.bgBase, balanced.fgBase, balanced.bdBase);
+    return balanced;
+  }
+
   const { pool } = getColorComboPool();
   if(!pool.length){
     return {
@@ -6505,6 +6613,15 @@ function pickNextColorCombo(){
 }
 
 function pickStartupColorCombo(){
+  const balanced = buildBalancedColorCombo({
+    allowCurrent: true,
+    allowSameCard: true,
+    ignoreRecent: true,
+    recentWindow: 0,
+    maxTries: 520
+  });
+  if(balanced) return balanced;
+
   const { pool } = getColorComboPool();
   if(!pool.length){
     return {
