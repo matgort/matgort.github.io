@@ -49,6 +49,9 @@
       --swW: calc(var(--pillH) * 2);
       --uiGlobalScale: 0.9;
       --menuTextSize: calc(14px * 1.15 * 1.05 * 1.1 * var(--uiGlobalScale));
+      --menuBtnScale: 1;
+      --menuUiScale: calc(var(--uiGlobalScale) * var(--menuBtnScale));
+      --menuButtonTextSize: calc(var(--menuTextSize) * var(--menuBtnScale));
 
       /* Global UI padding */
       --uiPadX: 30px;
@@ -159,14 +162,14 @@
       bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
       transform: translateX(-50%);
       z-index: 80;
-      width: calc(66px * 1.1 * var(--uiGlobalScale));
-      height: calc(30px * 1.1 * var(--uiGlobalScale));
+      width: calc(66px * 1.1 * var(--menuUiScale));
+      height: calc(30px * 1.1 * var(--menuUiScale));
       border-radius: 0;
       padding: 0;
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      font-size: var(--menuTextSize);
+      font-size: var(--menuButtonTextSize);
       font-weight: 650;
       line-height: 1;
       letter-spacing: .2px;
@@ -196,10 +199,10 @@
       pointer-events: auto;
     }
     #menuToggleBtn.dock-focus{
-      font-size: var(--menuTextSize);
+      font-size: var(--menuButtonTextSize);
     }
     #menuToggleBtn.dock-hover-focus{
-      font-size: var(--menuTextSize);
+      font-size: var(--menuButtonTextSize);
     }
     @media (hover: hover) and (pointer: fine){
       #menuToggleBtn[data-tip]::after{
@@ -565,7 +568,7 @@
     #dock .dockBtn,
     #dock .iconBtn,
     #dock .lockBtn{
-      --btnScale: var(--uiGlobalScale);
+      --btnScale: var(--menuUiScale);
       border-radius: 0;
       border: none;
       background: var(--cardUiBg, transparent);
@@ -600,8 +603,8 @@
       border-radius: 0;
     }
     #dock .iconBtn svg{
-      width: calc(14px * var(--uiGlobalScale));
-      height: calc(14px * var(--uiGlobalScale));
+      width: calc(14px * var(--btnScale));
+      height: calc(14px * var(--btnScale));
     }
     #dock .lockBtn{
       width: calc(28px * var(--btnScale));
@@ -646,7 +649,7 @@
     #panelInner .uiPage .val,
     #panelInner .uiPage .ssBtn,
     #panelInner .uiPage .colorBtn{
-      font-size: var(--menuTextSize) !important;
+      font-size: var(--menuButtonTextSize) !important;
       line-height: 1;
     }
     #panelInner .uiPage .label,
@@ -671,29 +674,29 @@
       transition: none;
     }
     #dock .dockControl.dock-shrink{
-      --btnScale: var(--uiGlobalScale);
+      --btnScale: var(--menuUiScale);
       transform: scale(1);
     }
     #dock .dockControl.dock-focus{
-      --btnScale: var(--uiGlobalScale);
+      --btnScale: var(--menuUiScale);
       transform: scale(1);
       z-index: 62;
     }
     #dock .dockControl.dock-hover-focus{
-      --btnScale: var(--uiGlobalScale);
+      --btnScale: var(--menuUiScale);
       transform: scale(1);
     }
     #dock .dockControl.dock-hover-shrink{
-      --btnScale: var(--uiGlobalScale);
+      --btnScale: var(--menuUiScale);
       transform: scale(1);
     }
     /* When a panel is open, keep extra center space by shrinking non-focused controls. */
     body[data-ui-page]:not([data-ui-page="none"]) #dock .dockControl.dock-shrink{
-      --btnScale: var(--uiGlobalScale);
+      --btnScale: var(--menuUiScale);
       transform: scale(0.9);
     }
     body[data-ui-page]:not([data-ui-page="none"]) #dock .dockControl.dock-focus{
-      --btnScale: var(--uiGlobalScale);
+      --btnScale: var(--menuUiScale);
       transform: scale(1);
     }
     #dock .dockObject{
@@ -954,8 +957,8 @@
     .uiPage--language #partsRow .ssBtn{
       min-width: max-content;
       width: max-content;
-      height: calc(36px * var(--uiGlobalScale));
-      padding: 0 calc(12px * var(--uiGlobalScale));
+      height: calc(36px * var(--menuUiScale));
+      padding: 0 calc(12px * var(--menuUiScale));
       border-radius: 0;
       border: none;
       background: var(--cardUiBg, transparent);
@@ -963,7 +966,7 @@
       text-transform: lowercase;
       font-weight: 650;
       letter-spacing: .02em;
-      font-size: calc(var(--menuTextSize) * 1.2) !important;
+      font-size: calc(var(--menuButtonTextSize) * 1.2) !important;
       line-height: 1;
       transition: height .12s ease, padding .12s ease, font-size .12s ease;
     }
@@ -973,9 +976,9 @@
       box-shadow: none;
       min-width: max-content;
       width: max-content;
-      height: calc(18px * var(--uiGlobalScale));
-      padding: 0 calc(8px * var(--uiGlobalScale));
-      font-size: calc(var(--menuTextSize) * 0.6) !important;
+      height: calc(18px * var(--menuUiScale));
+      padding: 0 calc(8px * var(--menuUiScale));
+      font-size: calc(var(--menuButtonTextSize) * 0.6) !important;
     }
     .uiPage--language #partsRow .ssBtn.on{
       opacity: 1;
@@ -983,9 +986,9 @@
       box-shadow: none;
       min-width: max-content;
       width: max-content;
-      height: calc(36px * var(--uiGlobalScale));
-      padding: 0 calc(12px * var(--uiGlobalScale));
-      font-size: calc(var(--menuTextSize) * 1.2) !important;
+      height: calc(36px * var(--menuUiScale));
+      padding: 0 calc(12px * var(--menuUiScale));
+      font-size: calc(var(--menuButtonTextSize) * 1.2) !important;
     }
     .uiPage--language #partsRow .ssBtn:hover,
     .uiPage--language #partsRow .ssBtn:focus-visible,
@@ -1130,41 +1133,41 @@
       min-height: 0;
       min-width: max-content;
       width: max-content;
-      padding: calc(6px * var(--uiGlobalScale)) calc(14px * var(--uiGlobalScale));
+      padding: calc(6px * var(--menuUiScale)) calc(14px * var(--menuUiScale));
       display: inline-flex;
       align-items: center;
       justify-content: center;
       white-space: nowrap;
       line-height: 1;
-      font-size: var(--menuTextSize) !important;
+      font-size: var(--menuButtonTextSize) !important;
       transition: padding .12s ease, font-size .12s ease, opacity .12s ease;
     }
     #panelInner .uiPage--colors .colorScopeBtn{
-      font-size: var(--menuTextSize) !important;
-      padding: calc(6px * var(--uiGlobalScale)) calc(14px * var(--uiGlobalScale));
+      font-size: var(--menuButtonTextSize) !important;
+      padding: calc(6px * var(--menuUiScale)) calc(14px * var(--menuUiScale));
       min-width: max-content;
       width: max-content;
     }
     #panelInner .uiPage--colors .colorScopeBtn:not(.on){
       opacity: 1;
       filter: none;
-      font-size: calc(var(--menuTextSize) * 0.7) !important;
-      padding: calc(4px * var(--uiGlobalScale)) calc(10px * var(--uiGlobalScale)) !important;
+      font-size: calc(var(--menuButtonTextSize) * 0.7) !important;
+      padding: calc(4px * var(--menuUiScale)) calc(10px * var(--menuUiScale)) !important;
     }
     #panelInner .uiPage--colors .colorScopeBtn.on{
       opacity: 1;
       filter: none;
       box-shadow: none;
-      font-size: var(--menuTextSize) !important;
-      padding: calc(6px * var(--uiGlobalScale)) calc(14px * var(--uiGlobalScale)) !important;
+      font-size: var(--menuButtonTextSize) !important;
+      padding: calc(6px * var(--menuUiScale)) calc(14px * var(--menuUiScale)) !important;
     }
     #panelInner .uiPage--colors .colorScopeBtn:not(.on):active{
-      font-size: calc(var(--menuTextSize) * 0.7) !important;
-      padding: calc(4px * var(--uiGlobalScale)) calc(10px * var(--uiGlobalScale));
+      font-size: calc(var(--menuButtonTextSize) * 0.7) !important;
+      padding: calc(4px * var(--menuUiScale)) calc(10px * var(--menuUiScale));
     }
     #panelInner .uiPage--colors .colorScopeBtn.on:active{
-      font-size: var(--menuTextSize) !important;
-      padding: calc(6px * var(--uiGlobalScale)) calc(14px * var(--uiGlobalScale));
+      font-size: var(--menuButtonTextSize) !important;
+      padding: calc(6px * var(--menuUiScale)) calc(14px * var(--menuUiScale));
     }
     .uiPage--colors .label,
     .uiPage--colors .val{
@@ -1258,11 +1261,11 @@
     @media(max-width: 860px){
       .uiPage--language{ max-width: min(640px, 100%); }
       .uiPage--language #partsRow .ssBtn{
-        height: calc(34px * var(--uiGlobalScale));
+        height: calc(34px * var(--menuUiScale));
       }
       .uiPage--language #partsRow .ssBtn:not(.on){
-        height: calc(17px * var(--uiGlobalScale));
-        padding: 0 calc(7px * var(--uiGlobalScale));
+        height: calc(17px * var(--menuUiScale));
+        padding: 0 calc(7px * var(--menuUiScale));
       }
 
       .uiPage--contrast{
@@ -1616,14 +1619,14 @@
   }
   .uiPage--language #partsRow .ssBtn,
   .uiPage--language #partsRow .ssBtn.on{
-    height: calc(30px * var(--uiGlobalScale));
-    padding: 0 calc(14px * var(--uiGlobalScale));
-    font-size: var(--menuTextSize) !important;
+    height: calc(30px * var(--menuUiScale));
+    padding: 0 calc(14px * var(--menuUiScale));
+    font-size: var(--menuButtonTextSize) !important;
   }
   .uiPage--language #partsRow .ssBtn:not(.on){
-    height: calc(22px * var(--uiGlobalScale));
-    padding: 0 calc(10px * var(--uiGlobalScale));
-    font-size: calc(var(--menuTextSize) * 0.7) !important;
+    height: calc(22px * var(--menuUiScale));
+    padding: 0 calc(10px * var(--menuUiScale));
+    font-size: calc(var(--menuButtonTextSize) * 0.7) !important;
   }
 
   .uiPage--info{
@@ -1654,6 +1657,12 @@
     height: calc(34px * 1.10 * 0.64);
   }
 }
+@media (pointer: coarse) and (orientation: portrait){
+  :root{
+    --menuBtnScale: 1.1;
+  }
+}
+
     
 
     @media(max-width: 980px){
