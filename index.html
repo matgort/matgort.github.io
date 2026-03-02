@@ -69,6 +69,7 @@
       );
 
       --titlePadTop: 18px;
+      --infoBlurbW: 620px;
     }
 
     *{ box-sizing:border-box; }
@@ -199,10 +200,10 @@
       pointer-events: auto;
     }
     #menuToggleBtn.dock-focus{
-      font-size: var(--menuButtonTextSize);
+      transform: translateX(-50%);
     }
     #menuToggleBtn.dock-hover-focus{
-      font-size: var(--menuButtonTextSize);
+      transform: translateX(-50%) scale(1);
     }
     @media (hover: hover) and (pointer: fine){
       #menuToggleBtn[data-tip]::after{
@@ -226,6 +227,12 @@
       #menuToggleBtn[data-tip]:hover::after,
       #menuToggleBtn[data-tip]:focus-visible::after{
         opacity: .9;
+      }
+    }
+    @media (hover: hover) and (pointer: fine){
+      #menuToggleBtn[data-tip]::after{
+        content: none !important;
+        display: none !important;
       }
     }
 
@@ -319,6 +326,12 @@
         transform: translate(-50%, 0);
       }
     }
+    @media (hover: hover) and (pointer: fine){
+      .lockBtn[data-tip]::after{
+        content: none !important;
+        display: none !important;
+      }
+    }
 
     .iconBtn{
       width: 34px;
@@ -396,6 +409,12 @@
         transform: translate(-50%, 0);
       }
     }
+    @media (hover: hover) and (pointer: fine){
+      .iconBtn[data-tip]::after{
+        content: none !important;
+        display: none !important;
+      }
+    }
 
     @media (hover: hover) and (pointer: fine){
       /* Dock button hover text (below the button). */
@@ -421,6 +440,12 @@
       .dockBtn[data-tip]:hover::after{
         opacity: .9;
         transform: translate(-50%, 0);
+      }
+    }
+    @media (hover: hover) and (pointer: fine){
+      .dockBtn[data-tip]::after{
+        content: none !important;
+        display: none !important;
       }
     }
 
@@ -610,11 +635,7 @@
       width: calc(28px * var(--btnScale));
       height: calc(28px * var(--btnScale));
       padding: 0;
-      transition: width .14s ease, height .14s ease;
-    }
-    #dock .lockBtn.locked{
-      width: calc(36px * var(--btnScale));
-      height: calc(36px * var(--btnScale));
+      transition: none;
     }
     #dock .lockIcons{
       opacity: 1;
@@ -680,7 +701,7 @@
     #dock .dockControl.dock-focus{
       --btnScale: var(--menuUiScale);
       transform: scale(1);
-      z-index: 62;
+      z-index: 64;
     }
     #dock .dockControl.dock-hover-focus{
       --btnScale: var(--menuUiScale);
@@ -690,10 +711,10 @@
       --btnScale: var(--menuUiScale);
       transform: scale(1);
     }
-    /* When a panel is open, keep extra center space by shrinking non-focused controls. */
+    /* Keep non-focused controls at baseline size even when panels are open. */
     body[data-ui-page]:not([data-ui-page="none"]) #dock .dockControl.dock-shrink{
       --btnScale: var(--menuUiScale);
-      transform: scale(0.9);
+      transform: scale(1);
     }
     body[data-ui-page]:not([data-ui-page="none"]) #dock .dockControl.dock-focus{
       --btnScale: var(--menuUiScale);
@@ -733,6 +754,66 @@
       letter-spacing: .02em;
       text-transform: lowercase;
       bottom: calc(100% + 2px);
+    }
+    #dock .dockControl[data-tip]::after,
+    #dock .iconBtn[data-tip]::after{
+      content: none !important;
+      display: none !important;
+    }
+
+    .btnText{
+      display: inline-block;
+      transform-origin: center center;
+      transition: transform .10s ease;
+      will-change: transform;
+    }
+    button:hover .btnText,
+    button:focus-visible .btnText{
+      transform: scale(1.10);
+    }
+    /* Active state across UI: invert colors, don't resize the button box. */
+    button.on:not(.swatch),
+    button[aria-pressed="true"]:not(.swatch),
+    #dock .dockControl.dock-focus,
+    #menuToggleBtn.dock-focus{
+      background: var(--cardUiFg, var(--ui)) !important;
+      color: var(--cardUiBg, transparent) !important;
+    }
+    /* Shadow mode: any rectangle currently using card color gets a subtle drop shadow. */
+    body.drop-shadow-on #card{
+      box-shadow: 0 10px 14px -12px rgba(0,0,0,0.30), 0 3px 5px -4px rgba(0,0,0,0.18) !important;
+    }
+    body.drop-shadow-on #menuToggleBtn,
+    body.drop-shadow-on #dock .dockBtn,
+    body.drop-shadow-on #dock .iconBtn,
+    body.drop-shadow-on #dock .lockBtn,
+    body.drop-shadow-on #panelInner .uiPage .colorBtn,
+    body.drop-shadow-on #panelInner .uiPage .ssBtn,
+    body.drop-shadow-on #panelInner .uiPage .ctrl,
+    body.drop-shadow-on #panelInner .uiPage--info .infoHeadTile,
+    body.drop-shadow-on #panelInner .uiPage--info .infoBlurbTile,
+    body.drop-shadow-on #panelInner .uiPage--colors .colorsGridCol{
+      box-shadow: 0 6px 8px -8px rgba(0,0,0,0.28), 0 2px 3px -2px rgba(0,0,0,0.15) !important;
+    }
+    button.on:not(.swatch):hover,
+    button.on:not(.swatch):focus-visible,
+    button.on:not(.swatch):active,
+    button[aria-pressed="true"]:not(.swatch):hover,
+    button[aria-pressed="true"]:not(.swatch):focus-visible,
+    button[aria-pressed="true"]:not(.swatch):active,
+    #dock .dockControl.dock-focus:hover,
+    #dock .dockControl.dock-focus:focus-visible,
+    #dock .dockControl.dock-focus:active,
+    #menuToggleBtn.dock-focus:hover,
+    #menuToggleBtn.dock-focus:focus-visible,
+    #menuToggleBtn.dock-focus:active{
+      background: var(--cardUiFg, var(--ui)) !important;
+      color: var(--cardUiBg, transparent) !important;
+    }
+    #dock .dockControl.dock-focus.iconBtn::before,
+    #dock .iconBtn.on::before,
+    #dock .iconBtn[aria-pressed="true"]::before{
+      background: var(--cardUiFg, var(--ui)) !important;
     }
     .row{
       display:flex;
@@ -1071,6 +1152,36 @@
       min-width: 196px;
       flex: 1 1 auto;
     }
+    .uiPage--contrast .contrastActionRow{
+      margin-top: 4px;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+    }
+    .uiPage--contrast .contrastActionBtn{
+      height: auto;
+      min-height: 0;
+      min-width: max-content;
+      width: max-content;
+      padding: calc(6px * var(--menuUiScale)) calc(14px * var(--menuUiScale));
+      border-radius: 0;
+      border: none;
+      background: var(--cardUiBg, transparent);
+      color: var(--cardUiFg, var(--ui));
+      text-transform: lowercase;
+      font-weight: 650;
+      letter-spacing: .02em;
+      font-size: var(--menuButtonTextSize) !important;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .uiPage--contrast .contrastActionBtn:hover,
+    .uiPage--contrast .contrastActionBtn:focus-visible{
+      background: var(--cardUiBg, transparent);
+      color: var(--cardUiFg, var(--ui));
+    }
 
     /* Colors panel: all swatches shown together (no grouped rows). */
     .uiPage--colors{
@@ -1105,7 +1216,8 @@
       justify-content: center;
     }
     .uiPage--colors .colorsControlRow{
-      width: 100%;
+      width: max-content;
+      max-width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -1178,7 +1290,7 @@
     }
     .uiPage--colors .swatchRow--all{
       display: grid;
-      grid-template-columns: repeat(10, max-content);
+      grid-template-columns: repeat(9, max-content);
       justify-content: center;
       gap: 7px;
       width: auto;
@@ -1200,8 +1312,8 @@
     }
     .uiPage--colors .swatchRow--all .swatch{
       position: relative;
-      width: calc(34px * 1.10);
-      height: calc(34px * 1.10);
+      width: calc(34px * 1.10 * 0.9);
+      height: calc(34px * 1.10 * 0.9);
       border: none;
       border-radius: 0;
       padding: 0;
@@ -1292,7 +1404,7 @@
         gap: 5px;
       }
       .uiPage--colors .swatchRow--all{
-        grid-template-columns: repeat(6, max-content);
+        grid-template-columns: repeat(9, max-content);
       }
     }
     @media(max-width: 640px){
@@ -1331,7 +1443,7 @@
         gap: 12px;
       }
       .uiPage--colors .swatchRow--all{
-        grid-template-columns: repeat(8, max-content);
+        grid-template-columns: repeat(9, max-content);
       }
     }
 
@@ -1353,6 +1465,8 @@
       background: var(--cardUiBg, transparent);
       color: var(--cardUiFg, var(--ui));
       padding: calc(9px * var(--uiGlobalScale)) calc(12px * var(--uiGlobalScale));
+      padding-top: calc((9px * var(--uiGlobalScale)) + 5px);
+      padding-bottom: calc((9px * var(--uiGlobalScale)) + 5px);
       display: flex;
       flex-direction: column;
       gap: calc(7px * var(--uiGlobalScale));
@@ -1367,49 +1481,74 @@
     .uiPage--speed .label,
     .uiPage--contrast .val,
     .uiPage--speed .val{
-      font-size: calc((var(--menuTextSize) * 0.74) + 1px) !important;
+      font-size: calc(var(--menuButtonTextSize) * 1.32) !important;
       letter-spacing: .02em;
       text-transform: lowercase;
       font-weight: 650;
+      line-height: 1;
     }
     .uiPage--contrast input[type=range],
     .uiPage--speed input[type=range]{
-      height: calc(20px * var(--uiGlobalScale));
+      height: calc(12px * var(--uiGlobalScale));
       touch-action: pan-x;
+      color: var(--cardUiFg, var(--ui));
     }
     .uiPage--contrast input[type=range]::-webkit-slider-runnable-track,
     .uiPage--speed input[type=range]::-webkit-slider-runnable-track{
-      height: 3px;
+      height: 1.5px;
+      background: currentColor;
+      border-radius: 0;
     }
     .uiPage--contrast input[type=range]::-moz-range-track,
     .uiPage--speed input[type=range]::-moz-range-track{
-      height: 3px;
+      height: 1.5px;
+      background: currentColor;
+      border-radius: 0;
+    }
+    .uiPage--contrast input[type=range]::-moz-range-progress,
+    .uiPage--speed input[type=range]::-moz-range-progress{
+      height: 1.5px;
+      background: currentColor;
+      border-radius: 0;
     }
     .uiPage--contrast input[type=range]::-webkit-slider-thumb,
     .uiPage--speed input[type=range]::-webkit-slider-thumb{
-      width: calc(16px * var(--uiGlobalScale));
-      height: calc(16px * var(--uiGlobalScale));
-      margin-top: calc(-6.5px * var(--uiGlobalScale));
+      appearance: none;
+      width: calc(10px * var(--uiGlobalScale));
+      height: calc(10px * var(--uiGlobalScale));
+      margin-top: calc(-4.25px * var(--uiGlobalScale));
+      border: 0;
       border-radius: 0;
+      background: currentColor;
+      box-shadow: none;
     }
     .uiPage--contrast input[type=range]::-moz-range-thumb,
     .uiPage--speed input[type=range]::-moz-range-thumb{
-      width: calc(16px * var(--uiGlobalScale));
-      height: calc(16px * var(--uiGlobalScale));
+      width: calc(10px * var(--uiGlobalScale));
+      height: calc(10px * var(--uiGlobalScale));
+      border: 0;
       border-radius: 0;
+      background: currentColor;
+      box-shadow: none;
     }
 
     /* Explicit speed-slider thumb override so it always matches contrast. */
     #speedSlider::-webkit-slider-thumb{
-      width: calc(16px * var(--uiGlobalScale)) !important;
-      height: calc(16px * var(--uiGlobalScale)) !important;
-      margin-top: calc(-6.5px * var(--uiGlobalScale)) !important;
+      width: calc(10px * var(--uiGlobalScale)) !important;
+      height: calc(10px * var(--uiGlobalScale)) !important;
+      margin-top: calc(-4.25px * var(--uiGlobalScale)) !important;
       border-radius: 0 !important;
+      border: 0 !important;
+      background: currentColor !important;
+      box-shadow: none !important;
     }
     #speedSlider::-moz-range-thumb{
-      width: calc(16px * var(--uiGlobalScale)) !important;
-      height: calc(16px * var(--uiGlobalScale)) !important;
+      width: calc(10px * var(--uiGlobalScale)) !important;
+      height: calc(10px * var(--uiGlobalScale)) !important;
       border-radius: 0 !important;
+      border: 0 !important;
+      background: currentColor !important;
+      box-shadow: none !important;
     }
 
     /* Dock buttons stay fully visible in the unified card-color style. */
@@ -1557,6 +1696,7 @@
     --pillFont: 7.6px;
     --mobileTextScale: 0.95;
     --uiGlobalScale: 0.729;
+    --uiPadX: 18px;
   }
   button{ font-size: 7.4px; padding: 5px 8px; }
   .iconBtn{ width: 42px; height: var(--pillH); padding: 0; }
@@ -1597,6 +1737,8 @@
     max-width: var(--mobileAdjustTileW);
     min-width: var(--mobileAdjustTileMinW) !important;
     padding: calc(8px * var(--uiGlobalScale)) calc(10px * var(--uiGlobalScale));
+    padding-top: calc((8px * var(--uiGlobalScale)) + 5px);
+    padding-bottom: calc((8px * var(--uiGlobalScale)) + 5px);
   }
   .uiPage--speed{
     max-width: min(96vw, 560px);
@@ -1610,6 +1752,8 @@
     max-width: var(--mobileAdjustTileW);
     min-width: var(--mobileAdjustTileMinW) !important;
     padding: calc(8px * var(--uiGlobalScale)) calc(10px * var(--uiGlobalScale));
+    padding-top: calc((8px * var(--uiGlobalScale)) + 5px);
+    padding-bottom: calc((8px * var(--uiGlobalScale)) + 5px);
   }
 
   .uiPage--language{
@@ -1651,12 +1795,12 @@
   }
 
   .uiPage--colors .swatchRow--all{
-    grid-template-columns: repeat(10, max-content);
+    grid-template-columns: repeat(9, max-content);
     gap: 5px;
   }
   .uiPage--colors .swatchRow--all .swatch{
-    width: calc(34px * 1.10 * 0.64);
-    height: calc(34px * 1.10 * 0.64);
+    width: calc(34px * 1.10 * 0.64 * 0.9);
+    height: calc(34px * 1.10 * 0.64 * 0.9);
   }
 }
 @media (pointer: coarse) and (orientation: portrait){
@@ -1695,13 +1839,13 @@
       .swatchRow{ gap: 9px; flex-wrap:wrap; }
     }
 
-    @media(max-width: 480px), (max-height: 720px){
-      :root{
-        --barH: clamp(210px, 30vh, 250px);
-        --barOffset: 8px;
-        --uiScale: 0.96;
-        --uiPadX: 14px;
-      }
+@media(max-width: 480px), (max-height: 720px){
+  :root{
+    --barH: clamp(210px, 30vh, 250px);
+    --barOffset: 8px;
+    --uiScale: 0.96;
+    --uiPadX: 18px;
+  }
       /* Bottom dock/panel manages its own scrolling (panelInner). */
       #titleBlock{ gap: 4px; }
     }
@@ -1806,22 +1950,26 @@
             <section class="uiPage uiPage--contrast" aria-label="contrast">
               <div class="sliderRow colorsBrightnessRow">
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">background brightness</div><div class="val" id="bgBrightVal">84%</div></div>
-                  <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.84">
+                  <div class="labelRow"><div class="label">background brightness</div><div class="val" id="bgBrightVal">70%</div></div>
+                  <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.70">
                 </div>
                 <div class="ctrl">
                   <div class="labelRow"><div class="label">text brightness</div><div class="val" id="fgBrightVal">0%</div></div>
                   <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
                 </div>
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">92%</div></div>
-                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="0.92">
+                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">100%</div></div>
+                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
                 </div>
+              </div>
+              <div class="contrastActionRow" id="contrastActionRow">
+                <button id="contrastInvertBtn" type="button" class="colorBtn contrastActionBtn">invert</button>
+                <button id="dropShadowBtn" type="button" class="colorBtn contrastActionBtn" aria-pressed="false">drop shadow</button>
               </div>
             </section>
 
             <section class="uiPage uiPage--colors" aria-label="colors">
-              <div class="colorsPanelLayout">
+              <div class="colorsPanelLayout" id="colorsPanelGroup">
                 <div class="colorsGridCol" id="colorsGridTile">
                   <div class="swatchGridPanel">
                     <div class="swatchRow swatchRow--all" id="allColorsRow"></div>
@@ -1835,7 +1983,7 @@
                     <button id="scopeBdBtn" type="button" class="colorBtn colorScopeBtn" aria-pressed="true">card color</button>
                   </div>
 
-                  <div class="colorsBulkCol">
+                  <div class="colorsBulkCol" id="colorsBulkRow">
                     <button id="allOnBtn" type="button" class="colorBtn colorScopeBtn">all on</button>
                     <button id="allOffBtn" type="button" class="colorBtn colorScopeBtn">all off</button>
                   </div>
@@ -1950,6 +2098,24 @@ function getRootVarVw(name){
   return Number.isFinite(n) ? n : null;
 }
 
+function ensureButtonTextSpan(btn){
+  if(!btn) return null;
+  let span = btn.querySelector(".btnText");
+  if(span) return span;
+  const txt = String(btn.textContent || "").trim();
+  btn.textContent = "";
+  span = document.createElement("span");
+  span.className = "btnText";
+  span.textContent = txt;
+  btn.appendChild(span);
+  return span;
+}
+function setButtonText(btn, text){
+  if(!btn) return;
+  const span = ensureButtonTextSpan(btn);
+  if(span) span.textContent = String(text || "");
+}
+
 /* ================= Non-repeating shuffle bags ================= */
 const BAGS = new Map();
 function bagNext(key, pool){
@@ -2037,9 +2203,9 @@ function bagNextWithCooldown(key, pool, maxRecent){
 /* ================= Palettes ================= */
 const PAL = {
   circus: ["#FF6AD5","#FF8A00","#FF4D1A","#C85AE0","#FF007A"],
-  beachy: ["#BDE8FF","#8FB2CF","#CBE7FF","#4E61B4","#74A8E8"],
+  beachy: ["#BDE8FF","#747CC2","#4E61B4","#74A8E8"],
   fleshy: ["#F7D59B","#F6B77D","#B7852F","#F7B59D","#E1780A"],
-  future: ["#99CC33","#8F6FD0","#F8C6A4","#B23A2B","#7FB1D9"],
+  future: ["#94BA48","#8F6FD0","#B23A2B","#6198EF"],
   retro:  ["#DDE6B7","#B8B745","#B8B745","#B31347","#F6A623"],
   earthy: ["#A7B827","#D79A16","#536A00","#6F8A1A","#806200"]
 };
@@ -2251,6 +2417,8 @@ const tabContrastBtn = document.getElementById("tabContrastBtn");
 const tabColorsBtn = document.getElementById("tabColorsBtn");
 const tabSpeedBtn = document.getElementById("tabSpeedBtn");
 const tabInfoBtn = document.getElementById("tabInfoBtn");
+const contrastInvertBtn = document.getElementById("contrastInvertBtn");
+const dropShadowBtn = document.getElementById("dropShadowBtn");
 const dockPlaybackEl = document.getElementById("dockPlayback");
 const scopeBgBtn = document.getElementById("scopeBgBtn");
 const scopeFgBtn = document.getElementById("scopeFgBtn");
@@ -2287,14 +2455,14 @@ let dockActiveBtnId = "";
 let dockHoverBtnId = "";
 let dockLayoutRaf = 0;
 const DOCK_LAYOUT_MARGIN = 8;
-const DOCK_LAYOUT_GAP = 6;
+const DOCK_LAYOUT_GAP = 4;
 const DOCK_LAYOUT_OBS_PAD = 8;
 const DOCK_GRID_MIN_STEP_X = 12;
 const DOCK_GRID_MIN_STEP_Y = 10;
 const DOCK_GRID_MAX_RING = 64;
 const DOCK_PANEL_MAX_RING = 96;
 const DOCK_SUBMENU_Y_SHIFT = 20;
-const DOCK_MENU_SPACER_EXTRA = 28;
+const DOCK_MENU_SPACER_EXTRA = 18;
 const DOCK_SUBMENU_IDS = new Set([
   "tabLanguageBtn",
   "tabContrastBtn",
@@ -2445,16 +2613,14 @@ function getActivePanelTileEls(page){
     return Array.from(panelInnerEl.querySelectorAll(".uiPage--info .infoGroup"));
   }
   if(safePage === "contrast"){
-    return Array.from(panelInnerEl.querySelectorAll(".uiPage--contrast .ctrl"));
+    const tiles = Array.from(panelInnerEl.querySelectorAll(".uiPage--contrast .ctrl"));
+    const actionRow = panelInnerEl.querySelector("#contrastActionRow");
+    if(actionRow) tiles.push(actionRow);
+    return tiles;
   }
   if(safePage === "colors"){
     return [
-      panelInnerEl.querySelector("#colorsGridTile"),
-      panelInnerEl.querySelector("#scopeFgBtn"),
-      panelInnerEl.querySelector("#scopeBgBtn"),
-      panelInnerEl.querySelector("#scopeBdBtn"),
-      panelInnerEl.querySelector("#allOffBtn"),
-      panelInnerEl.querySelector("#allOnBtn")
+      panelInnerEl.querySelector("#colorsPanelGroup")
     ].filter(Boolean);
   }
   if(safePage === "speed"){
@@ -2485,33 +2651,15 @@ function clearPanelFloatingTiles(){
 
 function getPanelTopBounds(vh, blockH, panelTopLimit){
   const safe = getSceneSafeRect();
-  const isBanded = shouldUseBandedMobileLayout(null, vh);
   const safeBottom = safe ? safe.bottom : Math.round(vh * 0.40);
-  const activePage = String(document.body.dataset.uiPage || "none");
-
-  // Keep adjustment layers below the phrase/card and out of the upper half on mobile.
-  const minSafeTop = Math.round(safeBottom + UI_SAFE_GAP_PX + 8);
-  const mobileFloor = isBanded ? Math.round(vh * 0.52) : DOCK_LAYOUT_MARGIN;
-  const mobilePanelDownShift = isMobileMode() ? Math.round(Math.max(10, vh * 0.035)) : 0;
-  const mobileAdjustLayerUpShift = (
-    isMobileMode() &&
-    activePage !== "language" &&
-    activePage !== "speed" &&
-    activePage !== "none"
-  ) ? 20 : 0;
-  // Extra global lift whenever any adjustment layer is open.
-  const mobileAnyPanelExtraUpShift = (isMobileMode() && activePage !== "none") ? 20 : 0;
-  const minTopBase = Math.max(DOCK_LAYOUT_MARGIN, minSafeTop, mobileFloor) + mobilePanelDownShift;
-  const minTop = Math.max(
-    DOCK_LAYOUT_MARGIN,
-    minTopBase - mobileAdjustLayerUpShift - mobileAnyPanelExtraUpShift
-  );
-
+  const laneGap = Math.max(10, UI_SAFE_GAP_PX);
+  const minTop = Math.max(DOCK_LAYOUT_MARGIN, Math.round(safeBottom + laneGap));
   const topLimit = Number.isFinite(panelTopLimit)
     ? panelTopLimit
-    : (vh - DOCK_LAYOUT_MARGIN);
-  const maxTop = Math.max(minTop, Math.round(topLimit - blockH - 6));
-  return { minTop, maxTop };
+    : (getDockControlsTopPx() ?? (vh - DOCK_LAYOUT_MARGIN));
+  const maxTop = Math.max(minTop, Math.round(topLimit - laneGap - blockH));
+  const targetTop = clamp(Math.round((minTop + maxTop) * 0.5), minTop, maxTop);
+  return { minTop, maxTop, targetTop };
 }
 
 function buildPanelFlowRows(items, maxRowW, gapX){
@@ -2545,7 +2693,6 @@ function buildPanelFlowRows(items, maxRowW, gapX){
 
 function tryPlacePanelFlowCluster(measured, vw, vh, obstacles, placed, opts = {}){
   if(!measured.length) return false;
-  const preferBelow = !!opts.preferBelow;
   const gapX = Math.max(6, Math.round(opts.gapX || 8));
   const gapY = Math.max(6, Math.round(opts.gapY || 8));
   const maxAvailW = Math.max(120, vw - (DOCK_LAYOUT_MARGIN * 2));
@@ -2558,31 +2705,15 @@ function tryPlacePanelFlowCluster(measured, vw, vh, obstacles, placed, opts = {}
 
   const blockW = Math.max(...rows.map((r)=>r.rowW));
   const blockH = rows.reduce((sum, r)=>sum + r.rowH, 0) + (gapY * (rows.length - 1));
-  const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
+  const { minTop, maxTop, targetTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
   const minX = DOCK_LAYOUT_MARGIN;
   const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
   const xShifts = [0, -12, 12, -24, 24, -36, 36];
-  const desiredTop = preferBelow
-    ? minTop
-    : clamp(
-        Math.round(minTop + ((maxTop - minTop) * 0.45)),
-        minTop,
-        maxTop
-      );
-  const yCandidates = preferBelow
-    ? Array.from(new Set([
-        minTop,
-        clamp(minTop + 8, minTop, maxTop),
-        clamp(minTop + 16, minTop, maxTop),
-        maxTop
-      ]))
-    : Array.from(new Set([
-        desiredTop,
-        minTop,
-        maxTop,
-        clamp(desiredTop - 10, minTop, maxTop),
-        clamp(desiredTop + 10, minTop, maxTop)
-      ]));
+  const yCandidates = Array.from(new Set([
+    targetTop,
+    clamp(targetTop - 4, minTop, maxTop),
+    clamp(targetTop + 4, minTop, maxTop)
+  ]));
 
   for(const yBase of yCandidates){
     for(const sx of xShifts){
@@ -2625,15 +2756,8 @@ function tryPlacePanelFlowCluster(measured, vw, vh, obstacles, placed, opts = {}
 
 function tryPlaceColorsPanelCluster(measured, vw, vh, obstacles, placed, opts = {}){
   const byId = new Map(measured.map((item)=>[String(item.el && item.el.id || ""), item]));
-  const grid = byId.get("colorsGridTile");
-  const leftBtns = ["scopeFgBtn","scopeBgBtn","scopeBdBtn"]
-    .map((id)=>byId.get(id))
-    .filter(Boolean);
-  const rightBtns = ["allOnBtn","allOffBtn"]
-    .map((id)=>byId.get(id))
-    .filter(Boolean);
-
-  if(!grid || leftBtns.length !== 3 || rightBtns.length !== 2) return false;
+  const group = byId.get("colorsPanelGroup");
+  if(!group) return false;
 
   function commitIfFits(placements){
     const local = [];
@@ -2654,121 +2778,27 @@ function tryPlaceColorsPanelCluster(measured, vw, vh, obstacles, placed, opts = 
     return true;
   }
 
-  const rowGap = Math.max(6, DOCK_LAYOUT_GAP);
-  const btnGapOptions = [10, 8, 6, 4];
   const maxAvailW = vw - (DOCK_LAYOUT_MARGIN * 2);
-
-  const gridW = grid.measure.w;
-  const gridH = grid.measure.h;
+  const groupW = group.measure.w;
+  const groupH = group.measure.h;
+  if(groupW > maxAvailW) return false;
 
   const centerX = Number.isFinite(opts.centerX) ? opts.centerX : (vw * 0.5);
   const xShifts = [0, -16, 16, -32, 32, -48, 48];
+  const { minTop, maxTop, targetTop } = getPanelTopBounds(vh, groupH, opts.panelTopLimit);
+  const minX = DOCK_LAYOUT_MARGIN;
+  const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - groupW);
+  const yCandidates = Array.from(new Set([
+    targetTop,
+    clamp(targetTop - 4, minTop, maxTop),
+    clamp(targetTop + 4, minTop, maxTop)
+  ]));
 
-  // layout A: swatches top, scope buttons row, then all-off/all-on row.
-  for(const btnGap of btnGapOptions){
-    const leftRowW = leftBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (btnGap * (leftBtns.length - 1));
-    const leftRowH = Math.max(...leftBtns.map((item)=>item.measure.h));
-    const rightRowW = rightBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (btnGap * (rightBtns.length - 1));
-    const rightRowH = Math.max(...rightBtns.map((item)=>item.measure.h));
-    const controlsW = Math.max(leftRowW, rightRowW);
-    const controlsH = leftRowH + rowGap + rightRowH;
-    const blockW = Math.max(gridW, controlsW);
-    const blockH = gridH + rowGap + controlsH;
-
-    if(blockW > maxAvailW) continue;
-
-    const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
-    const minX = DOCK_LAYOUT_MARGIN;
-    const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
-    const desiredTop = clamp(
-      Math.round(minTop + ((maxTop - minTop) * 0.42)),
-      minTop,
-      maxTop
-    );
-    const yCandidates = Array.from(new Set([
-      desiredTop,
-      minTop,
-      maxTop,
-      clamp(desiredTop - 8, minTop, maxTop),
-      clamp(desiredTop + 8, minTop, maxTop)
-    ]));
-
-    for(const topBase of yCandidates){
-      for(const sx of xShifts){
-        const blockX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
-        const topY = clamp(Math.round(topBase), minTop, maxTop);
-
-        const gridX = blockX + Math.round((blockW - gridW) * 0.5);
-        const scopeY = topY + gridH + rowGap;
-        const bulkY = scopeY + leftRowH + rowGap;
-        const leftStartX = blockX + Math.round((blockW - leftRowW) * 0.5);
-        const rightStartX = blockX + Math.round((blockW - rightRowW) * 0.5);
-
-        const placements = [{ item: grid, x: gridX, y: topY }];
-
-        let xL = leftStartX;
-        for(const item of leftBtns){
-          const y = scopeY + Math.round((leftRowH - item.measure.h) * 0.5);
-          placements.push({ item, x: xL, y });
-          xL += item.measure.w + btnGap;
-        }
-
-        let xR = rightStartX;
-        for(const item of rightBtns){
-          const y = bulkY + Math.round((rightRowH - item.measure.h) * 0.5);
-          placements.push({ item, x: xR, y });
-          xR += item.measure.w + btnGap;
-        }
-
-        if(commitIfFits(placements)) return true;
-      }
-    }
-  }
-
-  // layout B fallback: swatches top, compact vertical button stack below.
-  {
-    const buttonStack = leftBtns.concat(rightBtns);
-    const stackW = Math.max(...buttonStack.map((item)=>item.measure.w));
-    const stackH = buttonStack.reduce((sum, item)=>sum + item.measure.h, 0) + (rowGap * (buttonStack.length - 1));
-    const blockW = Math.max(gridW, stackW);
-    const blockH = gridH + rowGap + stackH;
-
-    if(blockW <= maxAvailW){
-      const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
-      const minX = DOCK_LAYOUT_MARGIN;
-      const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
-      const desiredTop = clamp(
-        Math.round(minTop + ((maxTop - minTop) * 0.40)),
-        minTop,
-        maxTop
-      );
-      const yCandidates = Array.from(new Set([
-        desiredTop,
-        minTop,
-        maxTop,
-        clamp(desiredTop - 8, minTop, maxTop),
-        clamp(desiredTop + 8, minTop, maxTop)
-      ]));
-
-      for(const topBase of yCandidates){
-        for(const sx of xShifts){
-          const blockX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
-          const topY = clamp(Math.round(topBase), minTop, maxTop);
-          const gridX = blockX + Math.round((blockW - gridW) * 0.5);
-          const stackX = blockX + Math.round((blockW - stackW) * 0.5);
-          const stackStartY = topY + gridH + rowGap;
-
-          const placements = [{ item: grid, x: gridX, y: topY }];
-          let yS = stackStartY;
-          for(const item of buttonStack){
-            const x = stackX + Math.round((stackW - item.measure.w) * 0.5);
-            placements.push({ item, x, y: yS });
-            yS += item.measure.h + rowGap;
-          }
-
-          if(commitIfFits(placements)) return true;
-        }
-      }
+  for(const topBase of yCandidates){
+    for(const sx of xShifts){
+      const x = clamp(Math.round(centerX - (groupW * 0.5) + sx), minX, maxX);
+      const y = clamp(Math.round(topBase), minTop, maxTop);
+      if(commitIfFits([{ item: group, x, y }])) return true;
     }
   }
 
@@ -2830,7 +2860,15 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, opts =
 
   const flowMaxW = (()=>{
     if(page === "language") return Math.min(vw - (DOCK_LAYOUT_MARGIN * 2), 860);
-    if(page === "contrast") return vw - (DOCK_LAYOUT_MARGIN * 2);
+    if(page === "contrast"){
+      const contrastCtrls = measured.filter((item)=> item.el && item.el.classList && item.el.classList.contains("ctrl"));
+      if(contrastCtrls.length){
+        const count = Math.min(3, contrastCtrls.length);
+        const ctrlRowW = contrastCtrls.slice(0, count).reduce((sum, item)=> sum + item.measure.w, 0) + (8 * Math.max(0, count - 1));
+        return Math.min(vw - (DOCK_LAYOUT_MARGIN * 2), Math.max(220, ctrlRowW));
+      }
+      return vw - (DOCK_LAYOUT_MARGIN * 2);
+    }
     if(page === "speed" || page === "info"){
       return Math.max(...measured.map((item)=>item.measure.w));
     }
@@ -2846,7 +2884,6 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, opts =
       centerX,
       panelTopLimit,
       maxRowW: flowMaxW,
-      preferBelow: page === "info",
       gapX: 8,
       gapY: 8
     }
@@ -2860,15 +2897,10 @@ function placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, opts =
     return a.idx - b.idx;
   });
 
-  const safe = getSceneSafeRect();
-  const panelMinTop = safe
-    ? Math.max(DOCK_LAYOUT_MARGIN, Math.round(safe.bottom + UI_SAFE_GAP_PX + 8))
-    : DOCK_LAYOUT_MARGIN;
-
-  let baseY = Math.max(panelMinTop, Math.round(anchorY - 12));
-  if(Number.isFinite(panelTopLimit)){
-    baseY = Math.max(panelMinTop, Math.min(baseY, Math.round(panelTopLimit - 24)));
-  }
+  const tallestTileH = ordered.reduce((maxH, item)=> Math.max(maxH, item.measure.h), 0);
+  const panelBounds = getPanelTopBounds(vh, tallestTileH, panelTopLimit);
+  const panelMinTop = panelBounds.minTop;
+  const baseY = panelBounds.targetTop;
   for(const item of ordered){
     let spot = findDockSpot(
       `__panel_tile_${item.idx}`,
@@ -3012,7 +3044,7 @@ function placePresetDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, mea
     const maxHalfH = present.reduce((max, item)=> Math.max(max, item.h * 0.5), 0);
     const hasTips = present.some((item)=> item.tipTop > 0);
     // Keep rows compact but leave a little headroom for hover labels.
-    const up = maxHalfH + (hasTips ? 8 : 0);
+    const up = maxHalfH + (hasTips ? 4 : 0);
     const down = maxHalfH;
     return { items: present, rowW, up, down, h: up + down };
   }
@@ -3039,7 +3071,7 @@ function placePresetDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, mea
   ]);
 
   const rows = [row1, row2, row3];
-  const rowGapOptions = [4, 6, 8, 10, 12];
+  const rowGapOptions = [2, 3, 4, 6, 8];
 
   function tryPreset(rowGap, shiftX = 0, shiftY = 0){
     const localRects = [];
@@ -3149,7 +3181,7 @@ function placeBandedDockRows(vw, vh, obstacles, placed, measuresById){
     const rowW = present.reduce((sum, item)=> sum + item.w, 0) + (Math.max(0, present.length - 1) * gapX);
     const maxHalfH = present.reduce((max, item)=> Math.max(max, item.h * 0.5), 0);
     const hasTips = present.some((item)=> item.tipTop > 0);
-    const up = maxHalfH + (hasTips ? 8 : 0);
+    const up = maxHalfH + (hasTips ? 4 : 0);
     const down = maxHalfH;
     return { items: present, rowW, up, down, h: up + down };
   }
@@ -3172,7 +3204,7 @@ function placeBandedDockRows(vw, vh, obstacles, placed, measuresById){
   ]);
 
   const rows = [row1, row2, row3];
-  const rowGapOptions = [4, 3, 2];
+  const rowGapOptions = [2, 3, 4];
   const xShiftOptions = [0, -10, 10, -20, 20, -30, 30];
 
   function tryRows(rowGap, shiftX = 0){
@@ -3252,8 +3284,7 @@ function placeOpenDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measu
   const menuW = Math.max(40, Math.ceil(menuRect ? menuRect.width : 68));
   const menuH = Math.max(24, Math.ceil(menuRect ? menuRect.height : 32));
   const g = DOCK_LAYOUT_GAP;
-  const rowGap = 4;
-  const panelGap = 6;
+  const rowGap = 2;
 
   function buildRow(items){
     const present = items
@@ -3277,7 +3308,7 @@ function placeOpenDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measu
     const rowW = present.reduce((sum, item)=> sum + item.w, 0) + (Math.max(0, present.length - 1) * g);
     const maxHalfH = present.reduce((max, item)=> Math.max(max, item.h * 0.5), 0);
     const hasTips = present.some((item)=> item.tipTop > 0);
-    const up = maxHalfH + (hasTips ? 8 : 0);
+    const up = maxHalfH + (hasTips ? 4 : 0);
     const down = maxHalfH;
     return { items: present, rowW, up, down };
   }
@@ -3352,7 +3383,7 @@ function placeOpenDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measu
   if(shouldUsePanelTileLayout(vw, vh, activePage)){
     const panelPlaced = placeOpenPanelTiles(anchorX, anchorY, vw, vh, obstacles, placed, {
       centerX: vw * 0.5,
-      panelTopLimit: p1.top - panelGap
+      panelTopLimit: p1.top
     });
     return { placedIds, panelPlaced };
   }
@@ -3363,12 +3394,11 @@ function placeOpenDockCluster(anchorX, anchorY, vw, vh, obstacles, placed, measu
 
   const panelAnchorX = vw * 0.5;
   const maxPanelLeft = Math.max(DOCK_LAYOUT_MARGIN, vw - DOCK_LAYOUT_MARGIN - panelMeasure.w);
-  const panelBottom = p1.top - panelGap;
-  const safe = getSceneSafeRect();
-  const safeBottom = safe ? safe.bottom : (vh * 0.5);
-  const minPanelY = Math.max(DOCK_LAYOUT_MARGIN, Math.round(safeBottom + UI_SAFE_GAP_PX + 6));
-  const maxPanelY = Math.max(minPanelY, Math.round(panelBottom - panelMeasure.h));
-  const centeredGapY = Math.round(minPanelY + ((maxPanelY - minPanelY) * 0.5));
+  const panelBottom = p1.top;
+  const panelBounds = getPanelTopBounds(vh, panelMeasure.h, panelBottom);
+  const minPanelY = panelBounds.minTop;
+  const maxPanelY = panelBounds.maxTop;
+  const centeredGapY = panelBounds.targetTop;
 
   const yCandidates = [centeredGapY, maxPanelY, minPanelY];
   const xCandidates = [0, -16, 16, -32, 32, -48, 48];
@@ -3503,8 +3533,8 @@ function scheduleDockLayout(){
 }
 
 function applyDockConstellationState(){
-  const activePageOpen = !!(document.body.dataset.uiPage && document.body.dataset.uiPage !== "none");
-  const focusId = activePageOpen ? dockActiveBtnId : (dockHoverBtnId || dockActiveBtnId);
+  const uiHidden = !!uiWrapEl && uiWrapEl.classList.contains("hidden");
+  const focusId = uiHidden ? "" : (dockActiveBtnId || "");
   [prevPoemBtn, pausePoemBtn, nextPoemBtn].filter(Boolean).forEach((btn)=>{
     btn.classList.remove("dockControl", "dockObject", "dock-shrink", "dock-focus", "dock-hover-focus", "dock-hover-shrink", "dock-tip-open");
     btn.style.left = "";
@@ -3516,11 +3546,7 @@ function applyDockConstellationState(){
 
     if(!focusId) return;
     const isFocus = btn.id === focusId;
-    if(dockHoverBtnId && !activePageOpen){
-      btn.classList.add(isFocus ? "dock-hover-focus" : "dock-hover-shrink");
-    }else{
-      btn.classList.add(isFocus ? "dock-focus" : "dock-shrink");
-    }
+    btn.classList.add(isFocus ? "dock-focus" : "dock-shrink");
     if(dockHoverBtnId === btn.id && btn.dataset && btn.dataset.tip){
       btn.classList.add("dock-tip-open");
     }
@@ -3529,9 +3555,7 @@ function applyDockConstellationState(){
   if(menuToggleBtn){
     menuToggleBtn.classList.remove("dock-focus", "dock-hover-focus");
     if(focusId){
-      if(dockHoverBtnId && focusId === "menuToggleBtn"){
-        menuToggleBtn.classList.add("dock-hover-focus");
-      }else if(focusId === "menuToggleBtn"){
+      if(focusId === "menuToggleBtn"){
         menuToggleBtn.classList.add("dock-focus");
       }
     }
@@ -3580,17 +3604,16 @@ function placeDockForViewport(){
 /* ================= Mobile UI pages ================= */
 const UI_PAGES = ["none","language","info","contrast","colors","speed"];
 let uiPage = "none";
-const UI_PHRASE_LIFT_PX = 18;
-const UI_PHRASE_LIFT_PANEL_PX = 64;
 const UI_PHRASE_SAFE_GAP_PX = 12;
+const UI_PHRASE_AUTO_LIFT_MAX_PX = 34;
+const UI_PHRASE_AUTO_LIFT_COLORS_MAX_PX = 96;
+const UI_PHRASE_AUTO_LIFT_DEADZONE_PX = 2;
+const UI_COLORS_PANEL_RESERVE_GAP_PX = 10;
 let infoBlurbFitRaf = 0;
 let phraseLiftRaf = 0;
 
 function getUiPhraseLiftTargetPx(){
-  const uiHidden = uiWrapEl.classList.contains("hidden");
-  if(uiHidden) return 0;
-  const pageOpen = !!(document.body.dataset.uiPage && document.body.dataset.uiPage !== "none");
-  return pageOpen ? UI_PHRASE_LIFT_PANEL_PX : UI_PHRASE_LIFT_PX;
+  return 0;
 }
 
 function getAdjustmentLayerTopPx(){
@@ -3689,40 +3712,14 @@ function getDockControlsTopPx(){
   return Number.isFinite(top) ? top : null;
 }
 
-function measurePanelItemHeight(el, fallback){
-  if(!el) return fallback;
-  const r = el.getBoundingClientRect();
-  const h = Math.round(r.height || 0);
-  if(h > 0) return h;
-  return fallback;
-}
-
 function getColorsPanelRequiredHeightPx(){
   if(String(document.body.dataset.uiPage || "none") !== "colors") return 0;
-  const gridH = measurePanelItemHeight(document.getElementById("colorsGridTile"), 220);
-  const controlsH = Math.max(
-    measurePanelItemHeight(scopeFgBtn, 30),
-    measurePanelItemHeight(scopeBgBtn, 30),
-    measurePanelItemHeight(scopeBdBtn, 30),
-    measurePanelItemHeight(allOffBtn, 30),
-    measurePanelItemHeight(allOnBtn, 30)
-  );
-  return gridH + 8 + controlsH + 8;
-}
-
-function getContrastPanelRequiredHeightPx(){
-  if(String(document.body.dataset.uiPage || "none") !== "contrast") return 0;
-  const ctrls = Array.from(panelInnerEl ? panelInnerEl.querySelectorAll(".uiPage--contrast .ctrl") : []);
-  if(!ctrls.length) return 0;
-  const gapY = 8;
-  const totalH = ctrls.reduce((sum, el)=> sum + measurePanelItemHeight(el, 74), 0);
-  return totalH + (gapY * Math.max(0, ctrls.length - 1)) + 8;
-}
-
-function getInfoPanelRequiredHeightPx(){
-  if(String(document.body.dataset.uiPage || "none") !== "info") return 0;
-  const group = panelInnerEl ? panelInnerEl.querySelector(".uiPage--info .infoGroup") : null;
-  return measurePanelItemHeight(group, 190) + 8;
+  const group = document.getElementById("colorsPanelGroup");
+  if(!group) return 0;
+  const r = group.getBoundingClientRect();
+  const h = Math.round(r.height || 0);
+  if(h <= 0) return 0;
+  return h + UI_COLORS_PANEL_RESERVE_GAP_PX;
 }
 
 function clampYPctToUiBoundary(nextY){
@@ -3762,7 +3759,21 @@ function ensurePhraseYWithinViewport(){
   return true;
 }
 
+function nudgePhraseYBy(deltaPct){
+  const delta = Number(deltaPct);
+  if(!Number.isFinite(delta) || Math.abs(delta) < 0.001) return;
+  const curY = clamp(Number(yEl.value), 0, 100);
+  const nextY = clampYPctToUiBoundary(clamp(curY + delta, 0, 100));
+  if(Math.abs(nextY - curY) < 0.01) return;
+  setManualYPosition(true);
+  yEl.value = String(nextY);
+  document.documentElement.style.setProperty("--yPct", String(nextY) + "%");
+  yVal.textContent = String(Math.round(nextY)) + "%";
+  syncPhraseUiLift();
+}
+
 function syncPhraseUiLift(){
+  const page = String(document.body.dataset.uiPage || "none");
   const baseLift = getUiPhraseLiftTargetPx();
   const setLift = (v)=>{
     const px = Math.max(0, Math.round(Number(v) || 0));
@@ -3778,36 +3789,49 @@ function syncPhraseUiLift(){
 
   let extraLift = 0;
 
+  // Only lift when UI actually overlaps the phrase/card safe zone.
+  // Keep movement small and let dock/panel layout handle the rest.
+  const topCandidates = [];
   const layerTop = getAdjustmentLayerTopPx();
-  if(layerTop != null){
-    const vhObj = getViewportSize();
-    const h = vhObj.h;
-    if(!(Number.isFinite(h) && h > 0 && layerTop <= (h * 0.45))){
-      const overlapNeed = (sceneBottomBase + UI_PHRASE_SAFE_GAP_PX) - layerTop;
-      if(overlapNeed > extraLift) extraLift = overlapNeed;
-    }
+  if(layerTop != null) topCandidates.push(layerTop);
+  const uiTop = getLowerUiTopPx();
+  if(uiTop != null) topCandidates.push(uiTop);
+  if(topCandidates.length){
+    const blockingTop = Math.min(...topCandidates);
+    const overlapNeed = (sceneBottomBase + UI_PHRASE_SAFE_GAP_PX) - blockingTop;
+    if(overlapNeed > extraLift) extraLift = overlapNeed;
   }
 
-  if(isMobileMode()){
-    const page = String(document.body.dataset.uiPage || "none");
+  // Colors page should stay centered below the phrase; reserve vertical lane for it.
+  if(page === "colors"){
     const dockTop = getDockControlsTopPx();
-    let neededPanelH = 0;
-    if(page === "colors") neededPanelH = getColorsPanelRequiredHeightPx();
-    else if(page === "contrast") neededPanelH = getContrastPanelRequiredHeightPx();
-    else if(page === "info") neededPanelH = getInfoPanelRequiredHeightPx();
-
+    const neededPanelH = getColorsPanelRequiredHeightPx();
     if(dockTop != null && neededPanelH > 0){
-      const available = (dockTop - UI_SAFE_GAP_PX) - sceneBottomBase;
+      const available = (dockTop - UI_SAFE_GAP_PX) - (sceneBottomBase + UI_PHRASE_SAFE_GAP_PX);
       const reserveNeed = neededPanelH - available;
       if(reserveNeed > extraLift) extraLift = reserveNeed;
     }
   }
 
-  if(extraLift <= 0.5) return;
+  if(extraLift <= UI_PHRASE_AUTO_LIFT_DEADZONE_PX) return;
 
-  setLift(baseLift + extraLift);
+  const liftCap = (page === "colors")
+    ? UI_PHRASE_AUTO_LIFT_COLORS_MAX_PX
+    : UI_PHRASE_AUTO_LIFT_MAX_PX;
+  const cappedLift = clamp(extraLift, 0, liftCap);
+  setLift(baseLift + cappedLift);
   ensurePhraseYWithinViewport();
   applyCardStyle(getCardLiveColor());
+
+  if(page !== "none"){
+    scheduleDockLayout();
+  }
+
+  // If overlap was larger than the phrase-lift cap, prioritize UI layout adjustments.
+  if(extraLift > (cappedLift + UI_PHRASE_AUTO_LIFT_DEADZONE_PX)){
+    scheduleUiSafeUpdate();
+    scheduleDockLayout();
+  }
 }
 
 function schedulePhraseUiLift(){
@@ -3820,11 +3844,8 @@ function schedulePhraseUiLift(){
 }
 
 function syncInfoBlurbWidthToPhrase(){
-  if(!phraseEl) return;
-  const rect = phraseEl.getBoundingClientRect();
-  if(!rect || !Number.isFinite(rect.width) || rect.width <= 0) return;
-  const nextW = Math.max(220, Math.round(rect.width * 1.2));
-  document.documentElement.style.setProperty("--infoBlurbW", `${nextW}px`);
+  // Keep info blurb width fixed; it should not track phrase width.
+  document.documentElement.style.setProperty("--infoBlurbW", "620px");
 }
 
 function fitInfoBlurbLines(){
@@ -3906,10 +3927,10 @@ function setUiPage(next){
   // Recolor on every page switch.
   assignMobileTabColors();
 
-  // Keep the sliding panel out of the phrase/card region (especially on mobile landscape).
-  syncMenuTogglePosition();
+  // Compute phrase lift first, then place dock/panels with updated safe zone.
   scheduleUiSafeUpdate();
   schedulePhraseUiLift();
+  syncMenuTogglePosition();
   scheduleMobileCentering();
   scheduleInfoBlurbFit();
 }
@@ -4202,6 +4223,7 @@ const sel = {
   fgColor: new Set(ALL_SWATCH_COLORS),
   bdColor: new Set(ALL_SWATCH_COLORS),
   borderEnabled: true,
+  cardShadowEnabled: true,
   borderThickness: Number(bdThickEl.value)
 };
 
@@ -7322,7 +7344,7 @@ function applyButtonColors(){
     prevPoemBtn, pausePoemBtn, nextPoemBtn,
     screenshotBtn, fsBtn, lockCompositionBtn,
     tabLanguageBtn, tabContrastBtn, tabColorsBtn, tabSpeedBtn, tabInfoBtn,
-    scopeBgBtn, scopeFgBtn, scopeBdBtn, allOnBtn, allOffBtn,
+    scopeBgBtn, scopeFgBtn, scopeBdBtn, allOnBtn, allOffBtn, contrastInvertBtn, dropShadowBtn,
     bdToggleBtn
   ].forEach((btn)=>{
     if(!btn) return;
@@ -8053,15 +8075,19 @@ function applyCardStyle(colorHex, opts = {}){
   const t = sel.borderEnabled ? clamp(sel.borderThickness, 0, 1) : 0;
   if(!sel.borderEnabled || t <= 0){
     cardEl.style.display = "none";
+    cardEl.style.boxShadow = "none";
     if(!skipUiSafeUpdate) scheduleUiSafeUpdate();
     return;
   }
   cardEl.style.display = "block";
   cardEl.style.background = colorHex;
+  // Shadow comes from CSS `.drop-shadow-on #card` so it matches other card-colored rectangles.
+  cardEl.style.boxShadow = "";
 
   const rect = phraseInkBounds() || phraseEl.getBoundingClientRect();
   if(rect.width <= 0 || rect.height <= 0){
     cardEl.style.display = "none";
+    cardEl.style.boxShadow = "none";
     if(!skipUiSafeUpdate) scheduleUiSafeUpdate();
     return;
   }
@@ -8181,6 +8207,13 @@ function setBorderBtn(){
   bdToggleBtn.setAttribute("aria-pressed", sel.borderEnabled ? "true" : "false");
 }
 
+function syncDropShadowBtn(){
+  document.body.classList.toggle("drop-shadow-on", !!sel.cardShadowEnabled);
+  if(!dropShadowBtn) return;
+  dropShadowBtn.classList.toggle("on", !!sel.cardShadowEnabled);
+  dropShadowBtn.setAttribute("aria-pressed", sel.cardShadowEnabled ? "true" : "false");
+}
+
 /* ================= Fullscreen helpers ================= */
 const fsApi = {
   request: document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen || document.documentElement.msRequestFullscreen,
@@ -8198,7 +8231,7 @@ function syncFullscreenBtn(){
   fsBtn.classList.remove("disabled");
   fsBtn.removeAttribute("aria-disabled");
   const on = isFullscreen();
-  fsBtn.textContent = "full screen";
+  setButtonText(fsBtn, "full screen");
   fsBtn.classList.toggle("on", on);
   fsBtn.setAttribute("aria-pressed", on ? "true" : "false");
 }
@@ -8309,6 +8342,8 @@ function hideUI(showMenuPeek = true, recenterPhrase = false){
   }
   uiWrapEl.classList.add("hidden");
   setMenuToggleState(false);
+  dockHoverBtnId = "";
+  setDockActiveButton("");
   if(showMenuPeek){
     showMenuToggleBriefly();
   }else if(menuToggleBtn){
@@ -8496,9 +8531,9 @@ fsBtn.addEventListener("click", async ()=>{
 document.addEventListener("fullscreenchange", syncFullscreenBtn);
 document.addEventListener("webkitfullscreenchange", syncFullscreenBtn);
 
-if(prevPoemBtn) prevPoemBtn.addEventListener("click", ()=>{ setDockActiveButton("dockPlayback"); goPrevPoem(); showUI(); });
+if(prevPoemBtn) prevPoemBtn.addEventListener("click", ()=>{ flashButtonOnce(prevPoemBtn, 160); goPrevPoem(); showUI(); });
 if(pausePoemBtn) pausePoemBtn.addEventListener("click", ()=>{ setDockActiveButton("dockPlayback"); togglePaused(); showUI(); });
-if(nextPoemBtn) nextPoemBtn.addEventListener("click", ()=>{ setDockActiveButton("dockPlayback"); goNextPoem(); showUI(); });
+if(nextPoemBtn) nextPoemBtn.addEventListener("click", ()=>{ flashButtonOnce(nextPoemBtn, 160); goNextPoem(); showUI(); });
 if(screenshotBtn) screenshotBtn.addEventListener("click", ()=>{ setDockActiveButton("screenshotBtn"); snapScreenshot(); showUI(); });
 if(lockCompositionBtn) lockCompositionBtn.addEventListener("click", ()=>{ setDockActiveButton("lockCompositionBtn"); toggleCompositionLock(); showUI(); });
 if(menuToggleBtn) menuToggleBtn.addEventListener("click", ()=>{ setDockActiveButton("menuToggleBtn"); toggleUI(); });
@@ -8507,6 +8542,21 @@ if(tabInfoBtn) tabInfoBtn.addEventListener("click", (e)=>{ applyDockClickRespons
 if(tabContrastBtn) tabContrastBtn.addEventListener("click", (e)=>{ applyDockClickResponse(e); setDockActiveButton("tabContrastBtn"); setUiPage("contrast"); showUI(); });
 if(tabColorsBtn) tabColorsBtn.addEventListener("click", (e)=>{ applyDockClickResponse(e); setDockActiveButton("tabColorsBtn"); setUiPage("colors"); showUI(); });
 if(tabSpeedBtn) tabSpeedBtn.addEventListener("click", (e)=>{ applyDockClickResponse(e); setDockActiveButton("tabSpeedBtn"); setUiPage("speed"); showUI(); });
+if(contrastInvertBtn) contrastInvertBtn.addEventListener("click", ()=>{
+  const fgVal = clamp(Number(fgBrightEl.value), 0, 1);
+  const bdVal = clamp(Number(bdBrightEl.value), 0, 1);
+  fgBrightEl.value = String(bdVal.toFixed(3));
+  bdBrightEl.value = String(fgVal.toFixed(3));
+  flushSliderColorUi();
+  flashButtonOnce(contrastInvertBtn, 170);
+  showUI();
+});
+if(dropShadowBtn) dropShadowBtn.addEventListener("click", ()=>{
+  sel.cardShadowEnabled = !sel.cardShadowEnabled;
+  syncDropShadowBtn();
+  applyCardStyle(getCardLiveColor());
+  showUI();
+});
 if(scopeBgBtn) scopeBgBtn.addEventListener("click", ()=>{ setColorScope("bg"); showUI(); });
 if(scopeFgBtn) scopeFgBtn.addEventListener("click", ()=>{ setColorScope("fg"); showUI(); });
 if(scopeBdBtn) scopeBdBtn.addEventListener("click", ()=>{ setColorScope("bd"); showUI(); });
@@ -8529,17 +8579,29 @@ window.addEventListener("keydown", (e)=>{
     showUI();
     return;
   }
-  if(e.code === "ArrowLeft" || e.code === "ArrowUp"){
+  if(e.code === "ArrowLeft"){
     e.preventDefault();
-    setDockActiveButton("dockPlayback");
+    flashButtonOnce(prevPoemBtn, 160);
     goPrevPoem();
     showUI();
     return;
   }
-  if(e.code === "ArrowRight" || e.code === "ArrowDown"){
+  if(e.code === "ArrowRight"){
     e.preventDefault();
-    setDockActiveButton("dockPlayback");
+    flashButtonOnce(nextPoemBtn, 160);
     goNextPoem();
+    showUI();
+    return;
+  }
+  if(e.code === "ArrowUp"){
+    e.preventDefault();
+    nudgePhraseYBy(-2);
+    showUI();
+    return;
+  }
+  if(e.code === "ArrowDown"){
+    e.preventDefault();
+    nudgePhraseYBy(2);
     showUI();
     return;
   }
@@ -8587,10 +8649,17 @@ window.addEventListener("keydown", (e)=>{
   applyAccentColors();
   syncSwatchHeaderWidths();
 
+  [
+    menuToggleBtn,
+    screenshotBtn, fsBtn, tabLanguageBtn, tabContrastBtn, tabColorsBtn, tabSpeedBtn, tabInfoBtn,
+    scopeBgBtn, scopeFgBtn, scopeBdBtn, allOnBtn, allOffBtn, contrastInvertBtn, dropShadowBtn
+  ].forEach(ensureButtonTextSpan);
+
   sel.borderEnabled = true;
   sel.borderThickness = clamp(Number(bdThickEl.value), 0, 1);
 
   setBorderBtn();
+  syncDropShadowBtn();
   applyIosPortraitLoadSizing();
   applyMobilePortraitLoadTextShrink();
   applyLoadViewerDefaults();
