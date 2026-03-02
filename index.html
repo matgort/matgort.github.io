@@ -1034,6 +1034,8 @@
       gap: 8px;
       justify-content: center;
       align-items:center;
+      width: fit-content;
+      max-width: 96vw;
     }
     .uiPage--language #partsRow .ssBtn{
       min-width: max-content;
@@ -1142,6 +1144,16 @@
       margin-left: auto;
       margin-right: auto;
     }
+    .uiPage--contrast .contrastPanelLayout{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+      max-width: 96vw;
+      margin-left: auto;
+      margin-right: auto;
+    }
     .uiPage--contrast .colorsBrightnessRow{
       margin-bottom: 0;
       display:grid;
@@ -1157,6 +1169,8 @@
       display: flex;
       justify-content: center;
       gap: 6px;
+      width: fit-content;
+      max-width: 96vw;
     }
     .uiPage--contrast .contrastActionBtn{
       height: auto;
@@ -1740,6 +1754,23 @@
     padding-top: calc((8px * var(--uiGlobalScale)) + 5px);
     padding-bottom: calc((8px * var(--uiGlobalScale)) + 5px);
   }
+  .uiPage--contrast .contrastActionRow{
+    width: var(--mobileAdjustTileW);
+    max-width: var(--mobileAdjustTileW);
+    min-width: var(--mobileAdjustTileMinW);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    justify-content: stretch;
+    margin-top: 6px;
+  }
+  .uiPage--contrast .contrastActionBtn{
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    padding-left: calc(8px * var(--menuUiScale));
+    padding-right: calc(8px * var(--menuUiScale));
+  }
   .uiPage--speed{
     max-width: min(96vw, 560px);
   }
@@ -1760,8 +1791,9 @@
     max-width: min(100vw - 8px, 980px);
   }
   .uiPage--language #partsRow{
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     gap: 4px;
+    justify-content: center;
   }
   .uiPage--language #partsRow .ssBtn,
   .uiPage--language #partsRow .ssBtn.on{
@@ -1948,23 +1980,25 @@
             </section>
 
             <section class="uiPage uiPage--contrast" aria-label="contrast">
-              <div class="sliderRow colorsBrightnessRow">
-                <div class="ctrl">
-                  <div class="labelRow"><div class="label">background brightness</div><div class="val" id="bgBrightVal">70%</div></div>
-                  <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.70">
+              <div class="contrastPanelLayout" id="contrastPanelGroup">
+                <div class="sliderRow colorsBrightnessRow">
+                  <div class="ctrl">
+                    <div class="labelRow"><div class="label">background brightness</div><div class="val" id="bgBrightVal">70%</div></div>
+                    <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.70">
+                  </div>
+                  <div class="ctrl">
+                    <div class="labelRow"><div class="label">text brightness</div><div class="val" id="fgBrightVal">0%</div></div>
+                    <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
+                  </div>
+                  <div class="ctrl">
+                    <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">100%</div></div>
+                    <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
+                  </div>
                 </div>
-                <div class="ctrl">
-                  <div class="labelRow"><div class="label">text brightness</div><div class="val" id="fgBrightVal">0%</div></div>
-                  <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
+                <div class="contrastActionRow" id="contrastActionRow">
+                  <button id="contrastInvertBtn" type="button" class="colorBtn contrastActionBtn">invert</button>
+                  <button id="dropShadowBtn" type="button" class="colorBtn contrastActionBtn" aria-pressed="false">drop shadow</button>
                 </div>
-                <div class="ctrl">
-                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">100%</div></div>
-                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
-                </div>
-              </div>
-              <div class="contrastActionRow" id="contrastActionRow">
-                <button id="contrastInvertBtn" type="button" class="colorBtn contrastActionBtn">invert</button>
-                <button id="dropShadowBtn" type="button" class="colorBtn contrastActionBtn" aria-pressed="false">drop shadow</button>
               </div>
             </section>
 
@@ -2607,16 +2641,17 @@ function getActivePanelTileEls(page){
   if(!panelInnerEl) return [];
   const safePage = String(page || "none");
   if(safePage === "language"){
-    return Array.from(panelInnerEl.querySelectorAll(".uiPage--language #partsRow .ssBtn"));
+    return [
+      panelInnerEl.querySelector(".uiPage--language #partsRow")
+    ].filter(Boolean);
   }
   if(safePage === "info"){
     return Array.from(panelInnerEl.querySelectorAll(".uiPage--info .infoGroup"));
   }
   if(safePage === "contrast"){
-    const tiles = Array.from(panelInnerEl.querySelectorAll(".uiPage--contrast .ctrl"));
-    const actionRow = panelInnerEl.querySelector("#contrastActionRow");
-    if(actionRow) tiles.push(actionRow);
-    return tiles;
+    return [
+      panelInnerEl.querySelector("#contrastPanelGroup")
+    ].filter(Boolean);
   }
   if(safePage === "colors"){
     return [
@@ -3607,8 +3642,10 @@ let uiPage = "none";
 const UI_PHRASE_SAFE_GAP_PX = 12;
 const UI_PHRASE_AUTO_LIFT_MAX_PX = 34;
 const UI_PHRASE_AUTO_LIFT_COLORS_MAX_PX = 96;
+const UI_PHRASE_AUTO_LIFT_CONTRAST_MAX_PX = 72;
 const UI_PHRASE_AUTO_LIFT_DEADZONE_PX = 2;
 const UI_COLORS_PANEL_RESERVE_GAP_PX = 10;
+const UI_CONTRAST_PANEL_RESERVE_GAP_PX = 10;
 let infoBlurbFitRaf = 0;
 let phraseLiftRaf = 0;
 
@@ -3722,6 +3759,16 @@ function getColorsPanelRequiredHeightPx(){
   return h + UI_COLORS_PANEL_RESERVE_GAP_PX;
 }
 
+function getContrastPanelRequiredHeightPx(){
+  if(String(document.body.dataset.uiPage || "none") !== "contrast") return 0;
+  const group = document.getElementById("contrastPanelGroup");
+  if(!group) return 0;
+  const r = group.getBoundingClientRect();
+  const h = Math.round(r.height || 0);
+  if(h <= 0) return 0;
+  return h + UI_CONTRAST_PANEL_RESERVE_GAP_PX;
+}
+
 function clampYPctToUiBoundary(nextY){
   const raw = clamp(Number(nextY), 0, 100);
   const { h } = getViewportSize();
@@ -3812,11 +3859,22 @@ function syncPhraseUiLift(){
       if(reserveNeed > extraLift) extraLift = reserveNeed;
     }
   }
+  if(page === "contrast" && isMobileMode()){
+    const dockTop = getDockControlsTopPx();
+    const neededPanelH = getContrastPanelRequiredHeightPx();
+    if(dockTop != null && neededPanelH > 0){
+      const available = (dockTop - UI_SAFE_GAP_PX) - (sceneBottomBase + UI_PHRASE_SAFE_GAP_PX);
+      const reserveNeed = neededPanelH - available;
+      if(reserveNeed > extraLift) extraLift = reserveNeed;
+    }
+  }
 
   if(extraLift <= UI_PHRASE_AUTO_LIFT_DEADZONE_PX) return;
 
   const liftCap = (page === "colors")
     ? UI_PHRASE_AUTO_LIFT_COLORS_MAX_PX
+    : (page === "contrast" && isMobileMode())
+      ? UI_PHRASE_AUTO_LIFT_CONTRAST_MAX_PX
     : UI_PHRASE_AUTO_LIFT_MAX_PX;
   const cappedLift = clamp(extraLift, 0, liftCap);
   setLift(baseLift + cappedLift);
@@ -6097,7 +6155,6 @@ at an art house theater
 at an open mic night
 at an outlet mall
 at madison square garden
-atop the water tower
 at the acropolis
 at the beach
 at the bottom of a lake
@@ -6121,6 +6178,7 @@ beneath a flickering neon sign
 buried in a shallow grave
 by a printing press
 by the fire pit
+by the water tower
 during its own wedding
 face down in the mud
 frozen in a block of ice
