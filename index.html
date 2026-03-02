@@ -2117,7 +2117,8 @@ function applyDimmer(hex, sliderVal, channel = "fg"){
 
   if(t < 0.5){
     const k = (0.5 - t) / 0.5;
-    const darkMinMul = (channel === "bg" || channel === "bd") ? 0.338688 : 0.24192;
+    // Keep bg/card from getting too dark while allowing text to go deeper.
+    const darkMinMul = (channel === "bg" || channel === "bd") ? 0.378 : 0.3024;
     const lMul = lerp(1.0, darkMinMul, k);
     l = clamp(l * lMul, 0.08, 0.90);
     s = clamp(s * lerp(1.0, 1.10, k), 0.18, 0.98);
