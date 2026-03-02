@@ -1795,16 +1795,16 @@
             <section class="uiPage uiPage--contrast" aria-label="contrast">
               <div class="sliderRow colorsBrightnessRow">
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">background brightness</div><div class="val" id="bgBrightVal">70%</div></div>
-                  <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.70">
+                  <div class="labelRow"><div class="label">background brightness</div><div class="val" id="bgBrightVal">84%</div></div>
+                  <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.84">
                 </div>
                 <div class="ctrl">
                   <div class="labelRow"><div class="label">text brightness</div><div class="val" id="fgBrightVal">0%</div></div>
                   <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
                 </div>
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">90%</div></div>
-                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="0.90">
+                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">92%</div></div>
+                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="0.92">
                 </div>
               </div>
             </section>
@@ -5994,8 +5994,6 @@ warped by heat
 watching asmr
 watching the sunset
 waxing its legs
-wearing
-wearing a bikini
 wearing a bikini
 wearing a mini skirt
 wearing a tracksuit
@@ -6003,6 +6001,7 @@ wearing cargo pants
 wearing chunky heels
 wearing cutoffs
 wearing cutoffs
+wearing fuzzy slippers
 wearing incredible jeans
 wearing overalls
 wearing slacks
@@ -7632,6 +7631,23 @@ function shouldAvoidSingleLine(stats){
   return words >= 7 || chars >= 42;
 }
 
+function hasShortTailLine(stats){
+  if(!stats || stats.lineCount <= 1) return false;
+  const totalWords = Number(stats.totalWords || 0);
+  const lastWords = Number(stats.lastWords || 0);
+
+  if(stats.lineCount === 2){
+    if(totalWords >= 7 && lastWords <= 2) return true;
+    if(totalWords >= 9 && lastWords <= 3) return true;
+  }
+
+  if(stats.lineCount === 3){
+    if(totalWords >= 9 && lastWords <= 2) return true;
+  }
+
+  return false;
+}
+
 function scorePhraseLineBalance(stats){
   if(!stats) return Infinity;
   if(stats.lineCount <= 1){
@@ -7662,6 +7678,16 @@ function scorePhraseLineBalance(stats){
   if(stats.lineCount === 2 && stats.lastRatio < 0.78){
     score += (0.78 - stats.lastRatio) * 4.2;
   }
+  if(hasShortTailLine(stats)){
+    score += 9.5;
+  }
+  if(stats.lineCount === 2){
+    const firstWords = Math.max(1, (Number(stats.totalWords || 0) - Number(stats.lastWords || 0)));
+    const wordBalance = Number(stats.lastWords || 0) / firstWords;
+    if(Number(stats.totalWords || 0) >= 7 && wordBalance < 0.58){
+      score += (0.58 - wordBalance) * 10.5;
+    }
+  }
   return score;
 }
 
@@ -7675,6 +7701,9 @@ function scoreMobilePhraseWidth(stats, candidateW){
   // 3) prefer wider settings when quality is otherwise similar.
   if(hasSingleWordLine(stats)){
     score += 120 + ((stats.singleWordLineCount || 0) * 36);
+  }
+  if(hasShortTailLine(stats)){
+    score += 70;
   }
   if(stats.lineCount >= 4){
     score += 160 + ((stats.lineCount - 4) * 90);
@@ -7760,8 +7789,10 @@ function smartPhraseWidth(){
     if(mobile){
       const hardPass =
         !hasSingleWordLine(stats) &&
+        !hasShortTailLine(stats) &&
         !shouldAvoidSingleLine(stats) &&
-        stats.lineCount <= 3;
+        stats.lineCount <= 3 &&
+        !(stats.lineCount === 2 && stats.lastRatio < (Number(stats.totalWords || 0) >= 7 ? 0.52 : 0.46));
       if(hardPass){
         mobileHardPick = { w: candidateW, stats };
         // Candidates are wide -> narrow, so first hard-pass is the widest valid.
