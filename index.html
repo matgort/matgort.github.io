@@ -1566,6 +1566,13 @@
       }
     }
 
+@media (pointer: coarse) and (orientation: landscape){
+  :root{
+    /* Mobile-landscape: make UI 20% smaller than current mobile scale. */
+    --uiGlobalScale: calc(0.729 * 0.8);
+  }
+}
+
 @media (pointer: coarse){
   .uiPage--contrast{
     max-width: min(96vw, 560px);
@@ -1778,8 +1785,8 @@
                   <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
                 </div>
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">100%</div></div>
-                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="1.00">
+                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">90%</div></div>
+                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="0.90">
                 </div>
               </div>
             </section>
@@ -2086,7 +2093,7 @@ function applyDimmer(hex, sliderVal){
 
   if(t < 0.5){
     const k = (0.5 - t) / 0.5;
-    const lMul = lerp(1.0, 0.42, k);
+    const lMul = lerp(1.0, 0.3024, k);
     l = clamp(l * lMul, 0.08, 0.90);
     s = clamp(s * lerp(1.0, 1.10, k), 0.18, 0.98);
   }else{
@@ -2455,8 +2462,13 @@ function getPanelTopBounds(vh, blockH, panelTopLimit){
     activePage !== "speed" &&
     activePage !== "none"
   ) ? 20 : 0;
+  // Extra global lift whenever any adjustment layer is open.
+  const mobileAnyPanelExtraUpShift = (isMobileMode() && activePage !== "none") ? 20 : 0;
   const minTopBase = Math.max(DOCK_LAYOUT_MARGIN, minSafeTop, mobileFloor) + mobilePanelDownShift;
-  const minTop = Math.max(DOCK_LAYOUT_MARGIN, minTopBase - mobileAdjustLayerUpShift);
+  const minTop = Math.max(
+    DOCK_LAYOUT_MARGIN,
+    minTopBase - mobileAdjustLayerUpShift - mobileAnyPanelExtraUpShift
+  );
 
   const topLimit = Number.isFinite(panelTopLimit)
     ? panelTopLimit
@@ -3534,7 +3546,7 @@ function placeDockForViewport(){
 const UI_PAGES = ["none","language","info","contrast","colors","speed"];
 let uiPage = "none";
 const UI_PHRASE_LIFT_PX = 18;
-const UI_PHRASE_LIFT_PANEL_PX = 34;
+const UI_PHRASE_LIFT_PANEL_PX = 64;
 const UI_PHRASE_SAFE_GAP_PX = 12;
 let infoBlurbFitRaf = 0;
 let phraseLiftRaf = 0;
@@ -5206,7 +5218,7 @@ jerk
 jock
 journalist
 landscape architect
-landlord
+lord
 luddite
 machinist
 man
@@ -5321,7 +5333,7 @@ buried in the back yard
 buried under rubble
 buying a raffle ticket
 buying crypto
-can't handle ~it~ anymore
+can't handle it anymore
 can't get out of bed
 can't hit the pinata
 can't stop laughing
@@ -5390,7 +5402,7 @@ dicing onions
 dimming the lights
 disappointing itself
 disassociating
-feeling disrespected
+disrespected
 doe eyed
 doesn't smell great
 doing a cold plunge
@@ -7554,11 +7566,40 @@ function scorePhraseLineBalance(stats){
   return score;
 }
 
+function scoreMobilePhraseWidth(stats, candidateW){
+  if(!stats) return Infinity;
+  let score = scorePhraseLineBalance(stats);
+
+  // Mobile priorities:
+  // 1) avoid one-word lines,
+  // 2) keep 4+ lines rare,
+  // 3) prefer wider settings when quality is otherwise similar.
+  if(hasSingleWordLine(stats)){
+    score += 120 + ((stats.singleWordLineCount || 0) * 36);
+  }
+  if(stats.lineCount >= 4){
+    score += 160 + ((stats.lineCount - 4) * 90);
+  }else if(stats.lineCount === 3){
+    score += 8;
+  }
+  if(shouldAvoidSingleLine(stats)){
+    score += 90;
+  }
+
+  // Nudge toward wider text blocks.
+  score += Math.max(0, (100 - Number(candidateW || 0))) * 0.18;
+  return score;
+}
+
 function smartPhraseWidth(){
   const base = clamp(Number(widthEl.value), 1, 100);
+  const mobile = isMobileMode();
+  const startW = mobile ? Math.max(base, 90) : base;
+  const edgePadPx = mobile ? 24 : (base >= 100 ? 0 : 50);
+
   phraseEl.classList.remove("oneWord");
-  document.documentElement.style.setProperty("--phraseW", `${base}vw`);
-  document.documentElement.style.setProperty("--edgePad", base >= 100 ? "0px" : "50px");
+  document.documentElement.style.setProperty("--phraseW", `${startW}vw`);
+  document.documentElement.style.setProperty("--edgePad", `${edgePadPx}px`);
   document.documentElement.style.setProperty("--fitScale", "1");
   widenPhraseToAvoidOverfullLines();
 
@@ -7583,18 +7624,32 @@ function smartPhraseWidth(){
 
   let bestW = currentW;
   let bestStats = currentStats;
-  let bestScore = scorePhraseLineBalance(currentStats);
+  let bestScore = mobile
+    ? scoreMobilePhraseWidth(currentStats, currentW)
+    : scorePhraseLineBalance(currentStats);
 
-  // If a one-word line or a long single-line poem appears, aggressively reflow width.
-  const needsSingleLineFix = shouldAvoidSingleLine(currentStats);
-  const needsWidowFix = hasSingleWordLine(currentStats);
-  const minSearchW = (needsWidowFix || needsSingleLineFix) ? 1 : clamp(currentW - 14, 1, 100);
-  const maxSearchW = needsWidowFix
-    ? 100
-    : (needsSingleLineFix
-      ? clamp(currentW, 1, 100)
-      : clamp(Math.min(100, currentW + 14), 1, 100));
-  const candidates = buildWidthSearchOrder(currentW, minSearchW, maxSearchW, 1);
+  const candidates = (() => {
+    if(mobile){
+      // Wide-first sweep on mobile to maximize line width while preserving edge padding.
+      const out = [];
+      for(let w = 100; w >= 44; w -= 1) out.push(w);
+      return out;
+    }
+    // Desktop: keep existing local balancing behavior.
+    const needsSingleLineFix = shouldAvoidSingleLine(currentStats);
+    const needsWidowFix = hasSingleWordLine(currentStats);
+    const minSearchW = (needsWidowFix || needsSingleLineFix) ? 1 : clamp(currentW - 14, 1, 100);
+    const maxSearchW = needsWidowFix
+      ? 100
+      : (needsSingleLineFix
+        ? clamp(currentW, 1, 100)
+        : clamp(Math.min(100, currentW + 14), 1, 100));
+    return buildWidthSearchOrder(currentW, minSearchW, maxSearchW, 1);
+  })();
+
+  // Mobile hard-pass candidate: widest layout that avoids one-word lines
+  // and keeps text to <=3 lines.
+  let mobileHardPick = null;
 
   for(const candidateW of candidates){
     document.documentElement.style.setProperty("--phraseW", `${candidateW.toFixed(2)}vw`);
@@ -7602,17 +7657,35 @@ function smartPhraseWidth(){
 
     const stats = getPhraseLineStats();
     if(!stats) continue;
+
+    if(mobile){
+      const hardPass =
+        !hasSingleWordLine(stats) &&
+        !shouldAvoidSingleLine(stats) &&
+        stats.lineCount <= 3;
+      if(hardPass){
+        mobileHardPick = { w: candidateW, stats };
+        // Candidates are wide -> narrow, so first hard-pass is the widest valid.
+        break;
+      }
+
+      const score = scoreMobilePhraseWidth(stats, candidateW);
+      const strongWin = score < (bestScore - 0.08);
+      const tieWin = Math.abs(score - bestScore) <= 0.08 && candidateW > bestW;
+      if(strongWin || tieWin){
+        bestScore = score;
+        bestW = candidateW;
+        bestStats = stats;
+      }
+      continue;
+    }
+
     const score = scorePhraseLineBalance(stats);
-    const candidateTier =
-      (needsSingleLineFix && shouldAvoidSingleLine(stats)) ? 2 :
-      (hasSingleWordLine(stats) ? 1 : 0);
-    const bestTier =
-      (needsSingleLineFix && shouldAvoidSingleLine(bestStats)) ? 2 :
-      (hasSingleWordLine(bestStats) ? 1 : 0);
+    const candidateTier = shouldAvoidSingleLine(stats) ? 2 : (hasSingleWordLine(stats) ? 1 : 0);
+    const bestTier = shouldAvoidSingleLine(bestStats) ? 2 : (hasSingleWordLine(bestStats) ? 1 : 0);
 
     const tierWin = candidateTier < bestTier;
     const sameTier = candidateTier === bestTier;
-
     const strongWin = sameTier && (score < (bestScore - 0.08));
     const tieWin =
       sameTier &&
@@ -7623,6 +7696,11 @@ function smartPhraseWidth(){
       bestW = candidateW;
       bestStats = stats;
     }
+  }
+
+  if(mobileHardPick){
+    bestW = mobileHardPick.w;
+    bestStats = mobileHardPick.stats;
   }
 
   document.documentElement.style.setProperty("--phraseW", `${bestW.toFixed(2)}vw`);
