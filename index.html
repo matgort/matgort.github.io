@@ -1795,16 +1795,16 @@
             <section class="uiPage uiPage--contrast" aria-label="contrast">
               <div class="sliderRow colorsBrightnessRow">
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">background brightness</div><div class="val" id="bgBrightVal">60%</div></div>
-                  <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.60">
+                  <div class="labelRow"><div class="label">background brightness</div><div class="val" id="bgBrightVal">70%</div></div>
+                  <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.70">
                 </div>
                 <div class="ctrl">
                   <div class="labelRow"><div class="label">text brightness</div><div class="val" id="fgBrightVal">0%</div></div>
                   <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
                 </div>
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">85%</div></div>
-                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="0.85">
+                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">90%</div></div>
+                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="0.90">
                 </div>
               </div>
             </section>
@@ -1911,6 +1911,12 @@ function applyIosPortraitLoadSizing(){
   // iOS portrait default: larger phrase/card on first load.
   sizeEl.value = String(clamp(Math.max(Number(sizeEl.value), 62), 0, 150));
   widthEl.value = String(clamp(Math.max(Number(widthEl.value), 52), 0, 100));
+}
+
+function applyMobilePortraitLoadTextShrink(){
+  if(!isMobileMode() || !isPortraitViewport()) return;
+  const currentSize = clamp(Number(sizeEl.value), 0, 150);
+  sizeEl.value = String(clamp(currentSize * 0.97, 0, 150));
 }
 
 function applyLoadViewerDefaults(){
@@ -2102,7 +2108,7 @@ function isComboLegible(bgHex, fgHex, bdHex){
 }
 
 /* brightness dimmer */
-function applyDimmer(hex, sliderVal){
+function applyDimmer(hex, sliderVal, channel = "fg"){
   const t = clamp(Number(sliderVal), 0, 1);
   const {r,g,b} = hexToRgb(hex);
   let {h,s,l} = rgbToHsl(r,g,b);
@@ -2111,7 +2117,8 @@ function applyDimmer(hex, sliderVal){
 
   if(t < 0.5){
     const k = (0.5 - t) / 0.5;
-    const lMul = lerp(1.0, 0.24192, k);
+    const darkMinMul = (channel === "bg" || channel === "bd") ? 0.338688 : 0.24192;
+    const lMul = lerp(1.0, darkMinMul, k);
     l = clamp(l * lMul, 0.08, 0.90);
     s = clamp(s * lerp(1.0, 1.10, k), 0.18, 0.98);
   }else{
@@ -2174,7 +2181,7 @@ function getBgLiveHex(){
   // Prefer the actual rendered background; fall back to what we'd compute right now.
   const live = normHex(current.bgLive);
   if(live) return live;
-  return normHex(applyDimmer(current.bgBase, Number(bgBrightEl.value)));
+  return normHex(applyDimmer(current.bgBase, Number(bgBrightEl.value), "bg"));
 }
 function getFgLiveHex(){
   const live = normHex(current.fgLive);
@@ -7139,7 +7146,7 @@ function toPureGrayHex(hex){
 }
 
 function getCardLiveColor(){
-  let bd = applyDimmer(current.bdBase, Number(bdBrightEl.value));
+  let bd = applyDimmer(current.bdBase, Number(bdBrightEl.value), "bd");
   if(isAllOffState()) bd = toPureGrayHex(bd);
   return normHex(bd || current.bdBase || "#000000");
 }
@@ -8071,9 +8078,9 @@ function applyColorsLive(opts = {}){
     current.bdBase = ALL_OFF_BD_HEX;
   }
 
-  let bg = applyDimmer(current.bgBase, Number(bgBrightEl.value));
+  let bg = applyDimmer(current.bgBase, Number(bgBrightEl.value), "bg");
   let fg  = applyDimmer(current.fgBase, Number(fgBrightEl.value));
-  let bd  = applyDimmer(current.bdBase, Number(bdBrightEl.value));
+  let bd  = applyDimmer(current.bdBase, Number(bdBrightEl.value), "bd");
 
   if(!isCompositionLocked && !allOff){
     if(bg.toLowerCase() === fg.toLowerCase()){
@@ -8084,7 +8091,7 @@ function applyColorsLive(opts = {}){
     if(bd.toLowerCase() === bg.toLowerCase()){
       const altB = pickColorNonRepeating("bd", sel.bdColor, new Set([current.bgBase, current.fgBase]));
       if(altB) current.bdBase = altB;
-      bd = applyDimmer(current.bdBase, Number(bdBrightEl.value));
+      bd = applyDimmer(current.bdBase, Number(bdBrightEl.value), "bd");
     }
   }
 
@@ -8543,6 +8550,7 @@ window.addEventListener("keydown", (e)=>{
 
   setBorderBtn();
   applyIosPortraitLoadSizing();
+  applyMobilePortraitLoadTextShrink();
   applyLoadViewerDefaults();
   applyTypeAndLayout();
 
