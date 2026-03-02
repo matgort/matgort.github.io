@@ -1574,6 +1574,11 @@
 }
 
 @media (pointer: coarse){
+  :root{
+    /* Keep slider-based adjustment layers on the same visual scale as colors. */
+    --mobileAdjustTileW: min(74vw, 416px);
+    --mobileAdjustTileMinW: min(74vw, 240px);
+  }
   .uiPage--contrast{
     max-width: min(96vw, 560px);
   }
@@ -1583,9 +1588,22 @@
     justify-items: center;
   }
   .uiPage--contrast .ctrl{
-    width: min(74vw, 416px);
-    max-width: 74vw;
-    min-width: min(74vw, 240px) !important;
+    width: var(--mobileAdjustTileW);
+    max-width: var(--mobileAdjustTileW);
+    min-width: var(--mobileAdjustTileMinW) !important;
+    padding: calc(8px * var(--uiGlobalScale)) calc(10px * var(--uiGlobalScale));
+  }
+  .uiPage--speed{
+    max-width: min(96vw, 560px);
+  }
+  .uiPage--speed .sliderRow{
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+  .uiPage--speed .ctrl{
+    width: var(--mobileAdjustTileW);
+    max-width: var(--mobileAdjustTileW);
+    min-width: var(--mobileAdjustTileMinW) !important;
     padding: calc(8px * var(--uiGlobalScale)) calc(10px * var(--uiGlobalScale));
   }
 
@@ -1777,16 +1795,16 @@
             <section class="uiPage uiPage--contrast" aria-label="contrast">
               <div class="sliderRow colorsBrightnessRow">
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">background brightness</div><div class="val" id="bgBrightVal">50%</div></div>
-                  <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.50">
+                  <div class="labelRow"><div class="label">background brightness</div><div class="val" id="bgBrightVal">60%</div></div>
+                  <input id="bgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.60">
                 </div>
                 <div class="ctrl">
                   <div class="labelRow"><div class="label">text brightness</div><div class="val" id="fgBrightVal">0%</div></div>
                   <input id="fgBrightSlider" type="range" min="0" max="1" step="0.001" value="0.00">
                 </div>
                 <div class="ctrl">
-                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">90%</div></div>
-                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="0.90">
+                  <div class="labelRow"><div class="label">card brightness</div><div class="val" id="bdBrightVal">85%</div></div>
+                  <input id="bdBrightSlider" type="range" min="0" max="1" step="0.001" value="0.85">
                 </div>
               </div>
             </section>
@@ -2093,12 +2111,12 @@ function applyDimmer(hex, sliderVal){
 
   if(t < 0.5){
     const k = (0.5 - t) / 0.5;
-    const lMul = lerp(1.0, 0.3024, k);
+    const lMul = lerp(1.0, 0.24192, k);
     l = clamp(l * lMul, 0.08, 0.90);
     s = clamp(s * lerp(1.0, 1.10, k), 0.18, 0.98);
   }else{
     const k = (t - 0.5) / 0.5;
-    l = clamp(l + (1 - l) * (0.33 * k), 0.08, 0.92);
+    l = clamp(l + (1 - l) * (0.429 * k), 0.08, 0.92);
     s = clamp(s * lerp(1.0, 1.28, k), 0.18, 0.98);
   }
   return setHsl(hex, h, s, l);
@@ -6453,7 +6471,58 @@ function pickRandomFrom(list){
 function pickRoleColor(roleKey, pool){
   const clean = uniq((pool || []).map(normHex).filter(Boolean));
   if(!clean.length) return null;
-  return bagNext(`combo-role:${String(roleKey || "any")}`, clean);
+  return bagNext("combo-role:" + String(roleKey || "any"), clean);
+}
+
+const colorComboGroupCache = {
+  sig: "",
+  bgKeys: [],
+  byBg: new Map()
+};
+
+function getColorComboGroups(){
+  const groupedPool = getColorComboPool();
+  const sig = groupedPool.sig;
+  const pool = groupedPool.pool;
+  if(colorComboGroupCache.sig === sig && colorComboGroupCache.bgKeys.length){
+    return { sig, pool, bgKeys: colorComboGroupCache.bgKeys, byBg: colorComboGroupCache.byBg };
+  }
+
+  const byBg = new Map();
+  for(const key of pool){
+    const bg = normHex(String(key || "").split("|", 1)[0]);
+    if(!bg) continue;
+    if(!byBg.has(bg)) byBg.set(bg, []);
+    byBg.get(bg).push(key);
+  }
+
+  const bgKeys = Array.from(byBg.keys());
+  colorComboGroupCache.sig = sig;
+  colorComboGroupCache.bgKeys = bgKeys;
+  colorComboGroupCache.byBg = byBg;
+  return { sig, pool, bgKeys, byBg };
+}
+
+function wasBgColorUsedRecently(bgHex, lookback = 90){
+  const bg = normHex(bgHex);
+  if(!bg) return false;
+  const windowSize = Math.max(0, Math.floor(lookback || 0));
+  if(windowSize <= 0) return false;
+  const start = Math.max(0, recentColorComboQueue.length - windowSize);
+  for(let i = recentColorComboQueue.length - 1; i >= start; i--){
+    const key = String(recentColorComboQueue[i] || "");
+    if(!key) continue;
+    const seenBg = normHex(key.split("|", 1)[0]);
+    if(seenBg === bg) return true;
+  }
+  return false;
+}
+
+function getBgRecentWindow(bgHex, baseWindow){
+  const bg = normHex(bgHex);
+  const windowSize = Math.max(0, Math.floor(baseWindow || 0));
+  if(bg === "#9edb00") return Math.max(windowSize, 220);
+  return windowSize;
 }
 
 function buildBalancedColorCombo(options = {}){
@@ -6462,40 +6531,63 @@ function buildBalancedColorCombo(options = {}){
   const ignoreRecent = !!options.ignoreRecent;
   const recentWindow = Math.max(0, Math.floor(options.recentWindow || 220));
   const maxTries = Math.max(80, Math.floor(options.maxTries || 680));
+  const recentBgWindow = Math.max(0, Math.floor(options.recentBgWindow || Math.max(18, Math.round(recentWindow * 0.28))));
 
-  const bgPool = uniq(getScopeColorPool(sel.bgColor, current.bgBase || "#ffffff").map(normHex).filter(Boolean));
-  const fgPool = uniq(getScopeColorPool(sel.fgColor, current.fgBase || "#000000").map(normHex).filter(Boolean));
-  const bdPool = uniq(getScopeColorPool(sel.bdColor, current.bdBase || "#4d4d4d").map(normHex).filter(Boolean));
-
-  if(!bgPool.length || !fgPool.length || !bdPool.length) return null;
+  const grouped = getColorComboGroups();
+  const bgKeys = grouped.bgKeys || [];
+  const byBg = grouped.byBg || new Map();
+  if(!bgKeys.length || !byBg.size) return null;
 
   const currentKey = colorComboKey(current.bgBase, current.fgBase, current.bdBase);
   const currentCard = normHex(current.bdBase);
+  const bdPool = uniq(getScopeColorPool(sel.bdColor, current.bdBase || "#4d4d4d").map(normHex).filter(Boolean));
   const shouldAvoidSameCard = !allowSameCard && bdPool.length > 1;
+  const useBgCooldown = !ignoreRecent && bgKeys.length > 1 && recentBgWindow > 0;
   let fallbackPick = null;
 
   for(let tries = 0; tries < maxTries; tries++){
-    const bg = pickRoleColor("bg", bgPool) || pickRandomFrom(bgPool);
+    const bg = bagNext("combo-bg-uniform", bgKeys) || pickRandomFrom(bgKeys);
     if(!bg) continue;
+    if(useBgCooldown && wasBgColorUsedRecently(bg, getBgRecentWindow(bg, recentBgWindow))) continue;
 
-    const fgCandidates = fgPool.filter((fg)=> fg !== bg && contrastRatio(bg, fg) >= 2.4);
-    if(!fgCandidates.length) continue;
-    const fg = pickRoleColor(`fg:${bg}`, fgCandidates) || pickRandomFrom(fgCandidates);
-    if(!fg) continue;
+    const keysForBg = byBg.get(bg) || [];
+    if(!keysForBg.length) continue;
+    const key = bagNext("combo-bg-key:" + bg, keysForBg) || pickRandomFrom(keysForBg);
+    if(!key) continue;
 
-    const bdCandidates = bdPool.filter((bd)=> bd !== bg && bd !== fg && contrastRatio(bd, fg) >= 2.2);
-    if(!bdCandidates.length) continue;
-    const bd = pickRoleColor(`bd:${fg}`, bdCandidates) || pickRandomFrom(bdCandidates);
-    if(!bd) continue;
-
-    const pick = { bgBase: bg, fgBase: fg, bdBase: bd };
-    const key = colorComboKey(bg, fg, bd);
+    const pick = parseColorComboKey(key);
+    if(!pick.bgBase || !pick.fgBase || !pick.bdBase) continue;
     if(!fallbackPick) fallbackPick = pick;
 
     if(!allowCurrent && key === currentKey) continue;
-    if(shouldAvoidSameCard && bd === currentCard) continue;
+    if(shouldAvoidSameCard && pick.bdBase === currentCard) continue;
     if(!ignoreRecent && wasColorComboUsedRecently(key, recentWindow)) continue;
     return pick;
+  }
+
+  const passCount = useBgCooldown ? 2 : 1;
+  for(let pass = 0; pass < passCount; pass++){
+    const relaxBgCooldown = pass > 0;
+    const bgStart = (Math.random() * bgKeys.length) | 0;
+    for(let i=0; i<bgKeys.length; i++){
+      const bg = bgKeys[(bgStart + i) % bgKeys.length];
+      if(!relaxBgCooldown && useBgCooldown && wasBgColorUsedRecently(bg, getBgRecentWindow(bg, recentBgWindow))) continue;
+
+      const keysForBg = byBg.get(bg) || [];
+      if(!keysForBg.length) continue;
+      const start = (Math.random() * keysForBg.length) | 0;
+
+      for(let j=0; j<keysForBg.length; j++){
+        const key = keysForBg[(start + j) % keysForBg.length];
+        const pick = parseColorComboKey(key);
+        if(!pick.bgBase || !pick.fgBase || !pick.bdBase) continue;
+        if(!fallbackPick) fallbackPick = pick;
+        if(!allowCurrent && key === currentKey) continue;
+        if(shouldAvoidSameCard && pick.bdBase === currentCard) continue;
+        if(!ignoreRecent && wasColorComboUsedRecently(key, recentWindow)) continue;
+        return pick;
+      }
+    }
   }
 
   return fallbackPick;
