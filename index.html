@@ -1107,9 +1107,10 @@
     .uiPage--colors .colorsControlRow{
       width: 100%;
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 18px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     .uiPage--colors .colorsScopeCol,
     .uiPage--colors .colorsBulkCol{
@@ -1118,15 +1119,16 @@
       flex-wrap: nowrap;
       gap: 7px;
       align-items: center;
+      justify-content: center;
       background: transparent;
       padding: 0;
     }
     .uiPage--colors .colorsScopeCol{
-      justify-content: flex-start;
+      width: max-content;
     }
     .uiPage--colors .colorsBulkCol{
-      justify-content: flex-end;
-      margin-left: auto;
+      width: max-content;
+      margin-left: 0;
     }
     .uiPage--colors .colorScopeBtn{
       height: auto;
@@ -1834,8 +1836,8 @@
                   </div>
 
                   <div class="colorsBulkCol">
-                    <button id="allOffBtn" type="button" class="colorBtn colorScopeBtn">all off</button>
                     <button id="allOnBtn" type="button" class="colorBtn colorScopeBtn">all on</button>
+                    <button id="allOffBtn" type="button" class="colorBtn colorScopeBtn">all off</button>
                   </div>
                 </div>
               </div>
@@ -2035,10 +2037,10 @@ function bagNextWithCooldown(key, pool, maxRecent){
 /* ================= Palettes ================= */
 const PAL = {
   circus: ["#FF6AD5","#FF8A00","#FF4D1A","#C85AE0","#FF007A"],
-  beachy: ["#BDE8FF","#8FB2CF","#CBE7FF","#445F86","#74A8E8"],
+  beachy: ["#BDE8FF","#8FB2CF","#CBE7FF","#4E61B4","#74A8E8"],
   fleshy: ["#F7D59B","#F6B77D","#B7852F","#F7B59D","#E1780A"],
-  future: ["#9EDB00","#C86AD6","#F8C6A4","#B23A2B","#7FB1D9"],
-  retro:  ["#DDE6B7","#00AEB0","#D85A10","#B10D33","#F6A623"],
+  future: ["#99CC33","#8F6FD0","#F8C6A4","#B23A2B","#7FB1D9"],
+  retro:  ["#DDE6B7","#B8B745","#B8B745","#B31347","#F6A623"],
   earthy: ["#A7B827","#D79A16","#536A00","#6F8A1A","#806200"]
 };
 
@@ -2627,7 +2629,7 @@ function tryPlaceColorsPanelCluster(measured, vw, vh, obstacles, placed, opts = 
   const leftBtns = ["scopeFgBtn","scopeBgBtn","scopeBdBtn"]
     .map((id)=>byId.get(id))
     .filter(Boolean);
-  const rightBtns = ["allOffBtn","allOnBtn"]
+  const rightBtns = ["allOnBtn","allOffBtn"]
     .map((id)=>byId.get(id))
     .filter(Boolean);
 
@@ -2653,7 +2655,6 @@ function tryPlaceColorsPanelCluster(measured, vw, vh, obstacles, placed, opts = 
   }
 
   const rowGap = Math.max(6, DOCK_LAYOUT_GAP);
-  const sideGapOptions = [18, 14, 10, 8];
   const btnGapOptions = [10, 8, 6, 4];
   const maxAvailW = vw - (DOCK_LAYOUT_MARGIN * 2);
 
@@ -2663,64 +2664,63 @@ function tryPlaceColorsPanelCluster(measured, vw, vh, obstacles, placed, opts = 
   const centerX = Number.isFinite(opts.centerX) ? opts.centerX : (vw * 0.5);
   const xShifts = [0, -16, 16, -32, 32, -48, 48];
 
-  // layout A: swatches top, controls row below (left scope buttons / right all on-off).
-  for(const sideGap of sideGapOptions){
-    for(const btnGap of btnGapOptions){
-      const leftRowW = leftBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (btnGap * (leftBtns.length - 1));
-      const leftRowH = Math.max(...leftBtns.map((item)=>item.measure.h));
-      const rightRowW = rightBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (btnGap * (rightBtns.length - 1));
-      const rightRowH = Math.max(...rightBtns.map((item)=>item.measure.h));
-      const controlsW = leftRowW + sideGap + rightRowW;
-      const controlsH = Math.max(leftRowH, rightRowH);
-      const blockW = Math.max(gridW, controlsW);
-      const blockH = gridH + rowGap + controlsH;
+  // layout A: swatches top, scope buttons row, then all-off/all-on row.
+  for(const btnGap of btnGapOptions){
+    const leftRowW = leftBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (btnGap * (leftBtns.length - 1));
+    const leftRowH = Math.max(...leftBtns.map((item)=>item.measure.h));
+    const rightRowW = rightBtns.reduce((sum, item)=>sum + item.measure.w, 0) + (btnGap * (rightBtns.length - 1));
+    const rightRowH = Math.max(...rightBtns.map((item)=>item.measure.h));
+    const controlsW = Math.max(leftRowW, rightRowW);
+    const controlsH = leftRowH + rowGap + rightRowH;
+    const blockW = Math.max(gridW, controlsW);
+    const blockH = gridH + rowGap + controlsH;
 
-      if(blockW > maxAvailW) continue;
+    if(blockW > maxAvailW) continue;
 
-      const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
-      const minX = DOCK_LAYOUT_MARGIN;
-      const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
-      const desiredTop = clamp(
-        Math.round(minTop + ((maxTop - minTop) * 0.42)),
-        minTop,
-        maxTop
-      );
-      const yCandidates = Array.from(new Set([
-        desiredTop,
-        minTop,
-        maxTop,
-        clamp(desiredTop - 8, minTop, maxTop),
-        clamp(desiredTop + 8, minTop, maxTop)
-      ]));
+    const { minTop, maxTop } = getPanelTopBounds(vh, blockH, opts.panelTopLimit);
+    const minX = DOCK_LAYOUT_MARGIN;
+    const maxX = Math.max(minX, vw - DOCK_LAYOUT_MARGIN - blockW);
+    const desiredTop = clamp(
+      Math.round(minTop + ((maxTop - minTop) * 0.42)),
+      minTop,
+      maxTop
+    );
+    const yCandidates = Array.from(new Set([
+      desiredTop,
+      minTop,
+      maxTop,
+      clamp(desiredTop - 8, minTop, maxTop),
+      clamp(desiredTop + 8, minTop, maxTop)
+    ]));
 
-      for(const topBase of yCandidates){
-        for(const sx of xShifts){
-          const blockX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
-          const topY = clamp(Math.round(topBase), minTop, maxTop);
+    for(const topBase of yCandidates){
+      for(const sx of xShifts){
+        const blockX = clamp(Math.round(centerX - (blockW * 0.5) + sx), minX, maxX);
+        const topY = clamp(Math.round(topBase), minTop, maxTop);
 
-          const gridX = blockX + Math.round((blockW - gridW) * 0.5);
-          const controlsY = topY + gridH + rowGap;
-          const leftStartX = blockX;
-          const rightStartX = blockX + blockW - rightRowW;
+        const gridX = blockX + Math.round((blockW - gridW) * 0.5);
+        const scopeY = topY + gridH + rowGap;
+        const bulkY = scopeY + leftRowH + rowGap;
+        const leftStartX = blockX + Math.round((blockW - leftRowW) * 0.5);
+        const rightStartX = blockX + Math.round((blockW - rightRowW) * 0.5);
 
-          const placements = [{ item: grid, x: gridX, y: topY }];
+        const placements = [{ item: grid, x: gridX, y: topY }];
 
-          let xL = leftStartX;
-          for(const item of leftBtns){
-            const y = controlsY + Math.round((controlsH - item.measure.h) * 0.5);
-            placements.push({ item, x: xL, y });
-            xL += item.measure.w + btnGap;
-          }
-
-          let xR = rightStartX;
-          for(const item of rightBtns){
-            const y = controlsY + Math.round((controlsH - item.measure.h) * 0.5);
-            placements.push({ item, x: xR, y });
-            xR += item.measure.w + btnGap;
-          }
-
-          if(commitIfFits(placements)) return true;
+        let xL = leftStartX;
+        for(const item of leftBtns){
+          const y = scopeY + Math.round((leftRowH - item.measure.h) * 0.5);
+          placements.push({ item, x: xL, y });
+          xL += item.measure.w + btnGap;
         }
+
+        let xR = rightStartX;
+        for(const item of rightBtns){
+          const y = bulkY + Math.round((rightRowH - item.measure.h) * 0.5);
+          placements.push({ item, x: xR, y });
+          xR += item.measure.w + btnGap;
+        }
+
+        if(commitIfFits(placements)) return true;
       }
     }
   }
@@ -4519,7 +4519,6 @@ athletic
 autistic
 awkward
 balding
-bulky
 barefoot
 betrayed
 bigoted
@@ -5205,7 +5204,6 @@ businesswoman
 burlesque dancer
 butt-head
 chaperone
-choreographer
 celebrity
 chemist
 chef
@@ -5213,10 +5211,7 @@ coal miner
 couples therapist
 crane operator
 dancer
-dance instructor
 day trader
-digital nomad
-dilettante
 dj
 documentary filmmaker
 drag king
@@ -5250,7 +5245,6 @@ housemate
 hunk
 immigrant
 improv comic
-influencer
 insomniac
 insurance broker
 intern
@@ -5258,9 +5252,8 @@ jazz singer
 jerk
 jock
 journalist
-lad
 landscape architect
-landlord
+lord
 luddite
 machinist
 man
@@ -5270,7 +5263,6 @@ meter maid
 middle manager
 model
 mother
-narc
 neighbor
 newscaster
 novelist
@@ -5280,7 +5272,6 @@ painter
 performance artist
 person
 pervert
-philanderer
 photographer
 portrait photographer
 piano player
@@ -5312,15 +5303,14 @@ unemployed guy
 unemployed lady
 waiter
 waitress
-wanker
 web developer
-whistle blower
 woman
 woodcarver
 `);
 
 /* action */
 const ACTIONS = vocabLines(`
+a little damp
 a little damp
 a little drunk
 acting tough
@@ -5336,11 +5326,12 @@ approaching middle age
 arms akimbo
 at peace
 at rest
-balancing on a ledge
-balancing on one foot
-being cancelled
+at the bottom of a well
+balanced on a ledge
+balancing
 being cyber bullied
 being held accountable
+being ignored
 being ignored
 being interrogated
 being praised
@@ -5362,6 +5353,7 @@ blowing out candles
 blowing smoke rings
 blowing smoke rings
 bodysurfing
+bored
 bored
 bottomless
 bouncing up and down
@@ -5385,6 +5377,7 @@ carved from a block of wood
 carving marble
 cashing a check
 cast aside
+cast aside
 cast in bronze
 casually dating
 catching up with an old friend
@@ -5395,6 +5388,7 @@ caught in the rip current
 celebrating the holidays
 changing its tampon
 charging its phone
+chatting
 cheating
 checking instagram
 checking its email
@@ -5523,7 +5517,9 @@ flickering softly
 flipping a house
 flipping houses
 flipping through a magazine
+flipping through a magazine
 flirting
+floating
 floating
 flossing aggressively
 folding laundry
@@ -5532,6 +5528,7 @@ found bedbugs
 freak dancing
 freshly cleaned
 freshly unpacked
+frowning
 frowning
 gently dabbing perfume
 gently kayaking
@@ -6073,8 +6070,6 @@ at a silent retreat
 at a strip club
 at a strip mall
 at a used book store
-at a writers retreat
-at an artist's residency
 at an amphitheater
 at an art house theater
 at an open mic night
@@ -6083,7 +6078,6 @@ at madison square garden
 at the acropolis
 at the beach
 at the bottom of a lake
-at the bottom of a well
 at the campgrounds
 at the catacombs
 at the club
@@ -6255,6 +6249,7 @@ on a suspension bridge
 on a tennis court
 on a third date
 on a tv show
+on an artist's residency
 on an empty boardwalk
 on an empty train platform
 on cobblestone
